@@ -1,0 +1,97 @@
+@charset "utf-8";
+
+#loading_icon {
+	position: fixed;
+	top: 40%;
+	bottom: 40%;
+	left: 40%;
+	right: 40%;
+	z-index: 1000;
+	background: #eee;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#list_container {
+	background: #ffd;
+	overflow: auto;
+}
+
+#song_list {
+	list-style: none;
+	padding-left: 20px;
+}
+
+#score_popup_container {
+	display: none;
+}
+
+#score_popup_container.open {
+	display: block;
+}
+
+#score_popup_bg {
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: rgba(0,0,0,0.5);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#score_popup_top_bar {
+	position: fixed;
+	top: 0;
+	height: 3em;
+	left: 0;
+	right: 0;
+	background: #111;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	box-shadow: 0 0 3px;
+	color: white;
+}
+
+#score_popup_top_bar * {
+	margin: 0.5ex;
+}
+
+#current_visual_tone {
+	width: 5ex;
+}
+
+#score_popup_top_bar input {
+    background: #000;
+    color: #fff;
+    border: 1px #777 solid;
+    padding: 2px;
+    padding-left: 5px;
+    width: 7ex;
+}
+
+#score_popup_window {
+	height: 80vmin;
+	width: 60vmin;
+	background: #fff;
+}
+
+#score_paper {
+	height: 100%;
+	width: 100%;
+}
+
+@media print {
+	body > * {
+		display: none;
+	}
+
+	#score_popup_container, #score_popup_bg, #score_popup_window, #score_paper {
+		width: 100%;
+		display: block;
+	}
+}
