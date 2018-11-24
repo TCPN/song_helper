@@ -1,12 +1,29 @@
 @charset "utf-8";
 
+@viewport {
+	max-width: 400px;
+	zoom:2;
+}
+
 #loading_icon {
 	position: fixed;
-	top: 40%;
-	bottom: 40%;
-	left: 40%;
-	right: 40%;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
 	z-index: 1000;
+	background: rgba(0,0,0,0);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#loading_icon_center {
+	width: 20%;
+	height: 20%;
+	box-sizing: border-box;
+	min-width: fit-content;
+	padding: 3ex;
 	background: #eee;
 	display: flex;
 	justify-content: center;
@@ -33,7 +50,7 @@
 
 #score_popup_bg {
 	position: fixed;
-	top: 0;
+	top: 3em;
 	bottom: 0;
 	left: 0;
 	right: 0;
@@ -57,7 +74,7 @@
 	color: white;
 }
 
-#score_popup_top_bar * {
+#score_popup_top_bar > * {
 	margin: 0.5ex;
 }
 
@@ -74,24 +91,46 @@
     width: 7ex;
 }
 
-#score_popup_window {
+#score_popup_window, #score_paper {
+	height: 120vw;
+	width: 90vw;
+	/*
 	height: 80vmin;
 	width: 60vmin;
+	*/
+}
+
+@media screen and (max-width: 420px){
+	#score_popup_window, #score_paper {
+		height: 133vw;
+		width: 100vw;
+	}
+}
+
+#score_popup_window {
+	max-height: 100%;
 	background: #fff;
+	overflow-y: auto;
 }
 
 #score_paper {
-	height: 100%;
-	width: 100%;
+	height: fit-content;
+}
+
+@media (orientation: portrait) {
 }
 
 @media print {
-	body > * {
+	body > *, #score_popup_top_bar {
 		display: none;
 	}
 
 	#score_popup_container, #score_popup_bg, #score_popup_window, #score_paper {
 		width: 100%;
 		display: block;
+	}
+
+	#score_popup_bg {
+		top: 0;
 	}
 }

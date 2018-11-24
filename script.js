@@ -124,6 +124,23 @@ function redrawScore(event){
 	render_score(event);
 }
 
+function utf8_to_b64( str ) {
+    return window.btoa(unescape(encodeURIComponent( str )));
+}
+
+function b64_to_utf8( str ) {
+    return decodeURIComponent(escape(window.atob( str )));
+}
+
+function svg2dataURI(elementSelector){
+    var svg = document.querySelector(elementSelector || 'svg');
+    var xml = new XMLSerializer().serializeToString(svg);
+    var svg64 = utf8_to_b64(xml);
+    var b64start = 'data:image/svg+xml;base64,';
+    var image64 = b64start + svg64;
+    return image64;
+};
+
 /*
 function selectionCallback(abcelem) {
 	var note = {};
