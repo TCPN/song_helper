@@ -102,6 +102,14 @@ function render_score(event){
 	displayingSong = song;
 }
 
+function force_redraw(element){
+	var saved_value = element.style.display;
+	element.style.display = 'none';
+	element.offsetHeight;
+	element.style.display = 'block';
+	element.style.display = saved_value;
+}
+
 function getUserSettings(){
 	var returnSettings = {};
 	returnSettings.visualTranspose = Number(document.querySelector('#visual_transpose').value);
