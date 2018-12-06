@@ -73,8 +73,22 @@
 			<label>調性:</label>
 			<label id="current_visual_tone"></label>
 			<label>移調</label>
-			<input id="visual_transpose" type="number" value="0"
-				onchange="redrawScore.call(this,event)"/>
+			<span class="popup-base">
+				<input id="visual_transpose" type="number" value="0"
+					onchange="redrawScore.call(this,event)"/>
+				<div class="popup-button-base">
+					<a class="popup-button"
+						onclick="value_modify.call(this,event)"
+						data-target="#visual_transpose"
+						data-add="+1"
+					>▴</a>
+					<a class="popup-button"
+						onclick="value_modify.call(this,event)"
+						data-target="#visual_transpose"
+						data-add="-1"
+					>▾</a>
+				</div>
+			</span>
 			<span>|</span>
 			<a onclick="window.print()">列印</a>
 			<span>|</span>

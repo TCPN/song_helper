@@ -134,3 +134,37 @@
 		top: 0;
 	}
 }
+
+.popup-base {
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+}
+
+.popup-button {
+    width: 16px;
+    height: 16px;
+    background: #333;
+    border: 1px solid #aaa;
+    margin: 1px;
+    position: relative;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+:focus + .popup-button-base,
+:focus .popup-button-base,
+:focus-within .popup-button-base,
+.popup-button-base:focus,
+.popup-button-base:hover {
+    display: flex;
+}
+
+.popup-button-base {
+    display: none;
+    position: absolute;
+    flex-direction: column;
+}
+

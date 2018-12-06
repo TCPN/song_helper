@@ -186,6 +186,17 @@ function svg2dataURI(elementSelector) {
     return image64;
 };
 
+function value_modify(event) {
+	var target = document.querySelector(this.dataset.target);
+	if(this.dataset.value != null)
+		target.value = this.dataset.value;
+	else if(this.dataset.add != null)
+		target.value = Number(target.value) + Number(this.dataset.add);
+	else
+		console.log('No specified method for modification.', '\n trigger:', this, '\n target:', target);
+	target.onchange();
+}
+
 /*
 function selectionCallback(abcelem) {
 	var note = {};
