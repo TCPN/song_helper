@@ -65,7 +65,7 @@ function createList(songs){
 		var to_append = li_tpl.cloneNode(true);
 		to_append.textContent = songs[i].id + '. ' + songs[i].name;
 		if(songs[i].abc && songs[i].abc.length > 0){
-			to_append.textContent += ' (abc)';
+			to_append.textContent += ' (譜)';
 		}
 		song_list_dom.appendChild(to_append);
 		to_append.song_obj = songs[i];
@@ -124,15 +124,15 @@ function redrawScore(event){
 	render_score(event);
 }
 
-function utf8_to_b64( str ) {
-    return window.btoa(unescape(encodeURIComponent( str )));
+function utf8_to_b64(str) {
+    return window.btoa(unescape(encodeURIComponent(str)));
 }
 
-function b64_to_utf8( str ) {
-    return decodeURIComponent(escape(window.atob( str )));
+function b64_to_utf8(str) {
+    return decodeURIComponent(escape(window.atob(str)));
 }
 
-function svg2dataURI(elementSelector){
+function svg2dataURI(elementSelector) {
     var svg = document.querySelector(elementSelector || 'svg');
     var xml = new XMLSerializer().serializeToString(svg);
     var svg64 = utf8_to_b64(xml);
