@@ -31,13 +31,27 @@
 }
 
 #list_container {
-	background: #ffd;
 	overflow: auto;
 }
 
 #song_list {
 	list-style: none;
 	padding-left: 20px;
+}
+
+table#song_list {
+	border-collapse: collapse;
+	background: #f9f9f9;
+	margin: auto;
+}
+
+table#song_list tr:nth-child(2n) {
+	background: #f0f0f0;
+}
+
+table#song_list td {
+	padding-left: 1em;
+	padding-right: 0.5em;
 }
 
 #score_popup_container {

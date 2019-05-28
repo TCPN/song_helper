@@ -95,23 +95,50 @@ function getSongArray(data) {
 	return songArray;
 }
 
+function getSongData(song_id){
+	return songDataObjects.find(x=>(x.id==song_id));
+}
+
 function createList(songs){
 	var song_list_dom = document.querySelector('#song_list');
-	var li_tpl = document.createElement('li');
 	for(i in songs){
-		var to_append = li_tpl.cloneNode(true);
-		to_append.textContent = songs[i].id + '. ' + songs[i].name;
+		var item_tpl = createListItem();
+		item_tpl.num.textContent = songs[i].id + '.';
+		item_tpl.name.textContent = songs[i].name;
 		if(songs[i].abc && songs[i].abc.length > 0){
-			to_append.textContent += ' (譜)';
+			item_tpl.flag.textContent += '(譜)';
 		}
-		song_list_dom.appendChild(to_append);
-		to_append.song_obj = songs[i];
-		to_append.onclick = render_score;
+		song_list_dom.appendChild(item_tpl.topElem);
+		item_tpl.topElem.dataset.target = songs[i].id;
+		item_tpl.topElem.song_obj = songs[i];
+		item_tpl.topElem.onclick = render_score;
 	}
 }
 
+function createListItem(){
+	var topElem = document.createElement('tr');
+	var num = document.createElement('td');
+	var name = document.createElement('td');
+	var flag = document.createElement('td');
+	topElem.appendChild(num);
+	topElem.appendChild(name);
+	topElem.appendChild(flag);
+	return {
+		topElem,
+		num,
+		name,
+		flag,
+	};
+}
+
+function findTargetSongFromParents(dom){
+	while(dom.dataset.target == null)
+		dom = dom.parentElement;
+	return getSongData(dom.dataset.target);
+}
+
 function render_score(event){
-	var song = displayingSong || event.target.song_obj;
+	var song = displayingSong || findTargetSongFromParents(event.target) || event.target.song_obj;
 	var score_container = document.querySelector('#score_popup_container');
 	var settings = getUserSettings();
 	var presetSettings = {
