@@ -96,16 +96,20 @@ table#song_list td {
 	width: 5ex;
 }
 
+#current_song_id {
+	font-weight: bold;
+}
+
 #score_popup_top_bar input {
     background: #000;
     color: #fff;
     border: 1px #777 solid;
     padding: 2px;
     padding-left: 5px;
-    width: 7ex;
+    width: 5ex;
 }
 
-#score_popup_window, #score_paper {
+#score_popup_window {
 	height: 120vw;
 	width: 90vw;
 	/*
@@ -129,6 +133,7 @@ table#song_list td {
 
 #score_paper {
 	height: fit-content;
+	width: 100%;
 }
 
 @media (orientation: portrait) {
@@ -139,9 +144,16 @@ table#song_list td {
 		display: none;
 	}
 
+	body {
+		margin: 0;
+	}
+
 	#score_popup_container, #score_popup_bg, #score_popup_window, #score_paper {
 		width: 100%;
 		display: block;
+		position: unset;
+		height: unset;
+		max-height: unset;
 	}
 
 	#score_popup_bg {
@@ -160,8 +172,8 @@ table#song_list td {
     height: 16px;
     background: #333;
     border: 1px solid #aaa;
-    margin: 1px;
     position: relative;
+	user-select: none;
 
 	display: flex;
 	justify-content: center;

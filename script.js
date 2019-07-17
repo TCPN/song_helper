@@ -103,13 +103,17 @@ function getSongData(song_id){
 	return songDataObjects.find(x=>(x.id==song_id));
 }
 
+function hasSongContent(song) {
+	return song.abc.match(/K:.*\n.*\w/);
+}
+
 function createList(songs){
 	var song_list_dom = document.querySelector('#song_list');
 	for(i in songs){
 		var item_tpl = createListItem();
 		item_tpl.num.textContent = songs[i].id + '.';
 		item_tpl.name.textContent = songs[i].name;
-		if(songs[i].abc && songs[i].abc.length > 0){
+		if(songs[i].abc && songs[i].abc.length > 0 && hasSongContent(songs[i])){
 			item_tpl.flag.textContent += '(譜)';
 		}
 		song_list_dom.appendChild(item_tpl.topElem);
@@ -144,29 +148,44 @@ function findTargetSongFromParents(dom){
 function render_score(event){
 	var song = displayingSong || findTargetSongFromParents(event.target) || event.target.song_obj;
 	var score_container = document.querySelector('#score_popup_container');
+	score_container.classList.add('open');
+	// open at the first so the abcjs can measure the elements' boxes and do good arrangement
+	// reset the score_paper
+	var score_paper = document.querySelector('#score_paper');
+	score_paper.className = '';
+	score_paper.style = '';
+	document.querySelector('#current_song_id').textContent = song.id;
+
 	var settings = getUserSettings();
 	var presetSettings = {
 		// TODO: decide the staffwidth dynamically
-		staffwidth: 800,
+		//staffwidth: 800,
 		responsive: 'resize',
-		wrap: {
-			minSpacing: 1.8,
-			maxSpacing: 3,
-			preferredMeasuresPerLine: 4,
-		},
+		//wrap: {
+			//minSpacing: 1.8,
+			//maxSpacing: 3,
+			//preferredMeasuresPerLine: 4,
+		//},
+		oneSvgPerLine: true,
 	};
 	params = Object.assign({}, presetSettings, settings);
 	tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
 	
 	var display_tone = "";
-	try{
-		var tone_signature = tuneObjectArray[0].engraver.engraver.startlimitelem.abcelem;
-		display_tone = (tone_signature.acc + tone_signature.root + tone_signature.mode) || "C";
-	}catch(e){
-	}finally{
-		document.querySelector('#current_visual_tone').textContent = display_tone;
+	if(true || params.oneSvgPerLine) {
+		try{
+			var tone_signature = tuneObjectArray[0].lines[0].staff[0].key;
+		}catch(e){}
 	}
-	score_container.classList.add('open');
+	else {
+		try{
+			var tone_signature = tuneObjectArray[0].engraver.engraver.startlimitelem.abcelem;
+		}catch(e){}
+	}
+	try{
+		display_tone = (tone_signature.root + (({"#": "♯", "b": "♭", "": ""})[tone_signature.acc]) + tone_signature.mode) || "C";
+	}catch(e){}
+	document.querySelector('#current_visual_tone').textContent = display_tone;
 	displayingSong = song;
 }
 
