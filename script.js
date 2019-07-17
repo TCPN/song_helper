@@ -26,44 +26,48 @@ function drawChart() {
 		songDataObjects = getSongArray(data);
 		createList(songDataObjects);
 		document.querySelector('#loading_icon').style.display = 'none';
-		//select score by url
-		if(!!location.hash){
-			// parse hash
-			var hash_params = location.hash.slice(1).split('&').reduce(
-			function(o, s){
-				var kv = s.split('=');
-				if(kv.length == 1)
-					o[s] = true;
-				else if(kv.length == 2)
-					o[kv[0]] = kv[1];
-				else if(kv.length > 2)
-					o[kv[0]] = kv.slice(1).join('=');
-				return o;
-			}, {});
-			// execute hash
-			if(hash_params['song_id'] != null){
-				var dsongobj = songDataObjects.find((s)=>(s.id == hash_params['song_id']));
-				if(!dsongobj.abc){
-					dsongobj = null;
-					alert('No score for song ' + hash_params['song_id']);
-				}
-			}
-			if(hash_params['transpose'] != null){
-				var transpose = Number(hash_params['transpose']);
-				if(!Number.isInteger(transpose)){
-					transpose = 0;
-					alert('Invalid transpose is ignored: ' + hash_params['transpose']);
-				}
-			}
-			if(dsongobj){
-				displayingSong = dsongobj;
-				document.querySelector('#visual_transpose').value = transpose;
-				render_score();
-			}else{
-				displayingSong = null;
+		exec_hash();
+	});
+}
+
+function exec_hash(){
+	//select score by url
+	if(!!location.hash){
+		// parse hash
+		var hash_params = location.hash.slice(1).split('&').reduce(
+		function(o, s){
+			var kv = s.split('=');
+			if(kv.length == 1)
+				o[s] = true;
+			else if(kv.length == 2)
+				o[kv[0]] = kv[1];
+			else if(kv.length > 2)
+				o[kv[0]] = kv.slice(1).join('=');
+			return o;
+		}, {});
+		// execute hash
+		if(hash_params['song_id'] != null){
+			var dsongobj = songDataObjects.find((s)=>(s.id == hash_params['song_id']));
+			if(!dsongobj.abc){
+				dsongobj = null;
+				alert('No score for song ' + hash_params['song_id']);
 			}
 		}
-	});
+		if(hash_params['transpose'] != null){
+			var transpose = Number(hash_params['transpose']);
+			if(!Number.isInteger(transpose)){
+				transpose = 0;
+				alert('Invalid transpose is ignored: ' + hash_params['transpose']);
+			}
+		}
+		if(dsongobj){
+			displayingSong = dsongobj;
+			document.querySelector('#visual_transpose').value = transpose;
+			render_score();
+		}else{
+			displayingSong = null;
+		}
+	}
 }
 
 function getSongArray(data) {
@@ -223,6 +227,8 @@ function value_modify(event) {
 		console.log('No specified method for modification.', '\n trigger:', this, '\n target:', target);
 	target.onchange();
 }
+
+window.addEventListener('hashchange', exec_hash);
 
 /*
 function selectionCallback(abcelem) {
