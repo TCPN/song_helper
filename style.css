@@ -22,6 +22,8 @@
 	width: 20%;
 	height: 20%;
 	box-sizing: border-box;
+	font-size: 2em;
+	max-height: 4em;
 	min-width: fit-content;
 	padding: 3ex;
 	background: #eee;
@@ -43,6 +45,10 @@ table#song_list {
 	border-collapse: collapse;
 	background: #f9f9f9;
 	margin: auto;
+}
+
+table#song_list tr{
+	line-height: 2em;
 }
 
 table#song_list tr:nth-child(2n) {
