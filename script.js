@@ -1,3 +1,4 @@
+var ORIGINAL_TITLE = document.title;
 
 // Load the Visualization API and the piechart package.
 google.load('visualization', '1.0', {'packages':['corechart']});
@@ -224,6 +225,7 @@ function render_score(event){
 		display_tone = (tone_signature.root + (({"#": "♯", "b": "♭", "": ""})[tone_signature.acc]) + tone_signature.mode) || "C";
 	}catch(e){}
 	document.querySelector('#current_visual_tone').textContent = display_tone;
+	document.title = `${song.name} (${display_tone})`
 	displayingSong = song;
 }
 
@@ -252,6 +254,7 @@ function closePopup(event){
 }
 
 function close_score(){
+	document.title = ORIGINAL_TITLE;
 	document.querySelector('#score_popup_container').classList.remove("open");
 	displayingSong = null;
 	clearSettings();
