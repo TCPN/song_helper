@@ -36,7 +36,7 @@
 		</table>
 	</div>
 	<div id='score_popup_container'>
-		<div id='score_popup_bg' data-close='#score_popup_container' onclick="closePopup.call(this,event)">
+		<div id='score_popup_bg' data-close='#score_popup_container' onclick="close_score()">
 			<div id='score_popup_window'>
 				<div id='score_paper'>
 				</div>
@@ -77,7 +77,7 @@
 			<label>移調</label>
 			<span class="popup-base">
 				<input id="visual_transpose" type="number" value="0"
-					onchange="redrawScore.call(this,event)"/>
+					onchange="set_transpose(this.value)"/>
 				<div class="popup-button-base">
 					<a class="popup-button"
 						onclick="value_modify.call(this,event)"
@@ -94,7 +94,7 @@
 			<span>|</span>
 			<a onclick="window.print()">列印</a>
 			<span>|</span>
-			<label data-close='#score_popup_container' onclick="closePopup.call(this,event)">關閉</label>
+			<label data-close='#score_popup_container' onclick="close_score()">關閉</label>
 		</div>
 	</div>
 </body>
