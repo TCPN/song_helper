@@ -36,7 +36,7 @@
 		</table>
 	</div>
 	<div id='score_popup_container'>
-		<div id='score_popup_bg' data-close='#score_popup_container' onclick="close_score()">
+		<div id='score_popup_bg' data-close='#score_popup_container' onclick="if(event.target==this)close_score()">
 			<div id='score_popup_window'>
 				<div id='score_paper'>
 				</div>
