@@ -181,7 +181,7 @@ function findTargetSongFromParents(dom){
 }
 
 function open_score(song_id){
-	if(song_id in songDataObjects){
+	if(songDataObjects.find((s)=>(s.id == song_id))){
 		update_hash('song_id', song_id);
 		return true;
 	}
