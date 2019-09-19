@@ -181,7 +181,12 @@ function findTargetSongFromParents(dom){
 }
 
 function open_score(song_id){
-	update_hash('song_id', song_id);
+	if(song_id in songDataObjects){
+		update_hash('song_id', song_id);
+		return true;
+	}
+	else
+		return false;
 }
 
 function render_score(event){
@@ -247,15 +252,36 @@ function clearSettings(){
 	document.querySelector('#visual_transpose').value = undefined;
 }
 
+function getDom(target) {
+	if(typeof target == 'string')
+		target = document.querySelector(target);
+	return target;
+}
+
+function openDom(target){
+	target = getDom(target);
+	target.classList.add('open');
+}
+
+function isOpenDom(target){
+	target = getDom(target);
+	return target.classList.contains('open');
+}
+
+function closeDom(target){
+	target = getDom(target);
+	target.classList.remove('open');
+}
+
 function closePopup(event){
 	if(event.target != this)
 		return;
-	document.querySelector(this.dataset.close).classList.remove("open");
+	domClose(this.dataset.close);
 }
 
 function close_score(){
 	document.title = ORIGINAL_TITLE;
-	document.querySelector('#score_popup_container').classList.remove("open");
+	document.querySelector('#score_popup_container').classList.remove('open');
 	displayingSong = null;
 	clearSettings();
 	save_scroll('html');
@@ -281,21 +307,70 @@ function restore_scroll(selector){
 	dom.scrollTop = scroll_tmp[selector];
 }
 
+function song_id_popup_control(btn){
+	var song_id_dom = document.querySelector('#current_song_id');
+	var song_id_popup = document.querySelector('#song_id_popup');
+	switch(btn) {
+		case "ent": open_score(song_id_dom.textContent) || restore_edited_song_id(); closeDom(song_id_popup); break;
+		case "esc": restore_edited_song_id(); closeDom(song_id_popup); break;
+		case "del": song_id_dom.textContent = song_id_dom.textContent.substr(0, song_id_dom.textContent.length - 1); break;
+		case "inc": song_id_dom.textContent = parseInt(_target_song_id) + 1; break;
+		case "dec": song_id_dom.textContent = parseInt(_target_song_id) - 1; break;
+		case "clr": song_id_dom.textContent = ''; break;
+		case "0": case "1": case "2": case "3": case "4": case "5": case "6": case "7": case "8": case "9":
+			song_id_dom.textContent += btn; break;
+	}
+	_target_song_id = song_id_dom.textContent || _target_song_id;
+	if(isOpenDom(song_id_popup))
+		song_id_dom.focus();
+}
+
+function song_id_keydown_handler(event){
+	console.log(event);
+	var btn_map = {
+		'0': '0',
+		'1': '1',
+		'2': '2',
+		'3': '3',
+		'4': '4',
+		'5': '5',
+		'6': '6',
+		'7': '7',
+		'8': '8',
+		'9': '9',
+		'Enter': 'ent',
+		'Esc': 'esc',
+		'UpArrow': 'inc',
+		'DownArrow': 'dec',
+		'c': 'clr',
+		'C': 'clr',
+		'Backspace': 'del',
+		'Delete': 'del',
+	};
+	var btn = btn_map[event.key];
+	btn && song_id_popup_control(btn);
+}
+
+function restore_edited_song_id(){
+	var song_id_dom = document.querySelector('#current_song_id');
+	song_id_dom.textContent = _original_song_id;
+}
+
 function utf8_to_b64(str) {
-    return window.btoa(unescape(encodeURIComponent(str)));
+	return window.btoa(unescape(encodeURIComponent(str)));
 }
 
 function b64_to_utf8(str) {
-    return decodeURIComponent(escape(window.atob(str)));
+	return decodeURIComponent(escape(window.atob(str)));
 }
 
 function svg2dataURI(elementSelector) {
-    var svg = document.querySelector(elementSelector || 'svg');
-    var xml = new XMLSerializer().serializeToString(svg);
-    var svg64 = utf8_to_b64(xml);
-    var b64start = 'data:image/svg+xml;base64,';
-    var image64 = b64start + svg64;
-    return image64;
+	var svg = document.querySelector(elementSelector || 'svg');
+	var xml = new XMLSerializer().serializeToString(svg);
+	var svg64 = utf8_to_b64(xml);
+	var b64start = 'data:image/svg+xml;base64,';
+	var image64 = b64start + svg64;
+	return image64;
 };
 
 function value_modify(event) {

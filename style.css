@@ -92,6 +92,7 @@ table#song_list td {
 	align-items: center;
 	box-shadow: 0 0 3px;
 	color: white;
+    user-select: none;
 }
 
 #score_popup_top_bar > * {
@@ -104,6 +105,13 @@ table#song_list td {
 
 #current_song_id {
 	font-weight: bold;
+    width: 3em;
+    min-width: fit-content;
+    text-align: right;
+}
+
+#current_song_id:hover {
+    background: #444;
 }
 
 #score_popup_top_bar input {
@@ -200,3 +208,83 @@ table#song_list td {
     flex-direction: column;
 }
 
+.popup, .popup-set {
+    display: none;
+}
+
+.popup.open, .popup-set.open {
+    display: initial;
+}
+
+.popup-bg {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
+
+.popup-window {
+	z-index: 2;
+}
+
+#song_id_popup .popup-window {
+    display: grid;
+    position: fixed;
+    top: 3em;
+    right: 50%;
+    height: 12em;
+    width: 12em;
+    max-height: calc(100vh - 3em);
+    max-width: 50vw;
+    margin: 0;
+    background: #333;
+    grid-template:
+        "a1 a2 a3 inc" 1fr
+        "a4 a5 a6 dec" 1fr
+        "a7 a8 a9 del" 1fr
+        "clr a0 esc ent" 1fr
+       / 1fr 1fr 1fr 1fr;
+    grid-gap: 2px;
+}
+
+#song_id_popup .popup-window .button {
+    height: 100%;
+    width: 100%;
+    background: #666;
+}
+
+#song_id_popup .popup-window .button::after {
+    content: attr(data-value);
+}
+
+#song_id_popup .popup-window .button[data-value="0"]   { grid-area: a0; background: #777; }
+#song_id_popup .popup-window .button[data-value="1"]   { grid-area: a1; background: #777; }
+#song_id_popup .popup-window .button[data-value="2"]   { grid-area: a2; background: #777; }
+#song_id_popup .popup-window .button[data-value="3"]   { grid-area: a3; background: #777; }
+#song_id_popup .popup-window .button[data-value="4"]   { grid-area: a4; background: #777; }
+#song_id_popup .popup-window .button[data-value="5"]   { grid-area: a5; background: #777; }
+#song_id_popup .popup-window .button[data-value="6"]   { grid-area: a6; background: #777; }
+#song_id_popup .popup-window .button[data-value="7"]   { grid-area: a7; background: #777; }
+#song_id_popup .popup-window .button[data-value="8"]   { grid-area: a8; background: #777; }
+#song_id_popup .popup-window .button[data-value="9"]   { grid-area: a9; background: #777; }
+#song_id_popup .popup-window .button[data-value="inc"] { grid-area: inc;}
+#song_id_popup .popup-window .button[data-value="dec"] { grid-area: dec;}
+#song_id_popup .popup-window .button[data-value="del"] { grid-area: del;}
+#song_id_popup .popup-window .button[data-value="esc"] { grid-area: esc;}
+#song_id_popup .popup-window .button[data-value="clr"] { grid-area: clr;}
+#song_id_popup .popup-window .button[data-value="ent"] { grid-area: ent;}
+
+#song_id_popup .popup-window .button[data-value="inc"]::after { content: "▲"; }
+#song_id_popup .popup-window .button[data-value="dec"]::after { content: "▼"; }
+#song_id_popup .popup-window .button[data-value="del"]::after { content: "⌫"; }
+#song_id_popup .popup-window .button[data-value="clr"]::after { content: "C"; }
+#song_id_popup .popup-window .button[data-value="esc"]::after { content: "✗"; }
+#song_id_popup .popup-window .button[data-value="ent"]::after { content: "✓"; }
+
+.cc {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
