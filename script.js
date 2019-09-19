@@ -258,14 +258,27 @@ function close_score(){
 	document.querySelector('#score_popup_container').classList.remove("open");
 	displayingSong = null;
 	clearSettings();
+	save_scroll('html');
 	update_hash('song_id', undefined);
 	update_hash('transpose', undefined);
+	restore_scroll('html');
 }
 
 function set_transpose(value){
 	render_score(event);
 	value = Number(value) || undefined; // remove hash when value is zero
 	update_hash('transpose', value);
+}
+
+var scroll_tmp = {};
+function save_scroll(selector){
+	dom = document.querySelector(selector);
+	scroll_tmp[selector] = dom.scrollTop;
+}
+
+function restore_scroll(selector){
+	dom = document.querySelector(selector);
+	dom.scrollTop = scroll_tmp[selector];
 }
 
 function utf8_to_b64(str) {
@@ -297,6 +310,8 @@ function value_modify(event) {
 }
 
 window.addEventListener('hashchange', exec_hash);
+window.addEventListener('beforeprint', ()=>{save_scroll('html')});
+window.addEventListener('afterprint', ()=>{restore_scroll('html')});
 
 /*
 function selectionCallback(abcelem) {
