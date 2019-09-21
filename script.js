@@ -14,7 +14,6 @@ var displayingSong;
 // instantiates the pie chart, passes in the data and
 // draws it.
 function drawChart() {
-	document.querySelector('#loading_icon').style.display = 'flex';
 	/*var URL = 'https://docs.google.com/spreadsheet/tq?key=0AvTQcvEt3SwvdEdaOUpVVHRSMkVXUXlHX1hZbFBzWkE';*//* file deleted! */
 	var URL = 'https://docs.google.com/spreadsheet/tq?key=1_8-RZ_a_f47I0IavWYOwg5W07d_M3nQx8VK6wzEvfoM';
 	var query = new google.visualization.Query(URL);
@@ -26,9 +25,16 @@ function drawChart() {
 		data = response.getDataTable();
 		songDataObjects = getSongArray(data);
 		createList(songDataObjects);
-		document.querySelector('#loading_icon').style.display = 'none';
+		fixedListWidth();
+		document.querySelector('#loading_icon').classList.add('hide');
 		exec_hash();
 	});
+}
+
+function fixedListWidth() {
+	var song_list_table = document.querySelector('#song_list');
+	var r = song_list_table.getClientRects()[0];
+	song_list_table.style.width = `${r.width}px`;
 }
 
 function parse_params(s){
@@ -142,7 +148,8 @@ function hasSongContent(song) {
 }
 
 function createList(songs){
-	var song_list_dom = document.querySelector('#song_list');
+	var song_list_table = document.querySelector('#song_list');
+	var song_list_dom = song_list_table.tBodies[0];
 	for(i in songs){
 		var item_tpl = createListItem();
 		item_tpl.num.textContent = songs[i].id + '.';
@@ -199,6 +206,13 @@ function render_score(event){
 	score_paper.className = '';
 	score_paper.style = '';
 	document.querySelector('#current_song_id').textContent = song.id;
+
+	//scroll to the song
+	var list_container = document.querySelector(`#list_container`);
+	var song_item_in_list = document.querySelector(`#song_list tbody [data-target="${song.id}"]`);
+	var rect = song_item_in_list.getClientRects()[0];
+	if(rect)
+		list_container.scrollBy(0, rect.top - rect.height);
 
 	var settings = getUserSettings();
 	var presetSettings = {
@@ -382,6 +396,26 @@ function value_modify(event) {
 	else
 		console.log('No specified method for modification.', '\n trigger:', this, '\n target:', target);
 	target.onchange();
+}
+
+function filter_song(pattern) {
+	var song_list_table = document.querySelector('#song_list');
+	var items = Array.from(song_list_table.tBodies[0].children);
+	var found_something = false;
+	items.forEach(v=>{
+		if(!v.textContent.match(pattern))
+			v.classList.add('hide');
+		else {
+			v.classList.remove('hide');
+			found_something = true;
+		}
+	});
+	var found_nothing_dom = document.querySelector('#found_nothing');
+	if(!found_something){
+		found_nothing_dom.classList.remove('hide');
+	}
+	else
+		found_nothing_dom.classList.add('hide');
 }
 
 window.addEventListener('hashchange', exec_hash);
