@@ -125,11 +125,12 @@ function getSongArray(data) {
 	10 abc
 	*/
 	var songArray = [];
+	console.log('number of songs', data.getNumberOfRows());
 	for (var i = 0; i < data.getNumberOfRows(); i++) {
 		var song = {
 			"id": data.getValue(i, 0),
 			"name": data.getValue(i, 1),
-			"key": data.getValue(i, 2),
+			"tone": data.getValue(i, 2),
 			"timesig": data.getValue(i, 3),
 			"melody": data.getValue(i, 4),
 			"abc": data.getValue(i, 10),
@@ -154,6 +155,7 @@ function createList(songs){
 		var item_tpl = createListItem();
 		item_tpl.num.textContent = songs[i].id + '.';
 		item_tpl.name.textContent = songs[i].name;
+		item_tpl.tone.textContent = songs[i].tone + '調';
 		if(songs[i].abc && songs[i].abc.length > 0 && hasSongContent(songs[i])){
 			item_tpl.flag.textContent += '(譜)';
 		}
@@ -169,14 +171,17 @@ function createListItem(){
 	var topElem = document.createElement('tr');
 	var num = document.createElement('td');
 	var name = document.createElement('td');
+	var tone = document.createElement('td');
 	var flag = document.createElement('td');
 	topElem.appendChild(num);
 	topElem.appendChild(name);
+	topElem.appendChild(tone);
 	topElem.appendChild(flag);
 	return {
 		topElem,
 		num,
 		name,
+		tone,
 		flag,
 	};
 }

@@ -6,15 +6,15 @@
 }
 
 body {
-    margin: 0;
+	margin: 0;
 }
 
 .fill-viewport {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
 }
 
 #loading_icon {
@@ -41,9 +41,9 @@ body {
 
 #list_container {
 	overflow: auto;
-    padding: 8px;
-    height: 100%;
-    box-sizing: border-box;
+	padding: 8px;
+	height: 100%;
+	box-sizing: border-box;
 }
 
 #song_list {
@@ -54,6 +54,7 @@ body {
 table#song_list {
 	border-collapse: collapse;
 	margin: auto;
+	max-width: 100%;
 }
 
 table#song_list tr{
@@ -61,7 +62,7 @@ table#song_list tr{
 }
 
 table#song_list tbody tr:nth-child(2n+1) {
-    background: #f9f9f9;
+	background: #f9f9f9;
 }
 
 table#song_list tbody tr:nth-child(2n) {
@@ -74,37 +75,37 @@ table#song_list td {
 }
 
 #song_list thead th {
-    position: sticky;
-    top: 0;
+	position: sticky;
+	top: 0;
 }
 
 #song_list_filters {
-    background-color: #fffd;
-    display: grid;
-    grid-template: "search clr" auto / auto 1.5em;
-    align-items: center;
-    margin-bottom: 0.2em;
+	background-color: #fffd;
+	display: grid;
+	grid-template: "search clr" auto / auto 1.5em;
+	align-items: center;
+	margin-bottom: 0.2em;
 }
 
 #song_search {
-    background: no-repeat left center / 1.5em url(search.svg), white;
-    padding: 0.2em;
-    padding-left: 1.5em;
-    border-radius: 2em;
-    grid-area: 1 / 1 / 1 / 3;
+	background: no-repeat left center / 1.5em url(search.svg), white;
+	padding: 0.2em;
+	padding-left: 1.5em;
+	border-radius: 2em;
+	grid-area: 1 / 1 / 1 / 3;
 }
 
 #clear_search {
-    height: 1em;
-    width: 1em;
-    grid-area: clr;
-    background: no-repeat center / contain url(delete.png);
-    cursor: pointer;
+	height: 1em;
+	width: 1em;
+	grid-area: clr;
+	background: no-repeat center / contain url(delete.png);
+	cursor: pointer;
 }
 
 #found_nothing {
-    background: #f9f9f9;
-    text-align: center;
+	background: #f9f9f9;
+	text-align: center;
 }
 
 
@@ -140,7 +141,7 @@ table#song_list td {
 	align-items: center;
 	box-shadow: 0 0 3px;
 	color: white;
-    user-select: none;
+	user-select: none;
 }
 
 #score_popup_top_bar > * {
@@ -153,22 +154,22 @@ table#song_list td {
 
 #current_song_id {
 	font-weight: bold;
-    width: 2em;
-    min-width: fit-content;
-    text-align: right;
+	width: 2em;
+	min-width: fit-content;
+	text-align: right;
 }
 
 #current_song_id:hover {
-    background: #444;
+	background: #444;
 }
 
 #score_popup_top_bar input {
-    background: #000;
-    color: #fff;
-    border: 1px #777 solid;
-    padding: 2px;
-    padding-left: 5px;
-    width: 5ex;
+	background: #000;
+	color: #fff;
+	border: 1px #777 solid;
+	padding: 2px;
+	padding-left: 5px;
+	width: 5ex;
 }
 
 #score_popup_window {
@@ -230,11 +231,11 @@ table#song_list td {
 }
 
 .popup-button {
-    width: 16px;
-    height: 16px;
-    background: #333;
-    border: 1px solid #aaa;
-    position: relative;
+	width: 16px;
+	height: 16px;
+	background: #333;
+	border: 1px solid #aaa;
+	position: relative;
 	user-select: none;
 
 	display: flex;
@@ -247,30 +248,30 @@ table#song_list td {
 :focus-within .popup-button-base,
 .popup-button-base:focus,
 .popup-button-base:hover {
-    display: flex;
+	display: flex;
 }
 
 .popup-button-base {
-    display: none;
-    position: absolute;
-    flex-direction: column;
+	display: none;
+	position: absolute;
+	flex-direction: column;
 }
 
 .popup, .popup-set {
-    display: none;
+	display: none;
 }
 
 .popup.open, .popup-set.open {
-    display: initial;
+	display: initial;
 }
 
 .popup-bg {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 1;
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 1;
 }
 
 .popup-window {
@@ -278,33 +279,33 @@ table#song_list td {
 }
 
 #song_id_popup .popup-window {
-    display: grid;
-    position: fixed;
-    top: 3em;
-    right: 50%;
-    height: 12em;
-    width: 12em;
-    max-height: calc(100vh - 3em);
-    max-width: 50vw;
-    margin: 0;
-    background: #333;
-    grid-template:
-        "a1 a2 a3 inc" 1fr
-        "a4 a5 a6 dec" 1fr
-        "a7 a8 a9 del" 1fr
-        "clr a0 esc ent" 1fr
-       / 1fr 1fr 1fr 1fr;
-    grid-gap: 2px;
+	display: grid;
+	position: fixed;
+	top: 3em;
+	right: 50%;
+	height: 12em;
+	width: 12em;
+	max-height: calc(100vh - 3em);
+	max-width: 50vw;
+	margin: 0;
+	background: #333;
+	grid-template:
+		"a1 a2 a3 inc" 1fr
+		"a4 a5 a6 dec" 1fr
+		"a7 a8 a9 del" 1fr
+		"clr a0 esc ent" 1fr
+	   / 1fr 1fr 1fr 1fr;
+	grid-gap: 2px;
 }
 
 #song_id_popup .popup-window .button {
-    height: 100%;
-    width: 100%;
-    background: #666;
+	height: 100%;
+	width: 100%;
+	background: #666;
 }
 
 #song_id_popup .popup-window .button::after {
-    content: attr(data-value);
+	content: attr(data-value);
 }
 
 #song_id_popup .popup-window .button[data-value="0"]   { grid-area: a0; background: #777; }
@@ -332,15 +333,15 @@ table#song_list td {
 #song_id_popup .popup-window .button[data-value="ent"]::after { content: "✓"; }
 
 .cc {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .hide {
-    display: none !important;
+	display: none !important;
 }
 
 .show {
-    display: initial;
+	display: initial;
 }
