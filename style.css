@@ -54,7 +54,8 @@ body {
 table#song_list {
 	border-collapse: collapse;
 	margin: auto;
-	max-width: 100%;
+	width: 100%;
+    max-width: max-content;
 }
 
 table#song_list tr{

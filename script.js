@@ -34,7 +34,7 @@ function drawChart() {
 function fixedListWidth() {
 	var song_list_table = document.querySelector('#song_list');
 	var r = song_list_table.getClientRects()[0];
-	song_list_table.style.width = `${r.width}px`;
+	song_list_table.style.maxWidth = `${r.width}px`;
 }
 
 function parse_params(s){
