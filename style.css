@@ -149,6 +149,15 @@ table#song_list td {
 	margin: 0.5ex;
 }
 
+@media (max-width: 360px) {
+    #score_popup_top_bar {
+        justify-content: space-around;
+    }
+    #score_popup_top_bar > * {
+        margin: 0;
+    }
+}
+
 #current_visual_tone {
 	width: 2.5ex;
 }
