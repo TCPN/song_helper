@@ -200,6 +200,10 @@ table#song_list td {
 	width: 100%;
 }
 
+#score_paper .abcjs-note_selected {
+    fill: #000;
+}
+
 @media (orientation: portrait) {
 }
 
@@ -332,6 +336,42 @@ table#song_list td {
 #song_id_popup .popup-window .button[data-value="clr"]::after { content: "C"; }
 #song_id_popup .popup-window .button[data-value="esc"]::after { content: "✗"; }
 #song_id_popup .popup-window .button[data-value="ent"]::after { content: "✓"; }
+
+#player-set {
+    position: fixed;
+    top: 3em;
+    left: 5%;
+    width: 90%;
+    margin: 0;
+}
+
+.abcjs-inline-midi *:before {
+    font-family: initial;
+}
+
+.abcjs-inline-midi .abcjs-midi-selection:before {
+    content: "\f07e";
+}
+
+.abcjs-inline-midi .abcjs-midi-loop:before {
+    content: "🔁";
+}
+
+.abcjs-inline-midi .abcjs-midi-reset:before {
+    content: "⏮";
+}
+
+.abcjs-inline-midi .abcjs-midi-start:before {
+    content: "▶";
+}
+
+.abcjs-inline-midi .abcjs-midi-start.abcjs-pushed:before {
+    content: "⏸";
+}
+
+.abcjs-inline-midi .abcjs-midi-start.abcjs-pushed.abcjs-loading:before {
+    content: "⏸";
+}
 
 .cc {
 	display: flex;

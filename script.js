@@ -201,6 +201,8 @@ function open_score(song_id){
 		return false;
 }
 
+clickListener = console.log;
+
 function render_score(event){
 	var song = displayingSong || findTargetSongFromParents(event.target) || event.target.song_obj;
 	var score_container = document.querySelector('#score_popup_container');
@@ -230,12 +232,16 @@ function render_score(event){
 			//preferredMeasuresPerLine: 4,
 		//},
 		oneSvgPerLine: true,
+		// generate_midi: true,
+		// midi_id: 'player_control',
+		clickListener: function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);}
 	};
 	params = Object.assign({}, presetSettings, settings);
 	tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
+	midiRendered = ABCJS.renderMidi('player-control', song.abc, {})
 	
 	var display_tone = "";
-	if(true || params.oneSvgPerLine) {
+	if(params.oneSvgPerLine) {
 		try{
 			var tone_signature = tuneObjectArray[0].lines[0].staff[0].key;
 		}catch(e){}
@@ -421,6 +427,15 @@ function filter_song(pattern) {
 	}
 	else
 		found_nothing_dom.classList.add('hide');
+}
+
+function toggleClass(element, class_name) {
+	if(typeof element == 'string')
+		element = document.querySelector(element);
+	if(element.classList.contains(class_name))
+		element.classList.remove(class_name);
+	else
+		element.classList.add(class_name);
 }
 
 window.addEventListener('hashchange', exec_hash);
