@@ -60,33 +60,6 @@
 			</div>
 		</div>
 		<div id='score_popup_top_bar'>
-			<!--select id="visual_transpose">
-				<option value="0">No transpose</option>
-				<option value="+1">+1</option>
-				<option value="+2">+2</option>
-				<option value="+3">+3</option>
-				<option value="+4">+4</option>
-				<option value="+5">+5</option>
-				<option value="+6">+6</option>
-				<option value="+7">+7</option>
-				<option value="+8">+8</option>
-				<option value="+9">+9</option>
-				<option value="+10">+10</option>
-				<option value="+11">+11</option>
-				<option value="+12">+12</option>
-				<option value="-1">-1</option>
-				<option value="-2">-2</option>
-				<option value="-3">-3</option>
-				<option value="-4">-4</option>
-				<option value="-5">-5</option>
-				<option value="-6">-6</option>
-				<option value="-7">-7</option>
-				<option value="-8">-8</option>
-				<option value="-9">-9</option>
-				<option value="-10">-10</option>
-				<option value="-11">-11</option>
-				<option value="-12">-12</option>
-			</select-->
 			<!-- add tabindex to enable the keydown event -->
 			<label id="current_song_id"
 				data-open="#song_id_popup"
@@ -96,28 +69,22 @@
 			<div id="song_id_popup" class="popup-set popup-bg" data-value="esc"
 				onclick="song_id_popup_control(event.target.dataset.value);"
 				>
-				<div class="popup-window">
-					<div class="button cc" data-value="0"></div>
-					<div class="button cc" data-value="1"></div>
-					<div class="button cc" data-value="2"></div>
-					<div class="button cc" data-value="3"></div>
-					<div class="button cc" data-value="4"></div>
-					<div class="button cc" data-value="5"></div>
-					<div class="button cc" data-value="6"></div>
-					<div class="button cc" data-value="7"></div>
-					<div class="button cc" data-value="8"></div>
-					<div class="button cc" data-value="9"></div>
-					<div class="button cc" data-value="inc"></div>
-					<div class="button cc" data-value="dec"></div>
-					<div class="button cc" data-value="del"></div>
-					<div class="button cc" data-value="clr"></div>
-					<div class="button cc" data-value="esc"></div>
-					<div class="button cc" data-value="ent"></div>
+				<div id="song_id_popup_window" class="popup-window">
+					<script type="text/javascript">
+						var buttons = [0,1,2,3,4,5,6,7,8,9,'inc','dec','del','clr','esc','ent'];
+						var parent = document.querySelector('#song_id_popup .popup-window');
+						var div = document.createElement('div');
+						div.className = 'button cc';
+						buttons.forEach(v=>{
+							div.dataset.value = v;
+							parent.append(div.cloneNode());
+						});
+					</script>
 				</div>
 			</div>
 			<span>|</span>
 			<label>調性:</label>
-			<label id="current_visual_tone"></label>
+			<span id="current_visual_tone"></span>
 			<label>移調</label>
 			<span class="popup-base">
 				<input id="visual_transpose" type="number" value="0"
@@ -136,7 +103,7 @@
 				</div>
 			</span>
 			<span>|</span>
-			<a onclick="window.print()">列印</a>
+			<label onclick="window.print()">列印</label>
 			<span>|</span>
 			<label onclick="toggleClass('#player-set', 'hide')">播放</label>
 			<div id="player-set" class="hide">

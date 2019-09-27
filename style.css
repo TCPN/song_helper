@@ -150,12 +150,12 @@ table#song_list td {
 }
 
 #current_visual_tone {
-	width: 3ex;
+	width: 2.5ex;
 }
 
 #current_song_id {
 	font-weight: bold;
-	width: 2em;
+	width: 4ex;
 	min-width: fit-content;
 	text-align: right;
 }
