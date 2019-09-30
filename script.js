@@ -102,7 +102,7 @@ function exec_hash(){
 		}
 		if(dsongobj){
 			displayingSong = dsongobj;
-			document.querySelector('#visual_transpose').value = transpose;
+			document.querySelector('#transpose').value = transpose;
 			render_score();
 		}else{
 			close_score();
@@ -268,13 +268,14 @@ function force_redraw(element){
 }
 
 function getUserSettings(){
-	var returnSettings = {};
-	returnSettings.visualTranspose = Number(document.querySelector('#visual_transpose').value);
-	return returnSettings;
+	var settings = {};
+	settings.visualTranspose = Number(document.querySelector('#transpose').value);
+	settings.midiTranspose = Number(document.querySelector('#transpose').value);
+	return settings;
 }
 
 function clearSettings(){
-	document.querySelector('#visual_transpose').value = undefined;
+	document.querySelector('#transpose').value = undefined;
 }
 
 function getDom(target) {
