@@ -363,23 +363,23 @@ table#song_list td {
 }
 
 .abcjs-inline-midi .abcjs-midi-loop:before {
-    content: "🔁";
+    content: "🔁\fe0e";
 }
 
 .abcjs-inline-midi .abcjs-midi-reset:before {
-    content: "⏮";
+    content: "⏮\fe0e";
 }
 
 .abcjs-inline-midi .abcjs-midi-start:before {
-    content: "▶";
+    content: "▶\fe0e";
 }
 
 .abcjs-inline-midi .abcjs-midi-start.abcjs-pushed:before {
-    content: "⏸";
+    content: "⏸\fe0e";
 }
 
 .abcjs-inline-midi .abcjs-midi-start.abcjs-pushed.abcjs-loading:before {
-    content: "⏸";
+    content: "⏸\fe0e";
 }
 
 .cc {
