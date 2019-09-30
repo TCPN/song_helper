@@ -234,7 +234,17 @@ function render_score(event){
 		oneSvgPerLine: true,
 		// generate_midi: true,
 		// midi_id: 'player_control',
-		clickListener: function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);}
+		clickListener: function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);},
+		onParsed: function (tune) {
+                tune.lines.forEach(line=>line.staff.forEach(st=>st.voices.forEach(vo=>{
+                    var stem_el_i = vo.findIndex(el=>el.el_type=='stem');
+                    if(stem_el_i >= 0){
+                        console.log(stem_el_i, vo[stem_el_i].el_type, vo[stem_el_i].direction);
+                        vo.splice(stem_el_i, 1);
+                    }
+                })));
+                console.log('remove the stem element to avoid stem forcing');
+            },
 	};
 	params = Object.assign({}, presetSettings, settings);
 	tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
