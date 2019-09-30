@@ -259,7 +259,7 @@ table#song_list td {
 
 :focus + .popup-button-base,
 :focus .popup-button-base,
-:focus-within .popup-button-base,
+.popup-base:focus-within .popup-button-base,
 .popup-button-base:focus,
 .popup-button-base:hover {
 	display: flex;
@@ -379,7 +379,7 @@ table#song_list td {
 }
 
 .abcjs-inline-midi .abcjs-midi-start.abcjs-pushed.abcjs-loading:before {
-    content: "⏸\fe0e";
+    content: "⌛\fe0e";
 }
 
 .cc {

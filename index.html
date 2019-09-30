@@ -90,16 +90,18 @@
 				<input id="transpose" type="number" value="0"
 					onchange="set_transpose(this.value)"/>
 				<div class="popup-button-base">
-					<a class="popup-button"
+					<label class="popup-button"
+						for="transpose"
 						onclick="value_modify.call(this,event)"
 						data-target="#transpose"
 						data-add="+1"
-					>▴</a>
-					<a class="popup-button"
+					>▴</label>
+					<label class="popup-button"
+						for="transpose"
 						onclick="value_modify.call(this,event)"
 						data-target="#transpose"
 						data-add="-1"
-					>▾</a>
+					>▾</label>
 				</div>
 			</span>
 			<span>|</span>
