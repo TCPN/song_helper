@@ -416,7 +416,7 @@ function split_measures(lines) {
     return lines.map(line=>{
         if(line.type != 'music')
             return line;
-        var bar_pattern = /\|\|\d?|\|\]\d?|:\|\[\d?|\[\|\d?|\|\[\d?|:\|\d?|:\|\]\d?|\|:\d?|:\|:\d?|\|\d?/g;
+        var bar_pattern = /\|\|\d?|\|\]\d?|:\|\[\d?|\[\|\d?|\|\[\d?|:\|\d?|:\|\]\d?|\|:\d?|:\|:\d?|\|\d?|\[\d/g;
         //var bar_pattern = /\|\||\|\]|\[\||:\||\|:|:\|:|\|/g;
         line.measures = line.content.split(bar_pattern);
         if(line.measures[line.measures.length - 1].match(/\s*/))
@@ -454,7 +454,7 @@ function extract_chord_voice(lines) {
                 var chords = line.measures[i].match(chord_pattern);
                 var melody_parts = line.measures[i].split(chord_pattern);
                 var clean_melody_parts = melody_parts.map(v=>{
-                    v = v.replace(/\(|\)|-/g, ''); // remove "(", ")", and "-"
+                    // v = v.replace(/\(|\)|-/g, ''); // remove "(", ")", and "-"
                     v = v.replace(/(\^_=)?[a-gA-GzZxX](,|')*/g, 'x'); // replace notes with x
                     return v;
                 });
@@ -479,7 +479,9 @@ function form_score(lines, melody_first=false) {
             return line.content;
         var ret = '';
         for (let i = 0; i < line.melody_voice.length; i ++) {
-            if(melody_first)
+            if(i == 0 && line.measures[0].match(/^\s*$/)) // this line start with a bar
+                ret += line.bars[i];
+            else if(melody_first)
                 ret += line.melody_voice[i] + '&' + line.chord_voice[i] + line.bars[i];
             else
                 ret += line.chord_voice[i] + '&' + line.melody_voice[i] + line.bars[i];
