@@ -221,8 +221,9 @@ table#song_list td {
 		display: none;
 	}
 
-	body {
+	body, body.fill-viewport {
 		margin: 0;
+        position: static !important;
 	}
 
 	#score_popup_container, #score_popup_bg, #score_popup_window, #score_paper {
