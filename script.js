@@ -245,6 +245,11 @@ function render_score(event){
                 })));
                 console.log('remove the stem element to avoid stem forcing');
             },
+        format: {
+            gchordfont: 'Times New Roman',
+            // vocalfont: 'PMingLiU',
+            // titlefont: '"Microsoft JhengHei" 24px',
+        },
 	};
 	params = Object.assign({}, presetSettings, settings);
 	tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
