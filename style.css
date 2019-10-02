@@ -355,7 +355,7 @@ table#song_list td {
 }
 
 .abcjs-inline-midi *:before {
-    font-family: initial;
+    font-family: "Segoe UI Symbol";
 }
 
 .abcjs-inline-midi .abcjs-midi-selection:before {
@@ -363,23 +363,23 @@ table#song_list td {
 }
 
 .abcjs-inline-midi .abcjs-midi-loop:before {
-    content: "🔁\fe0e";
+    content: "🔁\fe0e"; /*🔁*/
 }
 
 .abcjs-inline-midi .abcjs-midi-reset:before {
-    content: "⏮\fe0e";
+    content: "\23ee\fe0e"; /*⏮*/
 }
 
 .abcjs-inline-midi .abcjs-midi-start:before {
-    content: "▶\fe0e";
+    content: "\25b6\fe0e"; /*▶*/
 }
 
 .abcjs-inline-midi .abcjs-midi-start.abcjs-pushed:before {
-    content: "⏸\fe0e";
+    content: "\23f8\fe0e"; /*⏸*/
 }
 
 .abcjs-inline-midi .abcjs-midi-start.abcjs-pushed.abcjs-loading:before {
-    content: "⌛\fe0e";
+    content: "\23f3\fe0e"; /*⌛*/
 }
 
 .cc {
