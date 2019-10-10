@@ -60,14 +60,18 @@ table#song_list {
 
 table#song_list tr{
 	line-height: 2em;
+    background: #f9f9f9;
 }
 
-table#song_list tbody tr:nth-child(2n+1) {
-	background: #f9f9f9;
+table#song_list tr:hover{
+    background: #eee;
 }
 
-table#song_list tbody tr:nth-child(2n) {
-	background: #f0f0f0;
+table#song_list .button{
+    cursor: pointer;
+}
+
+table#song_list .button:hover{
 }
 
 table#song_list td {

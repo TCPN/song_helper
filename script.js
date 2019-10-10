@@ -157,13 +157,14 @@ function createList(songs){
 		item_tpl.name.textContent = songs[i].name;
 		item_tpl.tone.textContent = songs[i].tone + '調';
 		if(songs[i].abc && songs[i].abc.length > 0 && hasSongContent(songs[i])){
-			item_tpl.flag.textContent += '(譜)';
+			item_tpl.scoreMark.textContent += '(譜)';
 		}
 		song_list_dom.appendChild(item_tpl.topElem);
 		item_tpl.topElem.dataset.target = songs[i].id;
 		item_tpl.topElem.song_obj = songs[i];
 		//item_tpl.topElem.onclick = render_score;
-		item_tpl.topElem.setAttribute('onclick', 'open_score(this.dataset.target)');
+		item_tpl.scoreMark.setAttribute('onclick', 'open_score(this.parentElement.dataset.target)');
+		item_tpl.scoreMark.classList.add('button');
 	}
 }
 
@@ -172,17 +173,17 @@ function createListItem(){
 	var num = document.createElement('td');
 	var name = document.createElement('td');
 	var tone = document.createElement('td');
-	var flag = document.createElement('td');
+	var scoreMark = document.createElement('td');
 	topElem.appendChild(num);
 	topElem.appendChild(name);
 	topElem.appendChild(tone);
-	topElem.appendChild(flag);
+	topElem.appendChild(scoreMark);
 	return {
 		topElem,
 		num,
 		name,
 		tone,
-		flag,
+		scoreMark,
 	};
 }
 
