@@ -421,7 +421,7 @@ function split_measures(lines) {
     return lines.map(line=>{
         if(line.type != 'music')
             return line;
-        var bar_pattern = /\|\|\d?|\|\]\d?|:\|\[\d?|\[\|\d?|\|\[\d?|:\|\d?|:\|\]\d?|\|:\d?|:\|:\d?|\|\d?|\[\d/g;
+        var bar_pattern = /\]\s*\||\|\|\d?|\|\]\d?|:\|\[\d?|\[\|\d?|\|\[\d?|:\|\d?|:\|\]\d?|\|:\d?|:\|:\d?|\|\d?|\[\d|\]/g;
         //var bar_pattern = /\|\||\|\]|\[\||:\||\|:|:\|:|\|/g;
         line.measures = line.content.split(bar_pattern);
         if(line.measures[line.measures.length - 1].match(/\s*/))
