@@ -309,10 +309,10 @@ table#song_list td {
 	margin: 0;
 	background: #333;
 	grid-template:
-		"a1 a2 a3 inc" 1fr
-		"a4 a5 a6 dec" 1fr
+		"a1 a2 a3 esc" 1fr
+		"a4 a5 a6 clr" 1fr
 		"a7 a8 a9 del" 1fr
-		"clr a0 esc ent" 1fr
+		"dec a0 inc ent" 1fr
 	   / 1fr 1fr 1fr 1fr;
 	grid-gap: 2px;
 }
@@ -344,8 +344,8 @@ table#song_list td {
 #song_id_popup .popup-window .button[data-value="clr"] { grid-area: clr;}
 #song_id_popup .popup-window .button[data-value="ent"] { grid-area: ent;}
 
-#song_id_popup .popup-window .button[data-value="inc"]::after { content: "▲"; }
-#song_id_popup .popup-window .button[data-value="dec"]::after { content: "▼"; }
+#song_id_popup .popup-window .button[data-value="inc"]::after { content: "▶"; }
+#song_id_popup .popup-window .button[data-value="dec"]::after { content: "◀"; }
 #song_id_popup .popup-window .button[data-value="del"]::after { content: "⌫"; }
 #song_id_popup .popup-window .button[data-value="clr"]::after { content: "C"; }
 #song_id_popup .popup-window .button[data-value="esc"]::after { content: "✗"; }
