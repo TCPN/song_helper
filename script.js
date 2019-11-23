@@ -296,6 +296,23 @@ function clearSettings(){
 	document.querySelector('#transpose').value = undefined;
 }
 
+function fixRenderedScore(score_dom, staff_gap=10){
+    Array.from(getDom(score_dom).children).forEach(c=>{
+        var svg = c.children[0];
+        var svgVisibleChildren = Array.from(svg.children).filter(v=>(v.getClientRects().length > 0));
+        var vb_height = Math.max(...svgVisibleChildren.map(v=>{
+            var z = v.getBBox(); return z.y + z.height;
+        }));
+        var vb = svg.getAttribute('viewBox').split(' ');
+        vb[3] = `${vb_height + staff_gap}`;
+        svg.setAttribute('viewBox', vb.join(' '));
+        var y0 = svg.getBoundingClientRect().top;
+        var y1 = Math.max(...svgVisibleChildren.map(v=>(v.getBoundingClientRect().bottom)));
+        c.style.paddingBottom = null;
+        c.style.height = `${y1 - y0 + staff_gap}px`;
+    });
+}
+
 function getDom(target) {
 	if(typeof target == 'string')
 		target = document.querySelector(target);
