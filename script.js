@@ -297,8 +297,8 @@ function clearSettings(){
 }
 
 function fixRenderedScore(score_dom, staff_gap=10){
-    Array.from(getDom(score_dom).children).forEach(c=>{
-        var svg = c.children[0];
+    Array.from(getDom(score_dom).children).forEach(container=>{
+        var svg = container.children[0];
         var svgVisibleChildren = Array.from(svg.children).filter(v=>(v.getClientRects().length > 0));
         var vb_height = Math.max(...svgVisibleChildren.map(v=>{
             var z = v.getBBox(); return z.y + z.height;
@@ -306,10 +306,10 @@ function fixRenderedScore(score_dom, staff_gap=10){
         var vb = svg.getAttribute('viewBox').split(' ');
         vb[3] = `${vb_height + staff_gap}`;
         svg.setAttribute('viewBox', vb.join(' '));
-        var y0 = svg.getBoundingClientRect().top;
-        var y1 = Math.max(...svgVisibleChildren.map(v=>(v.getBoundingClientRect().bottom)));
-        c.style.paddingBottom = null;
-        c.style.height = `${y1 - y0 + staff_gap}px`;
+        var staff_top = svg.getBoundingClientRect().top;
+        var staff_bottom = Math.max(...svgVisibleChildren.map(v=>(v.getBoundingClientRect().bottom)));
+        container.style.paddingBottom = null;
+        container.style.height = `${staff_bottom - staff_top + staff_gap}px`;
     });
 }
 
