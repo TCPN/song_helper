@@ -232,8 +232,8 @@ table#song_list td {
 
 	#score_popup_container, #score_popup_bg, #score_popup_window, #score_paper {
 		width: 100%;
-		display: block;
-		position: unset;
+		display: block !important;
+		position: static !important;
 		height: unset;
 		max-height: unset;
 	}
