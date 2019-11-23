@@ -42,6 +42,7 @@ body {
 #list_container {
 	overflow: auto;
 	padding: 8px;
+	padding-top: 0;
 	height: 100%;
 	box-sizing: border-box;
 }
@@ -82,14 +83,16 @@ table#song_list td {
 #song_list thead th {
 	position: sticky;
 	top: 0;
+	padding: 0;
 }
 
 #song_list_filters {
-	background-color: #fffd;
+	background-color: #fff;
 	display: grid;
 	grid-template: "search clr" auto / auto 1.5em;
 	align-items: center;
 	margin-bottom: 0.2em;
+	padding-top: 0.5em;
 }
 
 #song_search {
