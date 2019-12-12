@@ -56,20 +56,20 @@ table#song_list {
 	border-collapse: collapse;
 	margin: auto;
 	width: 100%;
-    max-width: max-content;
+	max-width: max-content;
 }
 
 table#song_list tr{
 	line-height: 2em;
-    background: #f9f9f9;
+	background: #f9f9f9;
 }
 
 table#song_list tr:hover{
-    background: #eee;
+	background: #eee;
 }
 
 table#song_list .button{
-    cursor: pointer;
+	cursor: pointer;
 }
 
 table#song_list .button:hover{
@@ -157,12 +157,12 @@ table#song_list td {
 }
 
 @media (max-width: 360px) {
-    #score_popup_top_bar {
-        justify-content: space-around;
-    }
-    #score_popup_top_bar > * {
-        margin: 0;
-    }
+	#score_popup_top_bar {
+		justify-content: space-around;
+	}
+	#score_popup_top_bar > * {
+		margin: 0;
+	}
 }
 
 #current_visual_tone {
@@ -217,7 +217,7 @@ table#song_list td {
 }
 
 #score_paper .abcjs-note_selected {
-    fill: #000;
+	fill: #000;
 }
 
 @media (orientation: portrait) {
@@ -230,7 +230,7 @@ table#song_list td {
 
 	body, body.fill-viewport {
 		margin: 0;
-        position: static !important;
+		position: static !important;
 	}
 
 	#score_popup_container, #score_popup_bg, #score_popup_window, #score_paper {
@@ -355,39 +355,39 @@ table#song_list td {
 #song_id_popup .popup-window .button[data-value="ent"]::after { content: "✓"; }
 
 #player-set {
-    position: fixed;
-    top: 3em;
-    left: 5%;
-    width: 90%;
-    margin: 0;
+	position: fixed;
+	top: 3em;
+	left: 5%;
+	width: 90%;
+	margin: 0;
 }
 
 .abcjs-inline-midi *:before {
-    font-family: "Segoe UI Symbol";
+	font-family: "Segoe UI Symbol";
 }
 
 .abcjs-inline-midi .abcjs-midi-selection:before {
-    content: "\f07e";
+	content: "\f07e";
 }
 
 .abcjs-inline-midi .abcjs-midi-loop:before {
-    content: "🔁\fe0e"; /*🔁*/
+	content: "🔁\fe0e"; /*🔁*/
 }
 
 .abcjs-inline-midi .abcjs-midi-reset:before {
-    content: "\23ee\fe0e"; /*⏮*/
+	content: "\23ee\fe0e"; /*⏮*/
 }
 
 .abcjs-inline-midi .abcjs-midi-start:before {
-    content: "\25b6\fe0e"; /*▶*/
+	content: "\25b6\fe0e"; /*▶*/
 }
 
 .abcjs-inline-midi .abcjs-midi-start.abcjs-pushed:before {
-    content: "\23f8\fe0e"; /*⏸*/
+	content: "\23f8\fe0e"; /*⏸*/
 }
 
 .abcjs-inline-midi .abcjs-midi-start.abcjs-pushed.abcjs-loading:before {
-    content: "\23f3\fe0e"; /*⌛*/
+	content: "\23f3\fe0e"; /*⌛*/
 }
 
 .cc {

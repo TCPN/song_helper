@@ -237,21 +237,21 @@ function render_score(event){
 		// midi_id: 'player_control',
 		clickListener: function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);},
 		onParsed: function (tune) {
-                tune.lines.forEach(line=>line.staff.forEach(st=>st.voices.forEach(vo=>{
-                    var stem_el_i = vo.findIndex(el=>el.el_type=='stem');
-                    if(stem_el_i >= 0){
-                        console.log(stem_el_i, vo[stem_el_i].el_type, vo[stem_el_i].direction);
-                        vo.splice(stem_el_i, 1);
-                    }
-                })));
-                console.log('remove the stem element to avoid stem forcing');
-            },
-        format: {
-            gchordfont: 'Times New Roman',
-            textfont: 'Times New Roman',
-            // vocalfont: 'PMingLiU',
-            // titlefont: '"Microsoft JhengHei" 24px',
-        },
+				tune.lines.forEach(line=>line.staff.forEach(st=>st.voices.forEach(vo=>{
+					var stem_el_i = vo.findIndex(el=>el.el_type=='stem');
+					if(stem_el_i >= 0){
+						console.log(stem_el_i, vo[stem_el_i].el_type, vo[stem_el_i].direction);
+						vo.splice(stem_el_i, 1);
+					}
+				})));
+				console.log('remove the stem element to avoid stem forcing');
+			},
+		format: {
+			gchordfont: 'Times New Roman',
+			textfont: 'Times New Roman',
+			// vocalfont: 'PMingLiU',
+			// titlefont: '"Microsoft JhengHei" 24px',
+		},
 	};
 	params = Object.assign({}, presetSettings, settings);
 	tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
@@ -298,20 +298,20 @@ function clearSettings(){
 }
 
 function fixRenderedScore(score_dom, staff_gap=10){
-    Array.from(getDom(score_dom).children).forEach(container=>{
-        var svg = container.children[0];
-        var svgVisibleChildren = Array.from(svg.children).filter(v=>(v.getClientRects().length > 0));
-        var vb_height = Math.max(...svgVisibleChildren.map(v=>{
-            var z = v.getBBox(); return z.y + z.height;
-        }));
-        var vb = svg.getAttribute('viewBox').split(' ');
-        vb[3] = `${vb_height + staff_gap}`;
-        svg.setAttribute('viewBox', vb.join(' '));
-        var staff_top = svg.getBoundingClientRect().top;
-        var staff_bottom = Math.max(...svgVisibleChildren.map(v=>(v.getBoundingClientRect().bottom)));
-        container.style.paddingBottom = null;
-        container.style.height = `${staff_bottom - staff_top + staff_gap}px`;
-    });
+	Array.from(getDom(score_dom).children).forEach(container=>{
+		var svg = container.children[0];
+		var svgVisibleChildren = Array.from(svg.children).filter(v=>(v.getClientRects().length > 0));
+		var vb_height = Math.max(...svgVisibleChildren.map(v=>{
+			var z = v.getBBox(); return z.y + z.height;
+		}));
+		var vb = svg.getAttribute('viewBox').split(' ');
+		vb[3] = `${vb_height + staff_gap}`;
+		svg.setAttribute('viewBox', vb.join(' '));
+		var staff_top = svg.getBoundingClientRect().top;
+		var staff_bottom = Math.max(...svgVisibleChildren.map(v=>(v.getBoundingClientRect().bottom)));
+		container.style.paddingBottom = null;
+		container.style.height = `${staff_bottom - staff_top + staff_gap}px`;
+	});
 }
 
 function getDom(target) {
@@ -374,16 +374,16 @@ function song_id_popup_control(btn){
 	var song_id_popup = document.querySelector('#song_id_popup');
 	switch(btn) {
 		case "ent":
-            open_score(song_id_dom.textContent) || restore_edited_song_id();
-            closeDom(song_id_popup);
-            song_id_dom.blur();
-            break;
+			open_score(song_id_dom.textContent) || restore_edited_song_id();
+			closeDom(song_id_popup);
+			song_id_dom.blur();
+			break;
 		case "esc":
-            restore_edited_song_id();
-            open_score(song_id_dom.textContent);
-            closeDom(song_id_popup);
-            song_id_dom.blur();
-            break;
+			restore_edited_song_id();
+			open_score(song_id_dom.textContent);
+			closeDom(song_id_popup);
+			song_id_dom.blur();
+			break;
 		case "del": song_id_dom.textContent = song_id_dom.textContent.substr(0, song_id_dom.textContent.length - 1); break;
 		case "inc": song_id_dom.textContent = parseInt(_target_song_id) + 1; open_score(song_id_dom.textContent); break;
 		case "dec": song_id_dom.textContent = parseInt(_target_song_id) - 1; open_score(song_id_dom.textContent); break;
@@ -411,10 +411,10 @@ function song_id_keydown_handler(event){
 		'9': '9',
 		'Enter': 'ent',
 		'Escape': 'esc',
-        'ArrowUp': 'dec',
-        'ArrowLeft': 'dec',
-        'ArrowDown': 'inc',
-        'ArrowRight': 'inc',
+		'ArrowUp': 'dec',
+		'ArrowLeft': 'dec',
+		'ArrowDown': 'inc',
+		'ArrowRight': 'inc',
 		'c': 'clr',
 		'C': 'clr',
 		'Backspace': 'del',
@@ -431,108 +431,108 @@ function restore_edited_song_id(){
 
 /* rewrite the score for midi rendering */
 function remove_backslash_breakline(str) {
-    return str.replace('\\', '');
+	return str.replace('\\', '');
 }
 function split_lines(str) {
-    var lines = str.split('\n');
-    return lines.map(line=>{
-        if(line.match(/^w:/))
-            var type = 'lyrics';
-        else if(line.match(/^c:/))
-            var type = 'chords';
-        else if(line.match(/^\s*[a-zA-Z]:/))
-            var type = 'meta';
-        else
-            var type = 'music';
-        return {type, content: line};
-    });
+	var lines = str.split('\n');
+	return lines.map(line=>{
+		if(line.match(/^w:/))
+			var type = 'lyrics';
+		else if(line.match(/^c:/))
+			var type = 'chords';
+		else if(line.match(/^\s*[a-zA-Z]:/))
+			var type = 'meta';
+		else
+			var type = 'music';
+		return {type, content: line};
+	});
 }
 function split_measures(lines) {
-    return lines.map(line=>{
-        if(line.type != 'music')
-            return line;
-        var bar_pattern = /\]\s*\||\|\|\d?|\|\]\d?|:\|\[\d?|\[\|\d?|\|\[\d?|:\|\d?|:\|\]\d?|\|:\d?|:\|:\d?|\|\d?|\[\d|\]/g;
-        //var bar_pattern = /\|\||\|\]|\[\||:\||\|:|:\|:|\|/g;
-        line.measures = line.content.split(bar_pattern);
-        if(line.measures[line.measures.length - 1].match(/\s*/))
-            line.measures.pop();
-        line.bars = line.content.match(bar_pattern);
-        return line;
-    });
+	return lines.map(line=>{
+		if(line.type != 'music')
+			return line;
+		var bar_pattern = /\]\s*\||\|\|\d?|\|\]\d?|:\|\[\d?|\[\|\d?|\|\[\d?|:\|\d?|:\|\]\d?|\|:\d?|:\|:\d?|\|\d?|\[\d|\]/g;
+		//var bar_pattern = /\|\||\|\]|\[\||:\||\|:|:\|:|\|/g;
+		line.measures = line.content.split(bar_pattern);
+		if(line.measures[line.measures.length - 1].match(/\s*/))
+			line.measures.pop();
+		line.bars = line.content.match(bar_pattern);
+		return line;
+	});
 }
 function extract_chord_voice(lines) {
-    // Assume that we use "&" in a measure to form multiple voices only for denoting chords
-    return lines.map(line=>{
-        if(line.type != 'music')
-            return line;
-        var chord_voice = [];
-        var melody_voice = [];
-        line.measures.forEach(m=>{
-            var voices = m.split('&');
-            if(voices.length == 2) {
-                if(voices[0].match('"')){
-                    chord_voice.push(voices[0]);
-                    melody_voice.push(voices[1]);
-                }else{
-                    melody_voice.push(voices[0]);
-                    chord_voice.push(voices[1]);
-                }
-            }
-            else {
-                melody_voice.push(m);
-                chord_voice.push(null);
-            }
-        });
-        for (let i in line.measures) {
-            if(!chord_voice[i]) {
-                var chord_pattern = /"[^"]+"/g;
-                var chords = line.measures[i].match(chord_pattern);
-                var melody_parts = line.measures[i].split(chord_pattern);
-                var clean_melody_parts = melody_parts.map(v=>{
-                    // v = v.replace(/\(|\)|-/g, ''); // remove "(", ")", and "-"
-                    v = v.replace(/(\^_=)?[a-gA-GzZxX](,|')*/g, 'x'); // replace notes with x
-                    return v;
-                });
-                var s = '';
-                for(let j in chords) {
-                    s += clean_melody_parts[j];
-                    s += chords[j];
-                }
-                s += clean_melody_parts[clean_melody_parts.length - 1];
-                chord_voice[i] = s;
-                melody_voice[i] = melody_parts.join('');
-            }
-        }
-        line.chord_voice = chord_voice;
-        line.melody_voice = melody_voice;
-        return line;
-    });
+	// Assume that we use "&" in a measure to form multiple voices only for denoting chords
+	return lines.map(line=>{
+		if(line.type != 'music')
+			return line;
+		var chord_voice = [];
+		var melody_voice = [];
+		line.measures.forEach(m=>{
+			var voices = m.split('&');
+			if(voices.length == 2) {
+				if(voices[0].match('"')){
+					chord_voice.push(voices[0]);
+					melody_voice.push(voices[1]);
+				}else{
+					melody_voice.push(voices[0]);
+					chord_voice.push(voices[1]);
+				}
+			}
+			else {
+				melody_voice.push(m);
+				chord_voice.push(null);
+			}
+		});
+		for (let i in line.measures) {
+			if(!chord_voice[i]) {
+				var chord_pattern = /"[^"]+"/g;
+				var chords = line.measures[i].match(chord_pattern);
+				var melody_parts = line.measures[i].split(chord_pattern);
+				var clean_melody_parts = melody_parts.map(v=>{
+					// v = v.replace(/\(|\)|-/g, ''); // remove "(", ")", and "-"
+					v = v.replace(/(\^_=)?[a-gA-GzZxX](,|')*/g, 'x'); // replace notes with x
+					return v;
+				});
+				var s = '';
+				for(let j in chords) {
+					s += clean_melody_parts[j];
+					s += chords[j];
+				}
+				s += clean_melody_parts[clean_melody_parts.length - 1];
+				chord_voice[i] = s;
+				melody_voice[i] = melody_parts.join('');
+			}
+		}
+		line.chord_voice = chord_voice;
+		line.melody_voice = melody_voice;
+		return line;
+	});
 }
 function form_score(lines, melody_first=false) {
-    return lines.map(line=>{
-        if(line.type != 'music')
-            return line.content;
-        var ret = '';
-        for (let i = 0; i < line.melody_voice.length; i ++) {
-            if(i == 0 && line.measures[0].match(/^\s*$/)) // this line start with a bar
-                ret += line.bars[i];
-            else if(melody_first)
-                ret += line.melody_voice[i] + '&' + line.chord_voice[i] + line.bars[i];
-            else
-                ret += line.chord_voice[i] + '&' + line.melody_voice[i] + line.bars[i];
-        }
-        return ret;
-    }).join('\n');
+	return lines.map(line=>{
+		if(line.type != 'music')
+			return line.content;
+		var ret = '';
+		for (let i = 0; i < line.melody_voice.length; i ++) {
+			if(i == 0 && line.measures[0].match(/^\s*$/)) // this line start with a bar
+				ret += line.bars[i];
+			else if(melody_first)
+				ret += line.melody_voice[i] + '&' + line.chord_voice[i] + line.bars[i];
+			else
+				ret += line.chord_voice[i] + '&' + line.melody_voice[i] + line.bars[i];
+		}
+		return ret;
+	}).join('\n');
 }
 function rewrite_abc(str, melody_first=false) {
-    // var str = document.querySelector('#abc').value;
-    var obj = str;
-    obj = remove_backslash_breakline(obj);
-    obj = split_lines(obj);
-    obj = split_measures(obj);
-    obj = extract_chord_voice(obj);
-    obj = form_score(obj, melody_first);;
-    return obj;
+	// var str = document.querySelector('#abc').value;
+	var obj = str;
+	obj = remove_backslash_breakline(obj);
+	obj = split_lines(obj);
+	obj = split_measures(obj);
+	obj = extract_chord_voice(obj);
+	obj = form_score(obj, melody_first);;
+	return obj;
 }
 
 function utf8_to_b64(str) {
