@@ -248,6 +248,7 @@ function render_score(event){
             },
         format: {
             gchordfont: 'Times New Roman',
+            textfont: 'Times New Roman',
             // vocalfont: 'PMingLiU',
             // titlefont: '"Microsoft JhengHei" 24px',
         },
@@ -372,11 +373,20 @@ function song_id_popup_control(btn){
 	var song_id_dom = document.querySelector('#current_song_id');
 	var song_id_popup = document.querySelector('#song_id_popup');
 	switch(btn) {
-		case "ent": open_score(song_id_dom.textContent) || restore_edited_song_id(); closeDom(song_id_popup); break;
-		case "esc": restore_edited_song_id(); closeDom(song_id_popup); break;
+		case "ent":
+            open_score(song_id_dom.textContent) || restore_edited_song_id();
+            closeDom(song_id_popup);
+            song_id_dom.blur();
+            break;
+		case "esc":
+            restore_edited_song_id();
+            open_score(song_id_dom.textContent);
+            closeDom(song_id_popup);
+            song_id_dom.blur();
+            break;
 		case "del": song_id_dom.textContent = song_id_dom.textContent.substr(0, song_id_dom.textContent.length - 1); break;
-		case "inc": song_id_dom.textContent = parseInt(_target_song_id) + 1; break;
-		case "dec": song_id_dom.textContent = parseInt(_target_song_id) - 1; break;
+		case "inc": song_id_dom.textContent = parseInt(_target_song_id) + 1; open_score(song_id_dom.textContent); break;
+		case "dec": song_id_dom.textContent = parseInt(_target_song_id) - 1; open_score(song_id_dom.textContent); break;
 		case "clr": song_id_dom.textContent = ''; break;
 		case "0": case "1": case "2": case "3": case "4": case "5": case "6": case "7": case "8": case "9":
 			song_id_dom.textContent += btn; break;
@@ -400,9 +410,11 @@ function song_id_keydown_handler(event){
 		'8': '8',
 		'9': '9',
 		'Enter': 'ent',
-		'Esc': 'esc',
-		'UpArrow': 'inc',
-		'DownArrow': 'dec',
+		'Escape': 'esc',
+        'ArrowUp': 'dec',
+        'ArrowLeft': 'dec',
+        'ArrowDown': 'inc',
+        'ArrowRight': 'inc',
 		'c': 'clr',
 		'C': 'clr',
 		'Backspace': 'del',
