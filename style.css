@@ -103,14 +103,6 @@ table#song_list td {
 	grid-area: 1 / 1 / 1 / 3;
 }
 
-#clear_search {
-	height: 1em;
-	width: 1em;
-	grid-area: clr;
-	background: no-repeat center / contain url(delete.png);
-	cursor: pointer;
-}
-
 #found_nothing {
 	background: #f9f9f9;
 	text-align: center;
