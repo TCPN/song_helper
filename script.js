@@ -194,6 +194,13 @@ function findTargetSongFromParents(dom){
 }
 
 function open_score(song_id){
+	if(song_id == 'next' || song_id == 'prev'){
+		var sid = parseInt(parse_hash().song_id);
+		if(song_id == 'prev')
+			song_id = sid - 1;
+		else
+			song_id = sid + 1;
+	}
 	if(songDataObjects.find((s)=>(s.id == song_id))){
 		update_hash('song_id', song_id);
 		return true;
