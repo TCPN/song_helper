@@ -240,19 +240,10 @@ function render_score(event){
 			//preferredMeasuresPerLine: 4,
 		//},
 		oneSvgPerLine: true,
+		add_classes: true,
 		// generate_midi: true,
 		// midi_id: 'player_control',
 		clickListener: function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);},
-		onParsed: function (tune) {
-				tune.lines.forEach(line=>line.staff.forEach(st=>st.voices.forEach(vo=>{
-					var stem_el_i = vo.findIndex(el=>el.el_type=='stem');
-					if(stem_el_i >= 0){
-						console.log(stem_el_i, vo[stem_el_i].el_type, vo[stem_el_i].direction);
-						vo.splice(stem_el_i, 1);
-					}
-				})));
-				console.log('remove the stem element to avoid stem forcing');
-			},
 		format: {
 			gchordfont: 'Times New Roman',
 			textfont: 'Times New Roman',
@@ -262,9 +253,17 @@ function render_score(event){
 	};
 	params = Object.assign({}, presetSettings, settings);
 	tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
-	var rewrited_abc = rewrite_abc(song.abc, false);
-	console.log(rewrited_abc);
-	midiRendered = ABCJS.renderMidi('player-control', rewrited_abc, settings)
+	//var rewrited_abc = rewrite_abc(song.abc, false);
+	//console.log(rewrited_abc);
+	midiRendered = ABCJS.renderMidi('player-control', song.abc, settings);
+
+	// add bounding box of the part marks
+	var part_texts = document.querySelectorAll('.abcjs-part');
+	for(let p of part_texts){
+		svg_elem_add_box(p);
+	}
+	// fix the line heights and line styles
+	fix_score_line_heights('#score_paper');
 	
 	var display_tone = "";
 	if(params.oneSvgPerLine) {
@@ -598,7 +597,85 @@ function toggleClass(element, class_name) {
 	else
 		element.classList.add(class_name);
 }
+function svg_elem_add_box(elem) {
+	var bbox = elem.getBBox();
+	var new_elem = document.createElement('rect');
+	elem.insertAdjacentElement('afterend', new_elem);
+	new_elem.outerHTML = `<rect x="${bbox.x}" y="${bbox.y}" width="${bbox.width}" height="${bbox.height}" stroke="#000000" stroke-width="0.5" fill="none"></rect>`;
+	return new_elem;
+}
 
+/********** fix the height problems of svg lines **********/
+
+function find_svg_needed_height(svg){
+    var bottoms = Array.from(svg.children).map(elem=>{
+        var bbox = elem.getBBox && elem.getBBox();
+        return bbox && (bbox.y + bbox.height);
+    }).filter(v=>v!=null);
+    return Math.max(...bottoms);
+}
+
+function line_containers(score_paper){
+    return Array.from(score_paper.querySelectorAll('.abcjs-container'));
+}
+function line_svgs(score_paper){
+    return Array.from(score_paper.querySelectorAll('.abcjs-container svg'));
+}
+function staff_tops(score_paper){
+    var staff_tops = line_svgs(score_paper).map((svg)=>{
+        var staff_paths = Array.from(svg.querySelectorAll('.abcjs-staff'));
+        return Math.min(...staff_paths.map(p=>p.getBBox().y))
+    });
+    return staff_tops;
+}
+function staff_bottoms(score_paper){
+    var staff_bottoms = line_svgs(score_paper).map((svg)=>{
+        var staff_paths = Array.from(svg.querySelectorAll('.abcjs-staff'));
+        return Math.max(...staff_paths.map(p=>(p.getBBox().y + p.getBBox().height)))
+    });
+    return staff_bottoms;
+}
+function line_needed_heights(score_paper){
+    var svgs = Array.from(score_paper.querySelectorAll('.abcjs-container svg'));
+    return line_svgs(score_paper).map(find_svg_needed_height);
+}
+function line_current_heights(score_paper){
+    var svgs = Array.from(score_paper.querySelectorAll('.abcjs-container svg'));
+    return line_svgs(score_paper).map(p=>p.viewBox.baseVal.height);
+}
+function get_height_below_staff(score_paper){
+    var line_heights = line_current_heights(score_paper);
+    var staff_bottoms = staff_bottoms(score_paper);
+    return line_heights.map((h,i)=>(h - staff_bottoms[i]));
+}
+function set_line_height(score_paper, heights){
+    line_svgs(score_paper).forEach((svg,i)=>{
+        svg.viewBox.baseVal.height = heights[i];
+    })
+}
+
+function fix_svg_viewbox(svg){
+    svg.viewBox.baseVal.height = find_svg_needed_height(svg);
+}
+function fix_line_styles(score_paper) {
+    for(let line of line_containers(score_paper)){
+        var svg = line.firstElementChild;
+        svg.style.position = '';
+        line.style.paddingBottom = '';
+    }
+}
+function fix_score_line_heights(score_paper){
+    var score_paper = score_paper ? document.querySelector(score_paper) : score_paper;
+
+    var needed_heights = line_needed_heights(score_paper);
+    var bottoms = staff_bottoms(score_paper);
+    var height_below_staff = needed_heights.map((h,i)=>(h - bottoms[i]));
+    var max_height_below_staff = Math.max(...height_below_staff);
+    var fixed_heights = bottoms.map(b=>(b + max_height_below_staff));
+    set_line_height(score_paper, fixed_heights);
+    fix_line_styles(score_paper);
+}
+/**************************************************************************/
 window.addEventListener('hashchange', exec_hash);
 window.addEventListener('beforeprint', ()=>{save_scroll('html')});
 window.addEventListener('afterprint', ()=>{restore_scroll('html')});
@@ -631,3 +708,4 @@ function initEditor() {
 
 window.addEventListener("load", initEditor, false);
 */
+
