@@ -295,7 +295,7 @@ function force_redraw(element){
 function getUserSettings(){
 	var settings = {};
 	settings.visualTranspose = Number(document.querySelector('#transpose').value);
-	settings.midiTranspose = Number(document.querySelector('#transpose').value);
+	//settings.midiTranspose = Number(document.querySelector('#transpose').value);
 	return settings;
 }
 
