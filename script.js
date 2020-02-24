@@ -247,6 +247,7 @@ function render_score(event){
 		format: {
 			gchordfont: 'Times New Roman',
 			textfont: 'Times New Roman',
+			partsfont: '14px Times New Roman',
 			// vocalfont: 'PMingLiU',
 			// titlefont: '"Microsoft JhengHei" 24px',
 		},
@@ -601,7 +602,7 @@ function svg_elem_add_box(elem) {
 	var bbox = elem.getBBox();
 	var new_elem = document.createElement('rect');
 	elem.insertAdjacentElement('afterend', new_elem);
-	new_elem.outerHTML = `<rect x="${bbox.x}" y="${bbox.y}" width="${bbox.width}" height="${bbox.height}" stroke="#000000" stroke-width="0.5" fill="none"></rect>`;
+	new_elem.outerHTML = `<rect x="${bbox.x - 1}" y="${bbox.y}" width="${bbox.width + 2}" height="${bbox.height}" stroke="#000000" stroke-width="0.5" fill="none"></rect>`;
 	return new_elem;
 }
 
