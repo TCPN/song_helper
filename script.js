@@ -590,6 +590,12 @@ function filter_song(pattern) {
 		found_nothing_dom.classList.add('hide');
 }
 
+function open_editor(song_id) {
+  var editor_url = '/song_edit/';
+  var url = editor_url + (song_id ? '#song_id=' + song_id : '');
+  window.open(url);
+}
+
 function toggleClass(element, class_name) {
 	if(typeof element == 'string')
 		element = document.querySelector(element);
