@@ -591,7 +591,7 @@ function filter_song(pattern) {
 }
 
 function open_editor(song_id) {
-  var editor_url = '/song_edit/';
+  var editor_url = (location.hostname == 'www.csie.ntu.edu.tw' ? '//tcpn-web.appspot.com/song_edit/' : '/song_edit/');
   var url = editor_url + (song_id ? '#song_id=' + song_id : '');
   window.open(url);
 }
