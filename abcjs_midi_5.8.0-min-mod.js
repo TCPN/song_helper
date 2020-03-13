@@ -5968,12 +5968,22 @@
         }
         var z = {
             A: -27,
+            "A#": -26,
+            "Bb": -26,
             B: -25,
             C: -24,
+            "C#": -23,
+            "Db": -23,
             D: -22,
+            "D#": -21,
+            "Eb": -21,
             E: -20,
             F: -19,
+            "F#": -18,
+            "Gb": -18,
             G: -17,
+            "G#": -16,
+            "Ab": -16
         }
           , F = {
             dim: [0, 3, 6],
@@ -6003,6 +6013,7 @@
             m6: [0, 3, 7, 9],
             "-6": [0, 3, 7, 9],
             m7: [0, 3, 7, 10],
+            m9: [0, 3, 7, 10, 14],
             "-7": [0, 3, 7, 10],
             "-(b6)": [0, 3, 7, 8],
             "-b6": [0, 3, 7, 8],
@@ -6125,11 +6136,11 @@
             "2/2": ["boom", "chick"],
             "2/4": ["boom", "chick"],
             "3/4": ["boom", "chick", "chick"],
-            "4/4": ["boom", "chick", "boom2", "chick"],
+            "4/4": ["boom", "chick", "boom", "chick"],
             "5/4": ["boom", "chick", "chick", "boom2", "chick"],
-            "6/8": ["boom", "", "chick", "boom2", "", "chick"],
-            "9/8": ["boom", "", "chick", "boom2", "", "chick", "boom2", "", "chick"],
-            "12/8": ["boom", "", "chick", "boom2", "", "chick", "boom2", "", "chick", "boom2", "", "chick"]
+            "6/8": ["boom", "", "chick", "boom", "", "chick"],
+            "9/8": ["boom", "", "chick", "boom", "", "chick", "boom", "", "chick"],
+            "12/8": ["boom", "", "chick", "boom", "", "chick", "boom", "", "chick", "boom", "", "chick"]
         };
         function G() {
             var e = k.num
