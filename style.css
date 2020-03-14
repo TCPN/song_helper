@@ -79,6 +79,16 @@ table#song_list td {
 	padding-right: 0.5em;
 }
 
+table#song_list a{
+  display: block;
+  height: 100%;
+  width: 100%;
+  color: black;
+}
+table#song_list a:visited{color: black;}
+table#song_list a:hover{color: #999;}
+table#song_list a:active{color: red;}
+
 #song_list thead th {
 	position: sticky;
 	top: 0;
