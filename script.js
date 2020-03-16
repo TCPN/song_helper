@@ -637,9 +637,16 @@ function staff_tops(score_paper){
     });
     return staff_tops;
 }
+function staff_tops(score_paper){
+    var staff_tops = line_svgs(score_paper).map((svg)=>{
+        var staff_paths = Array.from(svg.querySelectorAll('.abcjs-top-line'));
+        return Math.max(...staff_paths.map(p=>(p.getBBox().y + p.getBBox().height)))
+    });
+    return staff_tops;
+}
 function staff_bottoms(score_paper){
     var staff_bottoms = line_svgs(score_paper).map((svg)=>{
-        var staff_paths = Array.from(svg.querySelectorAll('.abcjs-staff'));
+        var staff_paths = Array.from(svg.querySelectorAll('.abcjs-top-line, .abcjs-top-line ~ .abcjs-staff'));
         return Math.max(...staff_paths.map(p=>(p.getBBox().y + p.getBBox().height)))
     });
     return staff_bottoms;
@@ -657,8 +664,8 @@ function get_height_below_staff(score_paper){
     var staff_bottoms = staff_bottoms(score_paper);
     return line_heights.map((h,i)=>(h - staff_bottoms[i]));
 }
-function set_line_height(score_paper, heights){
-    line_svgs(score_paper).forEach((svg,i)=>{
+function set_line_height(svgs, heights){
+    svgs.forEach((svg,i)=>{
         svg.viewBox.baseVal.height = heights[i];
     })
 }
@@ -679,9 +686,10 @@ function fix_score_line_heights(score_paper){
     var needed_heights = line_needed_heights(score_paper);
     var bottoms = staff_bottoms(score_paper);
     var height_below_staff = needed_heights.map((h,i)=>(h - bottoms[i]));
-    var max_height_below_staff = Math.max(...height_below_staff);
+    var max_height_below_staff = Math.max(...height_below_staff.slice(0, -1));
     var fixed_heights = bottoms.map(b=>(b + max_height_below_staff));
-    set_line_height(score_paper, fixed_heights);
+    set_line_height(line_svgs(score_paper).slice(0,-1), fixed_heights.slice(0,-1));
+    // set_line_height(line_svgs(score_paper), fixed_heights);
     fix_line_styles(score_paper);
 }
 /**************************************************************************/
