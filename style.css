@@ -79,6 +79,13 @@ table#song_list td {
 	padding-right: 0.5em;
 }
 
+@media (max-width: 400px) {
+  table#song_list td {
+	padding-left: 0;
+	padding-right: 0.5em;
+}
+}
+
 table#song_list a{
   display: block;
   height: 100%;
