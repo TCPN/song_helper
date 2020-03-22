@@ -366,11 +366,16 @@ table#song_list a:active{color: red;}
   bottom: 0;
 }
 
+#feedback_popup_content, #feedback_popup_content a{
+  background: #eee;
+
+}
+
 #feedback_popup_content {
-    margin: auto;
-    background: #eee;
-    padding: 0.5em 1em;
-    border-radius: 1em;
+  margin: auto;
+  padding: 0.5em 1em;
+  border-radius: 1em;
+  box-shadow: 0 2px 5px #777;
 }
 
 #player-set {
