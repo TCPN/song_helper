@@ -693,6 +693,18 @@ function fix_score_line_heights(score_paper){
     fix_line_styles(score_paper);
 }
 /**************************************************************************/
+function open_feedback_popup(timeout=5) {
+  openDom('#feedback_popup');
+  var elem = document.querySelector('#feedback_popup');
+  elem.dataset.timeoutCount = (parseInt(elem.dataset.timeoutCount) || 0) + 1;
+  setTimeout(function () {
+    elem.dataset.timeoutCount = (parseInt(elem.dataset.timeoutCount) - 1) || 0;
+    if(!(parseInt(elem.dataset.timeoutCount)) > 0) {
+      closeDom('#feedback_popup');
+    }
+  }, timeout * 1000);
+}
+window.addEventListener('click', function (){ open_feedback_popup(5); });
 window.addEventListener('hashchange', exec_hash);
 window.addEventListener('beforeprint', ()=>{save_scroll('html')});
 window.addEventListener('afterprint', ()=>{restore_scroll('html')});

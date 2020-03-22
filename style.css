@@ -354,6 +354,25 @@ table#song_list a:active{color: red;}
 #song_id_popup .popup-window .button[data-value="esc"]::after { content: "✗"; }
 #song_id_popup .popup-window .button[data-value="ent"]::after { content: "✓"; }
 
+#feedback_popup {
+  position: fixed;
+  bottom: -2.5em;
+  width: 100vw;
+  display: flex;
+  transition: bottom 0.5s;
+}
+
+#feedback_popup.open {
+  bottom: 0;
+}
+
+#feedback_popup_content {
+    margin: auto;
+    background: #eee;
+    padding: 0.5em 1em;
+    border-radius: 1em;
+}
+
 #player-set {
 	position: fixed;
 	top: 3em;
@@ -434,3 +453,6 @@ table#song_list a:active{color: red;}
     content: ">";
 }
 
+.no-select {
+	user-select: none;
+}
