@@ -231,7 +231,7 @@ table#song_list a:active{color: red;}
 }
 
 @media print {
-	body > *, #score_popup_top_bar {
+	body > *, #score_popup_top_bar, body #feedback_popup {
 		display: none;
 	}
 
