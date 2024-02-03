@@ -25,6 +25,7 @@ function drawChart() {
 		data = response.getDataTable();
 		songDataObjects = getSongArray(data);
 		createList(songDataObjects);
+		setup_song_list_selection();
 		fixedListWidth();
 		document.querySelector('#loading_icon').classList.add('hide');
 		exec_hash();
@@ -101,6 +102,7 @@ function exec_hash(){
 			}
 		}
 		if(dsongobj){
+			select_song(dsongobj.id);
 			displayingSong = dsongobj;
 			document.querySelector('#transpose').value = transpose;
 			render_score();
@@ -157,7 +159,10 @@ function createList(songs){
 		item_tpl.name.textContent = songs[i].name;
 		item_tpl.tone.textContent = songs[i].tone + '調';
 		if(songs[i].abc && songs[i].abc.length > 0 && hasSongContent(songs[i])){
-			item_tpl.scoreMarkLink.innerText = '(譜)';
+			if(songs[i].abc.match(/"[^"]+"/))
+				item_tpl.scoreMarkLink.innerText = '(和弦譜)';
+			else
+				item_tpl.scoreMarkLink.innerText = '(譜)';
 			item_tpl.scoreMarkLink.href = '#song_id=' + songs[i].id;
 		}
 		song_list_dom.appendChild(item_tpl.topElem);
@@ -187,6 +192,34 @@ function createListItem(){
 		scoreMark,
     scoreMarkLink,
 	};
+}
+
+function select_song (id) {
+	const songs = document.querySelectorAll('#song_list tr');
+	for (const song_dom of songs) {
+		song_dom.classList.remove('selected');
+	}
+	if (typeof id === 'number') {
+		const song = document.querySelector(`#song_list tr[data-target="${id}"]`);
+		song?.classList.add('selected');
+	}
+}
+
+function on_click_select_song(event) {
+	let target = event.target;
+	while (target) {
+		if (target.tagName === 'TR') {
+			select_song(Number(target.dataset.target));
+			return;
+		}
+		target = target.parentElement;
+	}
+	select_song(null);
+}
+
+function setup_song_list_selection() {
+	const list_container = document.querySelector('#list_container');
+	list_container.addEventListener('click', on_click_select_song);
 }
 
 function findTargetSongFromParents(dom){
@@ -225,11 +258,8 @@ function render_score(event){
 	document.querySelector('#current_song_id').textContent = song.id;
 
 	//scroll to the song
-	var list_container = document.querySelector(`#list_container`);
-	var song_item_in_list = document.querySelector(`#song_list tbody [data-target="${song.id}"]`);
-	var rect = song_item_in_list.getClientRects()[0];
-	if(rect)
-		list_container.scrollBy(0, rect.top - rect.height);
+	const song_item_in_list = document.querySelector(`#song_list tbody [data-target="${song.id}"]`);
+	song_item_in_list.scrollIntoView({ block: 'nearest' });
 
 	var settings = getUserSettings();
 	var presetSettings = {
@@ -347,7 +377,7 @@ function closeDom(target){
 function closePopup(event){
 	if(event.target != this)
 		return;
-	domClose(this.dataset.close);
+	closeDom(this.dataset.close);
 }
 
 function close_score(){
@@ -365,6 +395,50 @@ function set_transpose(value){
 	render_score(event);
 	value = Number(value) || undefined; // remove hash when value is zero
 	update_hash('transpose', value);
+}
+
+var unicode_note = {
+'1/1': '𝅝',
+'1/2': '𝅗𝅥',
+'1/4': '𝅘𝅥',
+'1/8': '𝅘𝅥𝅮',
+'3/8': '𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥𝅮',
+'1/16': '𝅘𝅥𝅯',
+};
+function show_song_info(song_id){
+  var elem = getDom('#info-popup-container');
+  var content_elem = elem.querySelector('.popup-window-content');
+  var song = songDataObjects.find(s=>s.id == song_id);
+  if(!song)
+    return;
+  var score_link = '<a href onclick="closeDom(\'#info-popup-container\')">開啟</a>';
+  if(song.abc && song.abc.match(/Q:.*/)){
+    var [speed_unit, speed_value] = song.abc.match(/Q:.*/)[0].replace('Q:', '').replace(/ /g, '').split('=');
+    var speed_str = unicode_note[speed_unit] + '=' + speed_value;
+  }
+  content_elem.innerHTML=
+  `
+  <table>
+  <tr><td>編號:</td><td>${song.id}</td></tr>
+  <tr><td>歌名:</td><td>${song.name}</td></tr>
+  <tr><td>調性:</td><td>${song.tone}</td></tr>
+  <tr><td>拍號:</td><td>${song.timesig}</td></tr>
+  <tr><td>速度:</td><td>${speed_str || ''}</td></tr>
+  <tr><td>歌譜:</td><td>${song.abc ? score_link.replace('href', 'href=#song_id='+song.id) : '無'}</td></tr>
+  </table>
+  `;
+  openDom(elem);
+}
+function song_list_onclick(event){
+  var found_target = event.target;
+  while(this.contains(found_target) && this != found_target){
+    if(found_target.dataset.target || found_target.tagName == 'A')
+      break;
+    found_target = found_target.parentElement;
+  }
+  var target_song = found_target.dataset.target;
+  if(target_song)
+    show_song_info(target_song);
 }
 
 var scroll_tmp = {};
@@ -598,6 +672,12 @@ function open_editor(song_id) {
   window.open(url);
 }
 
+function open_chord_editor(song_id) {
+  var editor_url = (location.hostname == 'www.csie.ntu.edu.tw' ? '//tcpn-web.appspot.com/chord_editor/' : '/chord_editor/');
+  var url = editor_url + (song_id ? '#song_id=' + song_id : '');
+  window.open(url);
+}
+
 function toggleClass(element, class_name) {
 	if(typeof element == 'string')
 		element = document.querySelector(element);
@@ -708,6 +788,7 @@ window.addEventListener('click', function (){ open_feedback_popup(5); });
 window.addEventListener('hashchange', exec_hash);
 window.addEventListener('beforeprint', ()=>{save_scroll('html')});
 window.addEventListener('afterprint', ()=>{restore_scroll('html')});
+document.querySelector('#song_list tbody').addEventListener('click', song_list_onclick)
 
 /*
 function selectionCallback(abcelem) {
