@@ -159,10 +159,13 @@ function createList(songs){
 		item_tpl.name.textContent = songs[i].name;
 		item_tpl.tone.textContent = songs[i].tone + '調';
 		if(songs[i].abc && songs[i].abc.length > 0 && hasSongContent(songs[i])){
-			if(songs[i].abc.match(/"[^"]+"/))
-				item_tpl.scoreMarkLink.innerText = '(和弦譜)';
-			else
-				item_tpl.scoreMarkLink.innerText = '(譜)';
+			if(songs[i].abc.match(/"[^"]+"/)) {
+				item_tpl.scoreMarkLink.classList.add('chord_score');
+				item_tpl.scoreMarkLink.title = '五線譜 (含和弦)';
+			} else {
+				item_tpl.scoreMarkLink.classList.add('note_score');
+				item_tpl.scoreMarkLink.title = '五線譜 (僅旋律)';
+			}
 			item_tpl.scoreMarkLink.href = '#song_id=' + songs[i].id;
 		}
 		song_list_dom.appendChild(item_tpl.topElem);
@@ -179,6 +182,10 @@ function createListItem(){
 	var tone = document.createElement('td');
 	var scoreMark = document.createElement('td');
 	var scoreMarkLink = document.createElement('a');
+	num.classList.add('song_index');
+	name.classList.add('song_name');
+	tone.classList.add('song_tone');
+	scoreMark.classList.add('song_score');
 	topElem.appendChild(num);
 	topElem.appendChild(name);
 	topElem.appendChild(tone);
@@ -190,7 +197,7 @@ function createListItem(){
 		name,
 		tone,
 		scoreMark,
-    scoreMarkLink,
+		scoreMarkLink,
 	};
 }
 

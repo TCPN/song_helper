@@ -84,7 +84,7 @@ table#song_list td {
 	white-space: nowrap;
 }
 
-@media (max-width: 400px) {
+@media (max-width: 480px) {
   table#song_list td {
 	font-size: 0.9em;
 	padding-left: 0;
@@ -92,15 +92,37 @@ table#song_list td {
 }
 }
 
+table#song_list td.song_index {
+	padding-left: 0.5em;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 9px;
+	color: #777;
+}
+
 table#song_list a{
-  display: block;
-  height: 100%;
-  width: 100%;
-  color: black;
+	display: block;
+	height: 16px;
+	width: 16px;
+	color: black;
 }
 table#song_list a:visited{color: black;}
 table#song_list a:hover{color: #999;}
 table#song_list a:active{color: red;}
+
+table#song_list .song_score a {
+	background-position: center;
+	background-size: contain;
+	background-color: #fff;
+	box-shadow: 1px 1px #ccc;
+}
+
+table#song_list .song_score a.chord_score {
+	background-image: url(./score_chord.png);
+}
+
+table#song_list .song_score a.note_score {
+	background-image: url(./score_note.png);
+}
 
 #song_list thead th {
 	position: sticky;
