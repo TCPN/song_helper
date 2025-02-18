@@ -4,7 +4,7 @@ var ORIGINAL_TITLE = document.title;
 google.load('visualization', '1.0', {'packages':['corechart']});
 
 // Set a callback to run when the Google Visualization API is loaded.
-google.setOnLoadCallback(drawChart);
+google.setOnLoadCallback(loadData);
 
 var data;
 var cols, rows;
@@ -13,7 +13,7 @@ var displayingSong;
 // Callback that creates and populates a data table, 
 // instantiates the pie chart, passes in the data and
 // draws it.
-function drawChart() {
+function loadData() {
 	/*var URL = 'https://docs.google.com/spreadsheet/tq?key=0AvTQcvEt3SwvdEdaOUpVVHRSMkVXUXlHX1hZbFBzWkE';*//* file deleted! */
 	var URL = 'https://docs.google.com/spreadsheet/tq?key=1_8-RZ_a_f47I0IavWYOwg5W07d_M3nQx8VK6wzEvfoM';
 	var query = new google.visualization.Query(URL);
