@@ -10,6 +10,11 @@ var data;
 var cols, rows;
 var songDataObjects;
 var displayingSong;
+const CACHED_DATA_KEY = 'song_data';
+const CACHED_DATA_TIMESTAMP_KEY = 'song_data_timestamp';
+
+renderWithCachedData();
+
 // Callback that creates and populates a data table, 
 // instantiates the pie chart, passes in the data and
 // draws it.
@@ -24,12 +29,27 @@ function loadData() {
     }
     data = response.getDataTable();
     songDataObjects = getSongArray(data);
-    createList(songDataObjects);
-    setup_song_list_selection();
-    fixedListWidth();
-    document.querySelector('#loading_icon').classList.add('hide');
-    exec_hash();
+    updateListUI(songDataObjects);
+    console.log('rendered with newest data');
+    setCachedData(songDataObjects);
+    console.log('cached data updated');
   });
+}
+
+function renderWithCachedData() {
+  songDataObjects = getCachedData();
+  if (songDataObjects) {
+    updateListUI(songDataObjects);
+    console.log('rendered with cached data');
+  }
+}
+
+function updateListUI(songData) {
+  createList(songData);
+  setup_song_list_selection();
+  fixedListWidth();
+  document.querySelector('#loading_icon').classList.add('hide');
+  exec_hash();
 }
 
 function fixedListWidth() {
@@ -112,6 +132,31 @@ function exec_hash(){
   }
 }
 
+//// local storage management
+
+function getCachedData() {
+  try {
+    const data = localStorage.getItem(CACHED_DATA_KEY);
+    return data ? JSON.parse(data) : null;
+
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+function getCachedDataTimestamp() {
+  return parseInt(localStorage.getItem(CACHED_DATA_TIMESTAMP_KEY));
+}
+
+function setCachedData(data) {
+  const strData = JSON.stringify(data);
+  localStorage.setItem(CACHED_DATA_KEY, strData);
+  localStorage.setItem(CACHED_DATA_TIMESTAMP_KEY, Date.now());
+}
+
+////
+
 function getSongArray(data) {
   /*
   0  編號
@@ -152,9 +197,13 @@ function hasSongContent(song) {
 
 function createList(songs){
   var song_list_table = document.querySelector('#song_list');
+  const rows = Array.from(song_list_table.tBodies[0].rows);
+  for(let row of rows.splice(songs.length)){
+    row.remove();
+  }
   var song_list_dom = song_list_table.tBodies[0];
-  for(i in songs){
-    var item_tpl = createListItem();
+  for(let i = 0; i < songs.length; i++ ){
+    var item_tpl = (rows[i] && rows[i].item)|| createListItem();
     item_tpl.num.textContent = songs[i].id + '.';
     item_tpl.name.textContent = songs[i].name;
     item_tpl.tone.textContent = songs[i].tone + '調';
@@ -191,7 +240,7 @@ function createListItem(){
   topElem.appendChild(tone);
   topElem.appendChild(scoreMark);
   scoreMark.appendChild(scoreMarkLink);
-  return {
+  const listItem = {
     topElem,
     num,
     name,
@@ -199,6 +248,8 @@ function createListItem(){
     scoreMark,
     scoreMarkLink,
   };
+  topElem.item = listItem;
+  return listItem;
 }
 
 function select_song (id) {
