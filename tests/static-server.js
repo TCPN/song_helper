@@ -19,7 +19,7 @@ const MIME = {
 http.createServer((req, res) => {
   const urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
   let file = path.join(ROOT, urlPath === '/' ? 'index.html' : urlPath);
-  // 不允許跳出根目錄，也不提供測試與設定檔
+  // 不允許跳出根目錄，也不提供 tests/、node_modules/、.git/ 目錄（根目錄的 package.json 等檔案仍可存取）
   if (!file.startsWith(ROOT + path.sep) || /[\\/](tests|node_modules|\.git)[\\/]/.test(file)) {
     res.writeHead(404).end('Not found');
     return;

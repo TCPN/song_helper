@@ -57,20 +57,21 @@ test.describe('快取（localStorage）', () => {
     await expect(app.currentTone()).toHaveText('A');
   });
 
-  test('有快取但試算表查詢失敗：仍顯示快取的列表，並提示錯誤', async ({ app }) => {
-    await app.seedCache();
-    await app.page.addInitScript(() => {
-      window.__TEST_QUERY_ERROR__ = { message: 'boom', detail: 'offline' };
-    });
-    await app.goto();
-    await expect(app.rows()).toHaveCount(4);
-    await expect.poll(() => app.dialogs).toEqual(['Error in query: boom offline']);
-  });
-
   test('快取內容損壞（不是合法的 JSON）時，忽略快取並照常載入', async ({ app }) => {
     await app.page.addInitScript(() => localStorage.setItem('song_data', '{oops'));
     await app.goto();
     await expect(app.rows()).toHaveCount(4);
     await expect(app.rows().nth(0).locator('td.song_name')).toHaveText('測試歌一');
+  });
+});
+
+test.describe('有快取但試算表查詢失敗', () => {
+  test.use({ queryError: { message: 'boom', detail: 'offline' } });
+
+  test('仍顯示快取的列表，並提示錯誤', async ({ app }) => {
+    await app.seedCache();
+    await app.goto('', { waitReady: false });
+    await expect(app.rows()).toHaveCount(4);
+    await expect.poll(() => app.dialogs).toEqual(['Error in query: boom offline']);
   });
 });
