@@ -117,7 +117,6 @@ test.describe('已知問題：資訊彈窗', () => {
     });
 
     test('應原樣顯示成文字，不應被當成標籤', async ({ app }) => {
-      test.fail(true, 'show_song_info 用 innerHTML 直接插入歌名，HTML 會被解析（試算表若有 <、& 等字元會出錯，也有 XSS 風險）');
       await app.goto();
       await app.rows().nth(0).locator('td.song_name').click();
       await expect(app.infoPopup()).toHaveClass(/open/);

@@ -463,6 +463,15 @@ var unicode_note = {
 '3/8': '𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥𝅮',
 '1/16': '𝅘𝅥𝅯',
 };
+// Song names and other sheet cells are user data; keep their markup out of innerHTML.
+function escape_html(value){
+  return String(value)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
 function show_song_info(song_id){
   var elem = getDom('#info-popup-container');
   var content_elem = elem.querySelector('.popup-window-content');
@@ -477,11 +486,11 @@ function show_song_info(song_id){
   content_elem.innerHTML=
   `
   <table>
-  <tr><td>編號:</td><td>${song.id}</td></tr>
-  <tr><td>歌名:</td><td>${song.name}</td></tr>
-  <tr><td>調性:</td><td>${song.tone}</td></tr>
-  <tr><td>拍號:</td><td>${song.timesig}</td></tr>
-  <tr><td>速度:</td><td>${speed_str || ''}</td></tr>
+  <tr><td>編號:</td><td>${escape_html(song.id)}</td></tr>
+  <tr><td>歌名:</td><td>${escape_html(song.name)}</td></tr>
+  <tr><td>調性:</td><td>${escape_html(song.tone)}</td></tr>
+  <tr><td>拍號:</td><td>${escape_html(song.timesig)}</td></tr>
+  <tr><td>速度:</td><td>${escape_html(speed_str || '')}</td></tr>
   <tr><td>歌譜:</td><td>${song.abc ? score_link.replace('href', 'href=#song_id='+song.id) : '無'}</td></tr>
   </table>
   `;
