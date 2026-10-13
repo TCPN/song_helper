@@ -97,11 +97,12 @@ test.describe('已知問題：資訊彈窗', () => {
     });
 
     test('不應顯示 "undefined"', async ({ app }) => {
-      test.fail(true, 'unicode_note 只有幾種單位，查不到時直接串成 "undefined=80"');
       await app.goto();
       await app.rows().nth(0).locator('td.song_name').click();
       await expect(app.infoPopup()).toHaveClass(/open/);
       await expect(app.page.locator('#info-popup-window table')).not.toContainText('undefined');
+      // 查不到時顯示原本的寫法（#5）
+      await expect(app.page.locator('#info-popup-window table tr').nth(4).locator('td')).toHaveText(['速度:', '1/3=80']);
     });
   });
 

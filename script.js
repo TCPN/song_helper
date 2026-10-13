@@ -502,7 +502,9 @@ function show_song_info(song_id){
   var score_link = '<a href onclick="closeDom(\'#info-popup-container\')">開啟</a>';
   if(song.abc && song.abc.match(/Q:.*/)){
     var [speed_unit, speed_value] = song.abc.match(/Q:.*/)[0].replace('Q:', '').replace(/ /g, '').split('=');
-    var speed_str = unicode_note[speed_unit] + '=' + speed_value;
+    // 單位不在對照表時顯示原本的寫法（例如 1/3=80）；沒有 "=" 的寫法（例如 Q:120）原樣顯示
+    var speed_str = speed_value === undefined ? speed_unit
+      : (unicode_note[speed_unit] || speed_unit) + '=' + speed_value;
   }
   content_elem.innerHTML=
   `
