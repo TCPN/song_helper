@@ -12,8 +12,8 @@ var songDataObjects;
 var displayingSong;
 const CACHED_DATA_KEY = 'song_data';
 const CACHED_DATA_TIMESTAMP_KEY = 'song_data_timestamp';
-
-renderWithCachedData();
+// 網址 hash 只在載入時處理一次（之後交給 hashchange）；見 updateListUI
+var initialHashHandled = false;
 
 // Callback that creates and populates a data table, 
 // instantiates the pie chart, passes in the data and
@@ -25,11 +25,14 @@ function loadData() {
   query.send(function handleQueryResponse(response) {
     if (response.isError()) {
       alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
+      // 拿不到最新資料：若有快取，就用快取處理還沒處理的 hash
+      if (songDataObjects && !initialHashHandled)
+        exec_hash();
       return;
     }
     data = response.getDataTable();
     songDataObjects = getSongArray(data);
-    updateListUI(songDataObjects);
+    updateListUI(songDataObjects, true);
     console.log('rendered with newest data');
     setCachedData(songDataObjects);
     console.log('cached data updated');
@@ -44,12 +47,34 @@ function renderWithCachedData() {
   }
 }
 
-function updateListUI(songData) {
+// isNewest: songData 是試算表的最新資料（false 表示是 localStorage 的快取）
+function updateListUI(songData, isNewest) {
   createList(songData);
   setup_song_list_selection();
   fixedListWidth();
   document.querySelector('#loading_icon').classList.add('hide');
-  exec_hash();
+  if (!initialHashHandled) {
+    // 快取裡就能開的歌直接開；開不了（沒有譜／不存在）的等最新資料再判斷，
+    // 避免快取過舊時誤報，也避免提示出現兩次
+    if (isNewest || hash_song_openable(songData))
+      exec_hash();
+  } else if (isNewest && displayingSong) {
+    // 已用快取開了譜面：最新資料裡這首歌的譜有變（或不見了）才重新處理，否則不重複渲染
+    var newest = songData.find((s)=>(s.id === displayingSong.id));
+    if (newest && newest.abc === displayingSong.abc)
+      displayingSong = newest;
+    else
+      exec_hash();
+  }
+}
+
+// 網址指定的歌在 songData 裡是否有譜可以開（沒有指定歌也算可以處理）
+function hash_song_openable(songData) {
+  var song_id = parse_hash()['song_id'];
+  if (song_id == null)
+    return true;
+  var song = songData.find((s)=>(s.id.toString() === song_id));
+  return !!(song && song.abc);
 }
 
 function fixedListWidth() {
@@ -102,6 +127,7 @@ function update_hash(key, value, force=false){
 }
 
 function exec_hash(){
+  initialHashHandled = true;
   //select score by url
   if(!!location.hash){
     // parse hash
@@ -207,6 +233,10 @@ function createList(songs){
     item_tpl.num.textContent = songs[i].id + '.';
     item_tpl.name.textContent = songs[i].name;
     item_tpl.tone.textContent = songs[i].tone + '調';
+    // 重用的列先清掉舊的譜面連結（快取與最新資料的譜可能不同）
+    item_tpl.scoreMarkLink.classList.remove('chord_score', 'note_score');
+    item_tpl.scoreMarkLink.removeAttribute('title');
+    item_tpl.scoreMarkLink.removeAttribute('href');
     if(songs[i].abc && songs[i].abc.length > 0 && hasSongContent(songs[i])){
       if(songs[i].abc.match(/"[^"]+"/)) {
         item_tpl.scoreMarkLink.classList.add('chord_score');
@@ -847,6 +877,10 @@ window.addEventListener('hashchange', exec_hash);
 window.addEventListener('beforeprint', ()=>{save_scroll('html')});
 window.addEventListener('afterprint', ()=>{restore_scroll('html')});
 document.querySelector('#song_list tbody').addEventListener('click', song_list_onclick)
+
+// 必須放在檔案最後：要等上面所有的 var 初始化（例如 scroll_tmp）與事件監聽都完成才能執行，
+// 否則回訪時網址指向沒有譜／不存在的歌，close_score() 會在初始化前就被呼叫而中止整支 script
+renderWithCachedData();
 
 /*
 function selectionCallback(abcelem) {

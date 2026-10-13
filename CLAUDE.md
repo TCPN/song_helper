@@ -12,8 +12,8 @@
   不直接推 `dev` 或 `master`。
 - 計畫中的方向：先以測試固定行為，再把 `script.js` 依功能拆成 ES modules（不引入 bundler），
   最後才加新功能。HTML 裡的 `onclick=` 之後改成 `addEventListener`。
-- 拆模組時要特別注意初始化順序：`script.js` 頂層的 `renderWithCachedData()` 會在檔案其餘部分
-  （`var` 初始化、檔尾的事件監聽）之前執行，這正是目前最嚴重的已知問題的成因。
+- 拆模組時要特別注意初始化順序：`script.js` 的 `renderWithCachedData()` 必須在所有 `var` 初始化
+  與事件監聽之後才執行（目前放在檔尾）。以前它在第 16 行就執行，造成 #2 的 TypeError。
 
 ## 環境注意事項
 
