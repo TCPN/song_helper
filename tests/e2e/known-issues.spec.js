@@ -1,8 +1,10 @@
 const { test, expect } = require('../app');
 
-// 已知問題：這裡的測試寫的是「應有的行為」，目前會失敗，所以標成 test.fail()。
+// 已知問題：這裡的測試寫的是「應有的行為」，尚未修好的標成 test.fail()。
 // 修好之後 Playwright 會回報「預期失敗但通過了」，這時把 test.fail() 那行刪掉即可。
-// 這些測試都不會讓整體變紅；它們是待辦清單，也是修好後的回歸測試。
+// 標成 test.fail() 的測試不會讓整體變紅；它們是待辦清單，也是修好後的回歸測試。
+// 目前這裡的問題（#2〜#6）都已修正，以下全部是回歸測試。
+
 // 已修正（#4）：不是合法正規表達式的輸入改用純文字比對。
 test.describe('搜尋：正規表達式特殊字元', () => {
   test.use({ allowPageErrors: true });
@@ -90,7 +92,8 @@ test.describe('譜面渲染次數', () => {
   });
 });
 
-test.describe('已知問題：資訊彈窗', () => {
+// 已修正（#5、#6）：以下保留為回歸測試。
+test.describe('資訊彈窗：特殊資料', () => {
   test.describe('速度單位不在對照表', () => {
     test.use({
       songs: [{ id: 1, name: '怪速度', tone: 'C', timesig: '4/4', melody: '', abc: 'X:1\nT:t\nM:4/4\nL:1/4\nQ:1/3=80\nK:C\nCDEF|]\n' }],
@@ -112,11 +115,11 @@ test.describe('已知問題：資訊彈窗', () => {
     });
 
     test('應原樣顯示成文字，不應被當成標籤', async ({ app }) => {
-      test.fail(true, 'show_song_info 用 innerHTML 直接插入歌名，HTML 會被解析（試算表若有 <、& 等字元會出錯，也有 XSS 風險）');
       await app.goto();
       await app.rows().nth(0).locator('td.song_name').click();
       await expect(app.infoPopup()).toHaveClass(/open/);
       await expect(app.page.locator('#info-popup-window table')).toContainText('<b>粗體</b>歌名');
+      await expect(app.page.locator('#info-popup-window table b')).toHaveCount(0);
     });
   });
 });

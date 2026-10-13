@@ -499,24 +499,40 @@ function show_song_info(song_id){
   var song = songDataObjects.find(s=>s.id == song_id);
   if(!song)
     return;
-  var score_link = '<a href onclick="closeDom(\'#info-popup-container\')">開啟</a>';
   if(song.abc && song.abc.match(/Q:.*/)){
     var [speed_unit, speed_value] = song.abc.match(/Q:.*/)[0].replace('Q:', '').replace(/ /g, '').split('=');
     // 單位不在對照表時顯示原本的寫法（例如 1/3=80）；沒有 "=" 的寫法（例如 Q:120）原樣顯示
     var speed_str = speed_value === undefined ? speed_unit
       : (unicode_note[speed_unit] || speed_unit) + '=' + speed_value;
   }
-  content_elem.innerHTML=
-  `
-  <table>
-  <tr><td>編號:</td><td>${song.id}</td></tr>
-  <tr><td>歌名:</td><td>${song.name}</td></tr>
-  <tr><td>調性:</td><td>${song.tone}</td></tr>
-  <tr><td>拍號:</td><td>${song.timesig}</td></tr>
-  <tr><td>速度:</td><td>${speed_str || ''}</td></tr>
-  <tr><td>歌譜:</td><td>${song.abc ? score_link.replace('href', 'href=#song_id='+song.id) : '無'}</td></tr>
-  </table>
-  `;
+  var score_cell;
+  if(song.abc){
+    score_cell = document.createElement('a');
+    score_cell.href = '#song_id=' + song.id;
+    score_cell.textContent = '開啟';
+    score_cell.addEventListener('click', function(){ closeDom('#info-popup-container'); });
+  }else{
+    score_cell = '無';
+  }
+  // 資料來自試算表，一律當成文字放進表格（不用 innerHTML），避免 HTML 被解析
+  var table = document.createElement('table');
+  [
+    ['編號:', song.id],
+    ['歌名:', song.name],
+    ['調性:', song.tone],
+    ['拍號:', song.timesig],
+    ['速度:', speed_str || ''],
+    ['歌譜:', score_cell],
+  ].forEach(function([label, value]){
+    var tr = table.insertRow();
+    tr.insertCell().textContent = label;
+    var td = tr.insertCell();
+    if(value instanceof Node)
+      td.appendChild(value);
+    else
+      td.textContent = value;
+  });
+  content_elem.replaceChildren(table);
   openDom(elem);
 }
 function song_list_onclick(event){
