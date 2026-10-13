@@ -88,6 +88,28 @@ test.describe('快取（localStorage）', () => {
     await expect(app.popup()).toHaveClass(/open/);
   });
 
+  test('最新資料的譜不同而重新渲染時，hash 的提示不會再出現一次', async ({ app }) => {
+    const stale = SONGS.map((song) => ({ ...song }));
+    stale[1].abc = stale[1].abc.replace('K:G', 'K:D');
+    await app.seedCache(stale);
+    await app.delayQuery(500);
+    await app.goto('#song_id=2&transpose=abc');
+    await expect(app.currentTone()).toHaveText('D');
+    await expect(app.currentTone()).toHaveText('G');
+    await app.page.waitForTimeout(300);
+    expect(app.dialogs).toEqual(['Invalid transpose is ignored: abc']);
+  });
+
+  test('已用快取開啟的譜，最新資料只有歌名不同時，標題改用最新歌名', async ({ app }) => {
+    const stale = SONGS.map((song) => ({ ...song }));
+    stale[0].name = '快取中的舊歌名';
+    await app.seedCache(stale);
+    await app.delayQuery(500);
+    await app.goto('#song_id=1');
+    await expect(app.page).toHaveTitle('快取中的舊歌名 (C)');
+    await expect(app.page).toHaveTitle('測試歌一 (C)');
+  });
+
   test('快取裡有譜、最新資料沒有譜的歌：列表的譜面連結也跟著移除', async ({ app }) => {
     const stale = SONGS.map((song) => ({ ...song }));
     stale[2].abc = stale[1].abc;

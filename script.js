@@ -60,11 +60,19 @@ function updateListUI(songData, isNewest) {
       exec_hash();
   } else if (isNewest && displayingSong) {
     // 已用快取開了譜面：最新資料裡這首歌的譜有變（或不見了）才重新處理，否則不重複渲染
+    // 不重新執行 exec_hash，以免 hash 相關的提示（例如無效的 transpose）再出現一次
     var newest = songData.find((s)=>(s.id === displayingSong.id));
-    if (newest && newest.abc === displayingSong.abc)
+    if (!newest || !newest.abc) {
+      if (newest)
+        alert('No score for song ' + newest.id);
+      close_score();
+    } else if (newest.abc !== displayingSong.abc) {
       displayingSong = newest;
-    else
-      exec_hash();
+      render_score(); // 沿用目前輸入框裡的移調值；標題也會用最新的歌名
+    } else {
+      displayingSong = newest;
+      document.title = `${newest.name} (${document.querySelector('#current_visual_tone').textContent})`;
+    }
   }
 }
 
