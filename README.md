@@ -55,10 +55,12 @@ E2E 測試使用 [Playwright](https://playwright.dev/)，測試完全不連外�
 - 其他非本機的請求一律中止
 
 ```sh
-npm install
+npm ci
 npx playwright install chromium   # 第一次需要
 npm test
 ```
+
+PR 與推到 `dev`／`master` 時，GitHub Actions（`.github/workflows/test.yml`）會自動跑同樣的測試。
 
 測試分成幾個檔案（`tests/e2e/`）：列表、搜尋、譜面、移調、曲號鍵盤、網址 hash、
 快取、資訊彈窗、列表選取與意見回饋，以及已知問題。
