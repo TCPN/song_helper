@@ -131,12 +131,25 @@ test.describe('編輯選單', () => {
     await expect(menu(app).locator('.menu-item')).toHaveText(['和弦編輯器', '進階編輯器']);
   });
 
+  test('選單展開時點其他地方會收起，不開編輯器', async ({ app }) => {
+    await app.goto('#song_id=2');
+    await editLabel(app).click();
+    await expect(menu(app)).not.toHaveClass(/hide/);
+    let opened = false;
+    app.page.on('popup', () => { opened = true; });
+    await app.page.mouse.click(10, 300);
+    await expect(menu(app)).toHaveClass(/hide/);
+    expect(opened).toBe(false);
+  });
+
   test('「進階編輯器」在新分頁開啟 /song_edit/，並帶上目前的曲號', async ({ app }) => {
     await app.goto('#song_id=2');
     await editLabel(app).click();
     const popupPromise = app.page.waitForEvent('popup');
     await menu(app).locator('.menu-item', { hasText: '進階編輯器' }).click();
     const editor = await popupPromise;
+    // 選完編輯器後選單自動收起
+    await expect(menu(app)).toHaveClass(/hide/);
     const url = new URL(editor.url());
     expect(url.pathname).toBe('/song_edit/');
     expect(url.hash).toBe('#song_id=2');
@@ -149,6 +162,8 @@ test.describe('編輯選單', () => {
     const popupPromise = app.page.waitForEvent('popup');
     await menu(app).locator('.menu-item', { hasText: '和弦編輯器' }).click();
     const editor = await popupPromise;
+    // 選完編輯器後選單自動收起
+    await expect(menu(app)).toHaveClass(/hide/);
     const url = new URL(editor.url());
     expect(url.pathname).toBe('/chord_editor/');
     expect(url.hash).toBe('#song_id=4');

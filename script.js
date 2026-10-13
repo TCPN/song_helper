@@ -828,13 +828,6 @@ function line_svgs(score_paper){
 }
 function staff_tops(score_paper){
   var staff_tops = line_svgs(score_paper).map((svg)=>{
-    var staff_paths = Array.from(svg.querySelectorAll('.abcjs-staff'));
-    return Math.min(...staff_paths.map(p=>p.getBBox().y))
-  });
-  return staff_tops;
-}
-function staff_tops(score_paper){
-  var staff_tops = line_svgs(score_paper).map((svg)=>{
       var staff_paths = Array.from(svg.querySelectorAll('.abcjs-top-line'));
       return Math.max(...staff_paths.map(p=>(p.getBBox().y + p.getBBox().height)))
   });
