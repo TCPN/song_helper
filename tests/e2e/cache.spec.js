@@ -121,6 +121,30 @@ test.describe('快取（localStorage）', () => {
     await expect(app.scoreLink(3)).not.toHaveClass(/note_score|chord_score/);
   });
 
+  test('已用快取開啟的譜，最新資料裡這首歌被刪除時安靜地關閉（與不存在的 song_id 一致）', async ({ app }) => {
+    const extra = { ...SONGS[1], id: 9, name: '已刪除的歌' };
+    await app.seedCache([...SONGS, extra]);
+    await app.delayQuery(500);
+    await app.goto('#song_id=9');
+    await expect(app.popup()).toHaveClass(/open/);
+    await expect(app.currentSongId()).toHaveText('9');
+    await expect(app.popup()).not.toHaveClass(/open/);
+    await expect(app.rows()).toHaveCount(4);
+    expect(app.dialogs).toEqual([]);
+  });
+
+  test('已用快取開啟的譜，最新資料裡這首歌沒有譜時關閉並提示一次', async ({ app }) => {
+    const stale = SONGS.map((song) => ({ ...song }));
+    stale[2].abc = stale[1].abc;
+    await app.seedCache(stale);
+    await app.delayQuery(500);
+    await app.goto('#song_id=3');
+    await expect(app.popup()).toHaveClass(/open/);
+    await expect(app.popup()).not.toHaveClass(/open/);
+    await app.page.waitForTimeout(300);
+    expect(app.dialogs).toEqual(['No score for song 3']);
+  });
+
   test('快取內容損壞（不是合法的 JSON）時，忽略快取並照常載入', async ({ app }) => {
     await app.page.addInitScript(() => localStorage.setItem('song_data', '{oops'));
     await app.goto();

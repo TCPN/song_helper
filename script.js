@@ -63,6 +63,7 @@ function updateListUI(songData, isNewest) {
     // 不重新執行 exec_hash，以免 hash 相關的提示（例如無效的 transpose）再出現一次
     var newest = songData.find((s)=>(s.id === displayingSong.id));
     if (!newest || !newest.abc) {
+      // 沒有譜的歌提示一次；歌被刪除時與 exec_hash 對不存在的 song_id 一致，安靜關閉
       if (newest)
         alert('No score for song ' + newest.id);
       close_score();
