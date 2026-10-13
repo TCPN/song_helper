@@ -734,12 +734,22 @@ function value_modify(event) {
   target.onchange();
 }
 
+// 搜尋文字當成正規表達式；不是合法的正規表達式（例如單獨的 "("、"["、"*"）時改用純文字比對
+function search_pattern_to_regexp(pattern) {
+  try {
+    return new RegExp(pattern);
+  } catch (e) {
+    return new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  }
+}
+
 function filter_song(pattern) {
   var song_list_table = document.querySelector('#song_list');
   var items = Array.from(song_list_table.tBodies[0].children);
   var found_something = false;
+  var regexp = search_pattern_to_regexp(pattern);
   items.forEach(v=>{
-    if(!v.textContent.match(pattern))
+    if(!regexp.test(v.textContent))
       v.classList.add('hide');
     else {
       v.classList.remove('hide');

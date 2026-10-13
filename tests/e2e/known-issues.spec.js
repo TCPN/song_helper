@@ -3,11 +3,11 @@ const { test, expect } = require('../app');
 // 已知問題：這裡的測試寫的是「應有的行為」，目前會失敗，所以標成 test.fail()。
 // 修好之後 Playwright 會回報「預期失敗但通過了」，這時把 test.fail() 那行刪掉即可。
 // 這些測試都不會讓整體變紅；它們是待辦清單，也是修好後的回歸測試。
-test.describe('已知問題：搜尋', () => {
+// 已修正（#4）：不是合法正規表達式的輸入改用純文字比對。
+test.describe('搜尋：正規表達式特殊字元', () => {
   test.use({ allowPageErrors: true });
 
   test('搜尋框輸入 "(" 這類正規表達式特殊字元，不應該拋出錯誤', async ({ app }) => {
-    test.fail(true, 'filter_song 直接把輸入當成正規表達式，"(" 會丟出 SyntaxError');
     await app.goto();
     await app.page.locator('#song_search').fill('(');
     expect(app.errors).toEqual([]);

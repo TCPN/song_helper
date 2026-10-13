@@ -50,6 +50,18 @@ test.describe('搜尋的現況行為', () => {
     await expect(app.visibleRows()).toHaveCount(2);
   });
 
+  test('不是合法正規表達式的輸入改用純文字比對', async ({ app }) => {
+    await app.goto();
+    const search = app.page.locator('#song_search');
+    for (const text of ['(', '[', '*', '歌(']) {
+      await search.fill(text);
+      await expect(app.visibleRows()).toHaveCount(0);
+      await expect(app.page.locator('#found_nothing')).toBeVisible();
+    }
+    await search.fill('');
+    await expect(app.visibleRows()).toHaveCount(4);
+  });
+
   test('搜尋區分大小寫', async ({ app }) => {
     await app.goto();
     await app.page.locator('#song_search').fill('am');
