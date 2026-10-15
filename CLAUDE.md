@@ -4,7 +4,7 @@
 
 ## 工作方式
 
-- 改程式前後都跑 `npm test`（Playwright E2E）。目前的測試是重構的安全網，先綠燈才能動 `script.js`。
+- 改程式前後都跑 `npm test`（`node --test` 單元測試 + Playwright E2E）。目前的測試是重構的安全網，先綠燈才能動 `script.js`。
 - 網址 hash（`#song_id=…&transpose=…`）是對外契約，格式與行為不可無故改變。
 - 標示「現況」的測試記錄的是目前行為，改行為時連同測試一起改，並在 PR 說明裡講清楚。
 - `known-issues.spec.js` 裡的 `test.fail()` 是待辦清單：修好一個，就刪掉它的 `test.fail()`，讓它變成一般回歸測試。
@@ -12,6 +12,9 @@
   不直接推 `dev` 或 `master`。
 - 計畫中的方向：先以測試固定行為，再把 `script.js` 依功能拆成 ES modules（不引入 bundler），
   最後才加新功能。HTML 裡的 `onclick=` 之後改成 `addEventListener`。
+- 進度：純函式已抽到 `js/`（每個都有 `tests/unit/` 的單元測試）。`script.js` 還是一般 script，
+  靠 `js/legacy-globals.js` 把模組函式掛到 `window`；`index.html` 裡它必須放在 `script.js` 前面。
+  `js/package.json` 的 `"type": "module"` 是讓 Node 把 `js/*.js` 當 ES modules 載入，不要刪。
 - 拆模組時要特別注意初始化順序：`script.js` 的 `renderWithCachedData()` 必須在所有 `var` 初始化
   與事件監聽之後才執行（目前放在檔尾）。以前它在第 16 行就執行，造成 #2 的 TypeError。
 
