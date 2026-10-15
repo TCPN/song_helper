@@ -56,3 +56,43 @@ test.describe('搜尋的現況行為', () => {
     await expect(app.visibleRows()).toHaveCount(0);
   });
 });
+
+// #4：輸入不是合法的正規表達式時不丟錯；直接包含輸入文字的歌也算符合。
+test.describe('搜尋：含正規表達式特殊字元的歌名', () => {
+  // songs 是兩個以上元素的陣列時，要包成 [value, {}]，否則會被當成 Playwright 的 [value, options]
+  test.use({
+    songs: [[
+      { id: 1, name: '歌(一)', tone: 'C', timesig: '4/4', melody: '', abc: null },
+      { id: 2, name: '普通的歌', tone: 'G', timesig: '4/4', melody: '', abc: null },
+    ], {}],
+  });
+
+  for (const text of ['(', '歌(', '歌(一)']) {
+    test(`輸入 "${text}"：找到歌名含括號的歌`, async ({ app }) => {
+      await app.goto();
+      await app.page.locator('#song_search').fill(text);
+      await expect(app.visibleRows()).toHaveCount(1);
+      await expect(app.visibleRows().first().locator('td.song_name')).toHaveText('歌(一)');
+      await expect(app.page.locator('#found_nothing')).toHaveClass(/hide/);
+    });
+  }
+
+  test('輸入 "[" 或 "*"：沒有符合，不丟錯', async ({ app }) => {
+    await app.goto();
+    const search = app.page.locator('#song_search');
+    for (const text of ['[', '*']) {
+      await search.fill(text);
+      await expect(app.visibleRows()).toHaveCount(0);
+      await expect(app.page.locator('#found_nothing')).toBeVisible();
+    }
+    await search.fill('');
+    await expect(app.visibleRows()).toHaveCount(2);
+  });
+
+  test('合法的正規表達式仍照正規表達式比對', async ({ app }) => {
+    await app.goto();
+    await app.page.locator('#song_search').fill('^1\\.歌');
+    await expect(app.visibleRows()).toHaveCount(1);
+    await expect(app.visibleRows().first().locator('td.song_name')).toHaveText('歌(一)');
+  });
+});

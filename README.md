@@ -6,7 +6,8 @@
 ## 功能
 
 - 從 Google 試算表載入歌曲列表（編號、歌名、調號…），可搜尋；載入後搜尋框自動取得焦點
-- 回訪時先用 localStorage 的快取資料渲染列表，再用試算表的最新資料更新
+- 回訪時先用 localStorage 的快取資料渲染列表，再用試算表的最新資料更新。網址指定的歌在快取裡就有譜時
+  立刻開啟；快取裡沒有（或沒有譜）時等最新資料再判斷。已開啟的譜只有在最新資料的譜不同時才重新渲染
 - 列表每首歌有譜面連結（圖示區分「含和弦」與「僅旋律」），點一列則跳出該首的資訊彈窗
   （編號、歌名、調性、拍號、速度、開啟譜面）
 - 開啟 ABC 樂譜（abcjs 渲染），可移調、列印、播放 MIDI
@@ -54,10 +55,12 @@ E2E 測試使用 [Playwright](https://playwright.dev/)，測試完全不連外�
 - 其他非本機的請求一律中止
 
 ```sh
-npm install
+npm ci
 npx playwright install chromium   # 第一次需要
 npm test
 ```
+
+PR 與推到 `dev`／`master` 時，GitHub Actions（`.github/workflows/test.yml`）會自動跑同樣的測試。
 
 測試分成幾個檔案（`tests/e2e/`）：列表、搜尋、譜面、移調、曲號鍵盤、網址 hash、
 快取、資訊彈窗、列表選取與意見回饋，以及已知問題。
@@ -73,6 +76,4 @@ npm test
 
 ### 目前已知的問題
 
-詳見 `tests/e2e/known-issues.spec.js`。重點是：回訪（有快取）時，若網址指向「沒有譜」或「不存在」的歌，
-`script.js` 會在載入途中丟出 TypeError 而中止，之後改網址、點連結都不會開譜面。
-原因是第 16 行的 `renderWithCachedData()` 在檔案後面的初始化（例如 `var scroll_tmp = {}`）之前就執行了。
+詳見 `tests/e2e/known-issues.spec.js`（標成 `test.fail()` 的才是尚未修好的）。

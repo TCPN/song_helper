@@ -12,8 +12,8 @@ var songDataObjects;
 var displayingSong;
 const CACHED_DATA_KEY = 'song_data';
 const CACHED_DATA_TIMESTAMP_KEY = 'song_data_timestamp';
-
-renderWithCachedData();
+// 網址 hash 只在載入時處理一次（之後交給 hashchange）；見 updateListUI
+var initialHashHandled = false;
 
 // Callback that creates and populates a data table, 
 // instantiates the pie chart, passes in the data and
@@ -25,11 +25,14 @@ function loadData() {
   query.send(function handleQueryResponse(response) {
     if (response.isError()) {
       alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
+      // 拿不到最新資料：若有快取，就用快取處理還沒處理的 hash
+      if (songDataObjects && !initialHashHandled)
+        exec_hash();
       return;
     }
     data = response.getDataTable();
     songDataObjects = getSongArray(data);
-    updateListUI(songDataObjects);
+    updateListUI(songDataObjects, true);
     console.log('rendered with newest data');
     setCachedData(songDataObjects);
     console.log('cached data updated');
@@ -44,12 +47,43 @@ function renderWithCachedData() {
   }
 }
 
-function updateListUI(songData) {
+// isNewest: songData 是試算表的最新資料（false 表示是 localStorage 的快取）
+function updateListUI(songData, isNewest) {
   createList(songData);
   setup_song_list_selection();
   fixedListWidth();
   document.querySelector('#loading_icon').classList.add('hide');
-  exec_hash();
+  if (!initialHashHandled) {
+    // 快取裡就能開的歌直接開；開不了（沒有譜／不存在）的等最新資料再判斷，
+    // 避免快取過舊時誤報，也避免提示出現兩次
+    if (isNewest || hash_song_openable(songData))
+      exec_hash();
+  } else if (isNewest && displayingSong) {
+    // 已用快取開了譜面：最新資料裡這首歌的譜有變（或不見了）才重新處理，否則不重複渲染
+    // 不重新執行 exec_hash，以免 hash 相關的提示（例如無效的 transpose）再出現一次
+    var newest = songData.find((s)=>(s.id === displayingSong.id));
+    if (!newest || !newest.abc) {
+      // 沒有譜的歌提示一次；歌被刪除時與 exec_hash 對不存在的 song_id 一致，安靜關閉
+      if (newest)
+        alert('No score for song ' + newest.id);
+      close_score();
+    } else if (newest.abc !== displayingSong.abc) {
+      displayingSong = newest;
+      render_score(); // 沿用目前輸入框裡的移調值；標題也會用最新的歌名
+    } else {
+      displayingSong = newest;
+      document.title = `${newest.name} (${document.querySelector('#current_visual_tone').textContent})`;
+    }
+  }
+}
+
+// 網址指定的歌在 songData 裡是否有譜可以開（沒有指定歌也算可以處理）
+function hash_song_openable(songData) {
+  var song_id = parse_hash()['song_id'];
+  if (song_id == null)
+    return true;
+  var song = songData.find((s)=>(s.id.toString() === song_id));
+  return !!(song && song.abc);
 }
 
 function fixedListWidth() {
@@ -102,6 +136,7 @@ function update_hash(key, value, force=false){
 }
 
 function exec_hash(){
+  initialHashHandled = true;
   //select score by url
   if(!!location.hash){
     // parse hash
@@ -207,6 +242,10 @@ function createList(songs){
     item_tpl.num.textContent = songs[i].id + '.';
     item_tpl.name.textContent = songs[i].name;
     item_tpl.tone.textContent = songs[i].tone + '調';
+    // 重用的列先清掉舊的譜面連結（快取與最新資料的譜可能不同）
+    item_tpl.scoreMarkLink.classList.remove('chord_score', 'note_score');
+    item_tpl.scoreMarkLink.removeAttribute('title');
+    item_tpl.scoreMarkLink.removeAttribute('href');
     if(songs[i].abc && songs[i].abc.length > 0 && hasSongContent(songs[i])){
       if(songs[i].abc.match(/"[^"]+"/)) {
         item_tpl.scoreMarkLink.classList.add('chord_score');
@@ -469,22 +508,40 @@ function show_song_info(song_id){
   var song = songDataObjects.find(s=>s.id == song_id);
   if(!song)
     return;
-  var score_link = '<a href onclick="closeDom(\'#info-popup-container\')">開啟</a>';
   if(song.abc && song.abc.match(/Q:.*/)){
     var [speed_unit, speed_value] = song.abc.match(/Q:.*/)[0].replace('Q:', '').replace(/ /g, '').split('=');
-    var speed_str = unicode_note[speed_unit] + '=' + speed_value;
+    // 單位不在對照表時顯示原本的寫法（例如 1/3=80）；沒有 "=" 的寫法（例如 Q:120）原樣顯示
+    var speed_str = speed_value === undefined ? speed_unit
+      : (unicode_note[speed_unit] || speed_unit) + '=' + speed_value;
   }
-  content_elem.innerHTML=
-  `
-  <table>
-  <tr><td>編號:</td><td>${song.id}</td></tr>
-  <tr><td>歌名:</td><td>${song.name}</td></tr>
-  <tr><td>調性:</td><td>${song.tone}</td></tr>
-  <tr><td>拍號:</td><td>${song.timesig}</td></tr>
-  <tr><td>速度:</td><td>${speed_str || ''}</td></tr>
-  <tr><td>歌譜:</td><td>${song.abc ? score_link.replace('href', 'href=#song_id='+song.id) : '無'}</td></tr>
-  </table>
-  `;
+  var score_cell;
+  if(song.abc){
+    score_cell = document.createElement('a');
+    score_cell.href = '#song_id=' + song.id;
+    score_cell.textContent = '開啟';
+    score_cell.addEventListener('click', function(){ closeDom('#info-popup-container'); });
+  }else{
+    score_cell = '無';
+  }
+  // 資料來自試算表，一律當成文字放進表格（不用 innerHTML），避免 HTML 被解析
+  var table = document.createElement('table');
+  [
+    ['編號:', song.id],
+    ['歌名:', song.name],
+    ['調性:', song.tone],
+    ['拍號:', song.timesig],
+    ['速度:', speed_str || ''],
+    ['歌譜:', score_cell],
+  ].forEach(function([label, value]){
+    var tr = table.insertRow();
+    tr.insertCell().textContent = label;
+    var td = tr.insertCell();
+    if(value instanceof Node)
+      td.appendChild(value);
+    else
+      td.textContent = value;
+  });
+  content_elem.replaceChildren(table);
   openDom(elem);
 }
 function song_list_onclick(event){
@@ -704,12 +761,24 @@ function value_modify(event) {
   target.onchange();
 }
 
+// 搜尋文字當成正規表達式；不是合法的正規表達式（例如單獨的 "("、"["、"*"）時傳回 null
+function search_pattern_to_regexp(pattern) {
+  try {
+    return new RegExp(pattern);
+  } catch (e) {
+    return null;
+  }
+}
+
+// 正規表達式符合，或直接包含輸入的文字，都算符合（所以輸入完整的 "歌(一)" 也找得到）
 function filter_song(pattern) {
   var song_list_table = document.querySelector('#song_list');
   var items = Array.from(song_list_table.tBodies[0].children);
   var found_something = false;
+  var regexp = search_pattern_to_regexp(pattern);
   items.forEach(v=>{
-    if(!v.textContent.match(pattern))
+    var text = v.textContent;
+    if(!((regexp && regexp.test(text)) || text.includes(pattern)))
       v.classList.add('hide');
     else {
       v.classList.remove('hide');
@@ -767,13 +836,6 @@ function line_containers(score_paper){
 }
 function line_svgs(score_paper){
   return Array.from(score_paper.querySelectorAll('.abcjs-container svg'));
-}
-function staff_tops(score_paper){
-  var staff_tops = line_svgs(score_paper).map((svg)=>{
-    var staff_paths = Array.from(svg.querySelectorAll('.abcjs-staff'));
-    return Math.min(...staff_paths.map(p=>p.getBBox().y))
-  });
-  return staff_tops;
 }
 function staff_tops(score_paper){
   var staff_tops = line_svgs(score_paper).map((svg)=>{
@@ -847,6 +909,10 @@ window.addEventListener('hashchange', exec_hash);
 window.addEventListener('beforeprint', ()=>{save_scroll('html')});
 window.addEventListener('afterprint', ()=>{restore_scroll('html')});
 document.querySelector('#song_list tbody').addEventListener('click', song_list_onclick)
+
+// 必須放在檔案最後：要等上面所有的 var 初始化（例如 scroll_tmp）與事件監聽都完成才能執行，
+// 否則回訪時網址指向沒有譜／不存在的歌，close_score() 會在初始化前就被呼叫而中止整支 script
+renderWithCachedData();
 
 /*
 function selectionCallback(abcelem) {

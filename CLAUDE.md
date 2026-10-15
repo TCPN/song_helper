@@ -12,8 +12,8 @@
   不直接推 `dev` 或 `master`。
 - 計畫中的方向：先以測試固定行為，再把 `script.js` 依功能拆成 ES modules（不引入 bundler），
   最後才加新功能。HTML 裡的 `onclick=` 之後改成 `addEventListener`。
-- 拆模組時要特別注意初始化順序：`script.js` 頂層的 `renderWithCachedData()` 會在檔案其餘部分
-  （`var` 初始化、檔尾的事件監聽）之前執行，這正是目前最嚴重的已知問題的成因。
+- 拆模組時要特別注意初始化順序：`script.js` 的 `renderWithCachedData()` 必須在所有 `var` 初始化
+  與事件監聽之後才執行（目前放在檔尾）。以前它在第 16 行就執行，造成 #2 的 TypeError。
 
 ## 環境注意事項
 
@@ -21,5 +21,6 @@
   若機器上已有全域安裝的 Playwright，可在被忽略的 `node_modules/@playwright/test/index.js`
   放一行 `module.exports = require('<全域 playwright>/test');` 當替身來執行測試，不要提交 `node_modules`。
 - 沙盒裡 `gh pr create` 走 GraphQL 會被擋，改用 REST：`gh api -X POST repos/{owner}/{repo}/pulls …`。
-- 目前沒有提交 `package-lock.json`（當時無法連到 registry 產生）。有網路時請執行 `npm install` 並提交 lock 檔。
+- `package-lock.json` 已提交；CI（`.github/workflows/test.yml`）用 `npm ci` 安裝，改依賴時記得一起更新 lock 檔。
+- PR 與推到 `dev`／`master` 時 GitHub Actions 會跑 `npm test`（只裝 Chromium）。
 - 測試用的歌曲請維持自編或公有領域的短 ABC，不要把有版權的歌詞放進公開 repo。
