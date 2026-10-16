@@ -104,7 +104,7 @@ export function setup_song_list_selection() {
   list_container.addEventListener('click', on_click_select_song);
 }
 
-export function filter_song(pattern) {
+function filter_song(pattern) {
   var song_list_table = document.querySelector('#song_list');
   var items = Array.from(song_list_table.tBodies[0].children);
   var found_something = false;
@@ -126,7 +126,7 @@ export function filter_song(pattern) {
 }
 
 // 列表 tbody 的 click：點到歌曲那一列（不是譜面連結）時開資訊彈窗
-export function song_list_onclick(event){
+function song_list_onclick(event){
   var found_target = event.target;
   while(this.contains(found_target) && this != found_target){
     if(found_target.dataset.target || found_target.tagName == 'A')
@@ -136,4 +136,10 @@ export function song_list_onclick(event){
   var target_song = found_target.dataset.target;
   if(target_song)
     show_song_info(target_song);
+}
+
+// 註冊搜尋框與列表的事件
+export function setup_list() {
+  document.querySelector('#song_search').addEventListener('input', function(){ filter_song(this.value); });
+  document.querySelector('#song_list tbody').addEventListener('click', song_list_onclick);
 }

@@ -13,7 +13,8 @@
   最後才加新功能。
 - 進度：程式都在 `js/` 的 ES modules，進入點是 `js/main.js`。純函式（`hash.js`、`abc.js`、`song-data.js`、
   `search.js`、`keypad.js`）不碰 DOM，有 `tests/unit/` 的單元測試；新的純函式也照這樣放，模組頂層不要碰 DOM。
-  HTML 還在用 `onclick=` 等屬性，所以 `main.js` 暫時把那些函式掛到 `window`；改成 `addEventListener` 後刪掉。
+  HTML 裡不寫 `onclick=` 等事件屬性：每個模組有自己的 `setup_*()` 用 `addEventListener` 註冊，由 `main.js` 呼叫；
+  模組的函式不掛到 `window`。
   `js/package.json` 的 `"type": "module"` 是讓 Node 把 `js/*.js` 當 ES modules 載入，不要刪。
 - 初始化順序：`main.js` 的 `renderWithCachedData()` 要放在事件監聽註冊之後（以前太早執行造成 #2 的 TypeError）。
 - 部署時 `js/` 整個資料夾都要上傳；網站要透過伺服器開，`file://` 無法載入 ES modules。
