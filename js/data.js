@@ -41,6 +41,12 @@ export function renderWithCachedData() {
   }
 }
 
+// 快照的格式檢查：壞掉的檔案不用，免得列表渲染到一半出錯
+function is_song_list(songs) {
+  return Array.isArray(songs) && songs.length > 0 &&
+    songs.every((s) => s && typeof s.id === 'number' && typeof s.name === 'string');
+}
+
 // 快照讀取完成（或不需要讀）時 resolve
 var snapshotSettled = Promise.resolve();
 
@@ -50,7 +56,7 @@ function renderWithSnapshot() {
     .then((response) => (response.ok ? response.json() : null))
     .then((snapshot) => {
       // 試算表的最新資料已經先到了，就不用快照
-      if (!snapshot || state.songs || !Array.isArray(snapshot.songs) || snapshot.songs.length === 0)
+      if (!snapshot || state.songs || !is_song_list(snapshot.songs))
         return;
       state.songs = snapshot.songs;
       // 拿不到最新資料時，快照就是能用的最新資料，網址指定的歌也要在這時處理

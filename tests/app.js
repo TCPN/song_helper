@@ -21,12 +21,14 @@ const test = base.test.extend({
   queryError: [null, { option: true }],
   // songs.json 快照的內容（{ updated, songs }）；null 表示沒有部署快照（回 404）
   snapshot: [null, { option: true }],
+  // songs.json 延遲幾毫秒才回應（測試快照比試算表晚到的情況）
+  snapshotDelay: [0, { option: true }],
   // true 時 Google 的載入器（jsapi）載入失敗
   googleUnavailable: [false, { option: true }],
   // 預設任何未捕捉的頁面錯誤都會讓測試失敗；已知問題的測試可設為 true 後自行檢查 app.errors
   allowPageErrors: [false, { option: true }],
 
-  app: async ({ page, songs, queryError, snapshot, googleUnavailable, allowPageErrors }, use) => {
+  app: async ({ page, songs, queryError, snapshot, snapshotDelay, googleUnavailable, allowPageErrors }, use) => {
     const errors = [];
     const dialogs = [];
     const blocked = [];
@@ -37,10 +39,11 @@ const test = base.test.extend({
       dialog.accept();
     });
 
-    await page.route('**/*', (route) => {
+    await page.route('**/*', async (route) => {
       const url = new URL(route.request().url());
       if (LOCAL_HOSTS.includes(url.hostname)) {
         if (url.pathname.endsWith('/songs.json')) {
+          if (snapshotDelay) await new Promise((resolve) => setTimeout(resolve, snapshotDelay));
           return snapshot
             ? route.fulfill({ contentType: 'application/json', body: JSON.stringify(snapshot) })
             : route.fulfill({ status: 404, body: 'Not found' });

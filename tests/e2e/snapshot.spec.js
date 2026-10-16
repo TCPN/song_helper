@@ -27,6 +27,19 @@ test.describe('songs.json 快照', () => {
       expect(names[0]).toBe('測試歌一');
     });
 
+    test.describe('快照比試算表晚到', () => {
+      test.use({ snapshotDelay: 1000 });
+
+      test('不會用舊的快照蓋掉最新資料', async ({ app }) => {
+        const snapshotResponse = app.page.waitForResponse('**/songs.json');
+        await app.goto();
+        await expect(app.rows().nth(0).locator('td.song_name')).toHaveText('測試歌一');
+        await snapshotResponse;
+        await app.page.waitForTimeout(300);
+        await expect(app.rows().nth(0).locator('td.song_name')).toHaveText('測試歌一');
+      });
+    });
+
     test('有 localStorage 快取時不用快照', async ({ app }) => {
       await app.seedCache(snapshotOf(SONGS, '快取中的歌名').songs);
       await app.delayQuery(2000);
