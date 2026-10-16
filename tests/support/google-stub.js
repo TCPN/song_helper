@@ -1,4 +1,4 @@
-// 取代 https://www.google.com/jsapi 的假實作，只提供 script.js 用到的部分：
+// 取代 https://www.google.com/jsapi 的假實作，只提供 js/main.js、js/data.js 用到的部分：
 //   google.load / google.setOnLoadCallback / new google.visualization.Query(url).send(cb)
 // 資料來自測試在頁面載入前注入的 window.__TEST_SONGS__；
 // 設定 window.__TEST_QUERY_ERROR__ = { message, detail } 可模擬查詢失敗；

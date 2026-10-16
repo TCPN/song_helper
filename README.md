@@ -21,13 +21,22 @@
 | 檔案 | 說明 |
 | --- | --- |
 | `index.html` | 頁面結構 |
-| `script.js` | 主要程式邏輯（資料載入與快取、列表、搜尋、譜面渲染、移調、鍵盤、彈窗、hash 處理） |
-| `js/*.js` | 從 `script.js` 抽出的純函式（ES modules）：`hash.js`、`abc.js`、`song-data.js`、`search.js`、`keypad.js`。`js/legacy-globals.js` 暫時把它們掛到 `window` 給 `script.js` 用 |
+| `js/main.js` | 進入點：載入資料、註冊事件（`index.html` 以 `<script type="module">` 載入） |
+| `js/data.js`, `js/cache.js` | 資料載入（先用 localStorage 快取渲染，再用試算表最新資料更新）與快取 |
+| `js/list.js` | 歌曲列表、選取、搜尋 |
+| `js/score.js`, `js/score-layout.js` | 譜面渲染、移調、換歌、關閉；渲染後的版面修正 |
+| `js/song-id-input.js` | 譜面上方的歌號小鍵盤與鍵盤操作 |
+| `js/popups.js` | 歌曲資訊彈窗、意見回饋提示 |
+| `js/route.js` | 網址 hash 的讀寫與執行 |
+| `js/editor-links.js` | 「編輯」選單的編輯器連結 |
+| `js/state.js`, `js/dom.js` | 共用狀態、DOM 小工具 |
+| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js` | 純函式（不碰 DOM，有單元測試） |
+| `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
 | `abcjs_midi_5.8.0-min-mod.js` | 實際使用的 abcjs（修改版）。其餘 `abcjs_midi_*.js` 為舊版，目前沒有被引用 |
 
-資料來源是 `script.js` 開頭的 Google 試算表查詢（`docs.google.com/spreadsheet/tq?key=…`），
+資料來源是 `js/data.js` 裡的 Google 試算表查詢（`docs.google.com/spreadsheet/tq?key=…`），
 欄位以固定索引對應：0 編號、1 歌名、2 調號、3 拍號、4 首句旋律、10 abc。
 快取存在 localStorage 的 `song_data`（歌曲陣列的 JSON）與 `song_data_timestamp`。
 
