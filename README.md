@@ -47,6 +47,7 @@
 Google 的載入器（`www.google.com/jsapi`）無法使用時，網站也能靠它顯示。沒有這個檔案時，網站照常運作。
 
 `songs.json` 含整份歌譜與歌詞，而 repo 是公開的，所以它列在 `.gitignore`，**不要 commit**。
+部署出去的 `songs.json` 任何人都能下載（內容和網站上看得到的一樣）；快照不會自己更新，部署前請重新執行一次 `npm run update-songs`。
 
 ## 網址 hash（對外介面）
 
