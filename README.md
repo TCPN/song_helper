@@ -21,7 +21,8 @@
 | 檔案 | 說明 |
 | --- | --- |
 | `index.html` | 頁面結構 |
-| `script.js` | 全部的程式邏輯（資料載入與快取、列表、搜尋、譜面渲染、移調、鍵盤、彈窗、hash 處理） |
+| `script.js` | 主要程式邏輯（資料載入與快取、列表、搜尋、譜面渲染、移調、鍵盤、彈窗、hash 處理） |
+| `js/*.js` | 從 `script.js` 抽出的純函式（ES modules）：`hash.js`、`abc.js`、`song-data.js`、`search.js`、`keypad.js`。`js/legacy-globals.js` 暫時把它們掛到 `window` 給 `script.js` 用 |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
 | `abcjs_midi_5.8.0-min-mod.js` | 實際使用的 abcjs（修改版）。其餘 `abcjs_midi_*.js` 為舊版，目前沒有被引用 |
@@ -45,8 +46,14 @@ npm run serve        # 靜態伺服器，預設 http://127.0.0.1:4173
 ```
 
 不想用 npm 的話，`python3 -m http.server` 之類任何靜態伺服器都可以。
+因為用了 ES modules，直接用 `file://` 開 `index.html` 會被瀏覽器擋下，一定要透過伺服器。
 
 ## 測試
+
+`npm test` 會先跑單元測試再跑 E2E 測試，也可以分開跑：
+
+- `npm run test:unit`：`js/` 純函式的單元測試（`tests/unit/`，用 Node 內建的 `node --test`，不需要瀏覽器）
+- `npm run test:e2e`：整個頁面的 E2E 測試
 
 E2E 測試使用 [Playwright](https://playwright.dev/)，測試完全不連外部網路：
 
