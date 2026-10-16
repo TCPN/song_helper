@@ -44,7 +44,7 @@ export function renderWithCachedData() {
 // 快照的格式檢查：壞掉的檔案不用，免得列表渲染到一半出錯
 function is_song_list(songs) {
   return Array.isArray(songs) && songs.length > 0 &&
-    songs.every((s) => s && typeof s.id === 'number' && typeof s.name === 'string');
+    songs.every((s) => s && typeof s.id === 'number');
 }
 
 // 快照讀取完成（或不需要讀）時 resolve
