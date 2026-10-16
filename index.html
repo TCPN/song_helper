@@ -23,8 +23,7 @@
 	<!--<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>-->
 	<!-- ***20160831 new: make selected list sortable; end -->
 	<link rel="stylesheet" href="style.css" />
-	<script type="module" src="js/legacy-globals.js"></script>
-	<script type="text/javascript" src="script.js" defer></script>
+	<script type="module" src="js/main.js"></script>
 	<link rel="icon" href="/images/favicon.png"/>
 </head>
 <body class="fill-viewport">
@@ -67,7 +66,7 @@
 			<label id="current_song_id"
 				data-open="#song_id_popup"
 				tabindex="0"
-				onclick="openDom(this.dataset.open); _original_song_id = _target_song_id = this.textContent; this.textContent='';"
+				onclick="begin_song_id_edit(this)"
 				onkeydown="song_id_keydown_handler(event)"></label>
 			<div id="song_id_popup" class="popup-set popup-bg" data-value="esc"
 				onclick="song_id_popup_control(event.target.dataset.value);"
