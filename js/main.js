@@ -7,6 +7,9 @@ import { begin_song_id_edit, song_id_popup_control, song_id_keydown_handler } fr
 import { open_feedback_popup } from './popups.js';
 import { openDom, closeDom, toggleClass, save_scroll, restore_scroll } from './dom.js';
 import { open_editor, open_chord_editor } from './editor-links.js';
+import { state } from './state.js';
+
+state.originalTitle = document.title;
 
 // 過渡用：index.html 還在用 onclick= 等屬性呼叫這些函式，先掛到 window。
 // 改成 addEventListener 後（#9 第 5 步）就刪掉。
