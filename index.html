@@ -7,6 +7,7 @@
 	<meta charset="UTF-8" />
 
 	<link href="abcjs-midi.css" media="all" rel="stylesheet" type="text/css">
+	<link href="fix-abcjs-midi.css" media="all" rel="stylesheet" type="text/css">
 	<script src="abcjs_midi_5.8.0-min-mod.js" type="text/javascript"></script>
 	
 
@@ -22,7 +23,8 @@
 	<!--<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>-->
 	<!-- ***20160831 new: make selected list sortable; end -->
 	<link rel="stylesheet" href="style.css" />
-	<script type="text/javascript" src="script.js"></script>
+	<script type="text/javascript" src="script.js" defer></script>
+	<link rel="icon" href="/images/favicon.png"/>
 </head>
 <body class="fill-viewport">
 	<div id='loading_icon' class="fill-viewport">
@@ -36,7 +38,7 @@
 				<tr>
 					<th colspan="10">
 						<div id="song_list_filters">
-							<input id="song_search" type="search" placeholder="搜尋" oninput="filter_song(this.value)"/>
+							<input id="song_search" type="search" placeholder="搜尋" oninput="filter_song(this.value)" autofocus/>
 						</div>
 					</th>
 				</tr>
@@ -112,10 +114,34 @@
 				<div id="player-control"></div>
 			</div>
 			<span>|</span>
-			<label onclick="open_editor(parse_hash().song_id)">編輯</label>
+			<label onclick="toggleClass('#editor-menu', 'hide')">編輯
+				<div id="editor-menu" class="hide menu">
+					<div class="menu-bg"></div>
+					<label class="menu-item" onclick="open_chord_editor(parse_hash().song_id)">和弦編輯器</label>
+					<label class="menu-item" onclick="open_editor(parse_hash().song_id)">進階編輯器</label>
+				</div>
+			</label>
 			<span>|</span>
 			<label data-close='#score_popup_container' onclick="close_score()">關閉</label>
 		</div>
+	</div>
+  <div id="info-popup-container">
+    <div class="popup-bg" onclick="if(event.target==this)closeDom('#info-popup-container')">
+        <div id="info-popup-window">
+            <div class="popup-window-title">
+                <button class="popup-window-close" onclick="closeDom('#info-popup-container')"></button>
+            </div>
+            <div class="popup-window-content"></div>
+        </div>
+    </div>
+</div>
+  <div id="feedback_popup" class="">
+		<div id="feedback_popup_content" class="no-select"
+      onclick="closeDom(this.parentElement);event.stopPropagation();">找不到想找的歌嗎？
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdwK5DtTSFJ_1kFJcCZlXpzxbDf5iEUy4tYEn0aFHWpKtdhSg/viewform?usp=sf_link">
+      反應意見
+      </a>
+    </div>
 	</div>
 </body>
 </html>

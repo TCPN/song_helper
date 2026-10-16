@@ -1,0 +1,27 @@
+.abcjs-inline-midi *:before {
+    font-family: "Segoe UI Symbol";
+}
+
+.abcjs-inline-midi .abcjs-midi-selection:before {
+    content: "\f07e";
+}
+
+.abcjs-inline-midi .abcjs-midi-loop:before {
+    content: "🔁\fe0e"; /*🔁*/
+}
+
+.abcjs-inline-midi .abcjs-midi-reset:before {
+    content: "\23ee\fe0e"; /*⏮*/
+}
+
+.abcjs-inline-midi .abcjs-midi-start:before {
+    content: "\25b6\fe0e"; /*▶*/
+}
+
+.abcjs-inline-midi .abcjs-midi-start.abcjs-pushed:before {
+    content: "\23f8\fe0e"; /*⏸*/
+}
+
+.abcjs-inline-midi .abcjs-midi-start.abcjs-pushed.abcjs-loading:before {
+    content: "\23f3\fe0e"; /*⌛*/
+}
