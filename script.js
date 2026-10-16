@@ -1,3 +1,4 @@
+// 純函式（hash、ABC 判讀、資料轉換、搜尋、鍵盤對應）在 js/ 的模組裡，由 js/legacy-globals.js 掛到 window
 var ORIGINAL_TITLE = document.title;
 
 // Load the Visualization API and the piechart package.
@@ -92,34 +93,6 @@ function fixedListWidth() {
   song_list_table.style.maxWidth = `${r.width}px`;
 }
 
-function parse_params(s){
-  return s.split('&').reduce(
-    function(o, s){
-      if(s == '')
-        return o;
-      var kv = s.split('=');
-      if(kv.length == 1)
-        o[s] = true;
-      else if(kv.length == 2)
-        o[kv[0]] = kv[1];
-      else if(kv.length > 2)
-        o[kv[0]] = kv.slice(1).join('=');
-      return o;
-    }, {});
-}
-
-function params_to_str(param){
-  var a = [];
-  for(var key in param){
-    var value = param[key];
-    if(value === true)
-      a.push('' + key);
-    else
-      a.push(key + '=' + value);
-  }
-  return a.join('&');
-}
-
 function parse_hash(){
   return parse_params(location.hash.slice(1));
 }
@@ -192,42 +165,8 @@ function setCachedData(data) {
 
 ////
 
-function getSongArray(data) {
-  /*
-  0  編號
-  1  歌名/曲名
-  2  調號
-  3  拍號
-  4  首句旋律
-  5  出處/譜源
-  6  分類
-  7  譜
-  8  投影片
-  9  ppt
-  10 abc
-  */
-  var songArray = [];
-  console.log('number of songs', data.getNumberOfRows());
-  for (var i = 0; i < data.getNumberOfRows(); i++) {
-    var song = {
-      "id": data.getValue(i, 0),
-      "name": data.getValue(i, 1),
-      "tone": data.getValue(i, 2),
-      "timesig": data.getValue(i, 3),
-      "melody": data.getValue(i, 4),
-      "abc": data.getValue(i, 10),
-    }
-    songArray.push(song);
-  }
-  return songArray;
-}
-
 function getSongData(song_id){
   return songDataObjects.find(x=>(x.id==song_id));
-}
-
-function hasSongContent(song) {
-  return song.abc.match(/K:.*\r?\n.*\w/);
 }
 
 function createList(songs){
@@ -246,8 +185,9 @@ function createList(songs){
     item_tpl.scoreMarkLink.classList.remove('chord_score', 'note_score');
     item_tpl.scoreMarkLink.removeAttribute('title');
     item_tpl.scoreMarkLink.removeAttribute('href');
-    if(songs[i].abc && songs[i].abc.length > 0 && hasSongContent(songs[i])){
-      if(songs[i].abc.match(/"[^"]+"/)) {
+    var kind = score_kind(songs[i].abc);
+    if(kind){
+      if(kind == 'chord') {
         item_tpl.scoreMarkLink.classList.add('chord_score');
         item_tpl.scoreMarkLink.title = '五線譜 (含和弦)';
       } else {
@@ -406,9 +346,7 @@ function render_score(event){
       var tone_signature = tuneObjectArray[0].engraver.engraver.startlimitelem.abcelem;
     }catch(e){}
   }
-  try{
-    display_tone = (tone_signature.root + (({"#": "♯", "b": "♭", "": ""})[tone_signature.acc]) + tone_signature.mode) || "C";
-  }catch(e){}
+  display_tone = key_display_name(tone_signature);
   document.querySelector('#current_visual_tone').textContent = display_tone;
   document.title = `${song.name} (${display_tone})`
   displayingSong = song;
@@ -494,26 +432,12 @@ function set_transpose(value){
   update_hash('transpose', value);
 }
 
-var unicode_note = {
-'1/1': '𝅝',
-'1/2': '𝅗𝅥',
-'1/4': '𝅘𝅥',
-'1/8': '𝅘𝅥𝅮',
-'3/8': '𝅘𝅥𝅮𝅘𝅥𝅮𝅘𝅥𝅮',
-'1/16': '𝅘𝅥𝅯',
-};
 function show_song_info(song_id){
   var elem = getDom('#info-popup-container');
   var content_elem = elem.querySelector('.popup-window-content');
   var song = songDataObjects.find(s=>s.id == song_id);
   if(!song)
     return;
-  if(song.abc && song.abc.match(/Q:.*/)){
-    var [speed_unit, speed_value] = song.abc.match(/Q:.*/)[0].replace('Q:', '').replace(/ /g, '').split('=');
-    // 單位不在對照表時顯示原本的寫法（例如 1/3=80）；沒有 "=" 的寫法（例如 Q:120）原樣顯示
-    var speed_str = speed_value === undefined ? speed_unit
-      : (unicode_note[speed_unit] || speed_unit) + '=' + speed_value;
-  }
   var score_cell;
   if(song.abc){
     score_cell = document.createElement('a');
@@ -530,7 +454,7 @@ function show_song_info(song_id){
     ['歌名:', song.name],
     ['調性:', song.tone],
     ['拍號:', song.timesig],
-    ['速度:', speed_str || ''],
+    ['速度:', tempo_text(song.abc)],
     ['歌譜:', score_cell],
   ].forEach(function([label, value]){
     var tr = table.insertRow();
@@ -596,29 +520,7 @@ function song_id_popup_control(btn){
 
 function song_id_keydown_handler(event){
   console.log(event);
-  var btn_map = {
-    '0': '0',
-    '1': '1',
-    '2': '2',
-    '3': '3',
-    '4': '4',
-    '5': '5',
-    '6': '6',
-    '7': '7',
-    '8': '8',
-    '9': '9',
-    'Enter': 'ent',
-    'Escape': 'esc',
-    'ArrowUp': 'dec',
-    'ArrowLeft': 'dec',
-    'ArrowDown': 'inc',
-    'ArrowRight': 'inc',
-    'c': 'clr',
-    'C': 'clr',
-    'Backspace': 'del',
-    'Delete': 'del',
-  };
-  var btn = btn_map[event.key];
+  var btn = keypad_button_for_key(event.key);
   btn && song_id_popup_control(btn);
 }
 
@@ -761,24 +663,13 @@ function value_modify(event) {
   target.onchange();
 }
 
-// 搜尋文字當成正規表達式；不是合法的正規表達式（例如單獨的 "("、"["、"*"）時傳回 null
-function search_pattern_to_regexp(pattern) {
-  try {
-    return new RegExp(pattern);
-  } catch (e) {
-    return null;
-  }
-}
-
-// 正規表達式符合，或直接包含輸入的文字，都算符合（所以輸入完整的 "歌(一)" 也找得到）
 function filter_song(pattern) {
   var song_list_table = document.querySelector('#song_list');
   var items = Array.from(song_list_table.tBodies[0].children);
   var found_something = false;
-  var regexp = search_pattern_to_regexp(pattern);
+  var matches = make_song_matcher(pattern);
   items.forEach(v=>{
-    var text = v.textContent;
-    if(!((regexp && regexp.test(text)) || text.includes(pattern)))
+    if(!matches(v.textContent))
       v.classList.add('hide');
     else {
       v.classList.remove('hide');

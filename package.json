@@ -5,7 +5,9 @@
   "description": "移調小幫手 - 歌曲列表與 ABC 樂譜移調工具",
   "scripts": {
     "serve": "node tests/static-server.js",
-    "test": "playwright test",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --test \"tests/unit/*.test.mjs\"",
+    "test:e2e": "playwright test",
     "test:headed": "playwright test --headed"
   },
   "devDependencies": {
