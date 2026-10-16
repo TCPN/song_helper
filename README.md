@@ -40,6 +40,14 @@
 欄位以固定索引對應：0 編號、1 歌名、2 調號、3 拍號、4 首句旋律、10 abc。
 快取存在 localStorage 的 `song_data`（歌曲陣列的 JSON）與 `song_data_timestamp`。
 
+### songs.json 快照（選用）
+
+`npm run update-songs` 會抓試算表，在網站根目錄產生 `songs.json`，可以當作試算表的備份，也可以跟網站一起部署。
+有部署這個檔案時，第一次來的訪客（沒有 localStorage 快取）會先看到快照的列表，再更新成試算表的最新資料；
+Google 的載入器（`www.google.com/jsapi`）無法使用時，網站也能靠它顯示。沒有這個檔案時，網站照常運作。
+
+`songs.json` 含整份歌譜與歌詞，而 repo 是公開的，所以它列在 `.gitignore`，**不要 commit**。
+
 ## 網址 hash（對外介面）
 
 使用者可能已把網址存成書籤，所以這個格式要保持相容：

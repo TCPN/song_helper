@@ -1,9 +1,10 @@
 // 所有 E2E 測試共用的 fixture。
 //
-// 做了三件事，讓測試完全不依賴外部網路：
-//   1. 把 https://www.google.com/jsapi 換成 tests/support/google-stub.js
+// 做了這些事，讓測試完全不依賴外部網路，也不受本機檔案影響：
+//   1. 把 https://www.google.com/jsapi 換成 tests/support/google-stub.js（googleUnavailable 時讓它載入失敗）
 //   2. 其餘非本機的請求一律中止，並記錄在 app.blocked
-//   3. 在頁面載入前注入測試歌曲，並把 window.print 換成計數器
+//   3. songs.json 快照由測試決定（snapshot 選項；預設 404，就算本機有產生過 songs.json 也不會用到）
+//   4. 在頁面載入前注入測試歌曲，並把 window.print 換成計數器
 //
 // 另外自動收集頁面錯誤（app.errors）與 alert/confirm 訊息（app.dialogs）。
 const fs = require('fs');
@@ -18,10 +19,14 @@ const test = base.test.extend({
   // 測試檔可用 test.use({ songs: [...] }) 或 test.use({ queryError: {...} }) 覆寫
   songs: [SONGS, { option: true }],
   queryError: [null, { option: true }],
+  // songs.json 快照的內容（{ updated, songs }）；null 表示沒有部署快照（回 404）
+  snapshot: [null, { option: true }],
+  // true 時 Google 的載入器（jsapi）載入失敗
+  googleUnavailable: [false, { option: true }],
   // 預設任何未捕捉的頁面錯誤都會讓測試失敗；已知問題的測試可設為 true 後自行檢查 app.errors
   allowPageErrors: [false, { option: true }],
 
-  app: async ({ page, songs, queryError, allowPageErrors }, use) => {
+  app: async ({ page, songs, queryError, snapshot, googleUnavailable, allowPageErrors }, use) => {
     const errors = [];
     const dialogs = [];
     const blocked = [];
@@ -34,8 +39,16 @@ const test = base.test.extend({
 
     await page.route('**/*', (route) => {
       const url = new URL(route.request().url());
-      if (LOCAL_HOSTS.includes(url.hostname)) return route.continue();
+      if (LOCAL_HOSTS.includes(url.hostname)) {
+        if (url.pathname.endsWith('/songs.json')) {
+          return snapshot
+            ? route.fulfill({ contentType: 'application/json', body: JSON.stringify(snapshot) })
+            : route.fulfill({ status: 404, body: 'Not found' });
+        }
+        return route.continue();
+      }
       if (url.href === 'https://www.google.com/jsapi') {
+        if (googleUnavailable) return route.abort();
         return route.fulfill({ contentType: 'text/javascript', body: GOOGLE_STUB });
       }
       blocked.push(url.href);

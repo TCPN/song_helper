@@ -1,6 +1,7 @@
-// 歌曲資料載入：先用 localStorage 快取渲染，再用 Google 試算表的最新資料更新
+// 歌曲資料載入：先用 localStorage 快取（第一次來則用部署時產生的 songs.json 快照）渲染，
+// 再用 Google 試算表的最新資料更新
 import { state } from './state.js';
-import { getSongArray } from './song-data.js';
+import { getSongArray, SPREADSHEET_KEY } from './song-data.js';
 import { getCachedData, setCachedData } from './cache.js';
 import { createList, setup_song_list_selection, fixedListWidth } from './list.js';
 import { exec_hash, hash_song_openable } from './route.js';
@@ -9,11 +10,12 @@ import { render_score, close_score } from './score.js';
 // Google Visualization API 載入後的 callback：查詢試算表
 export function loadData() {
   /*var URL = 'https://docs.google.com/spreadsheet/tq?key=0AvTQcvEt3SwvdEdaOUpVVHRSMkVXUXlHX1hZbFBzWkE';*//* file deleted! */
-  var URL = 'https://docs.google.com/spreadsheet/tq?key=1_8-RZ_a_f47I0IavWYOwg5W07d_M3nQx8VK6wzEvfoM';
+  var URL = 'https://docs.google.com/spreadsheet/tq?key=' + SPREADSHEET_KEY;
   var query = new google.visualization.Query(URL);
   query.send(function handleQueryResponse(response) {
     if (response.isError()) {
       alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
+      state.newestUnavailable = true;
       // 拿不到最新資料：若有快取，就用快取處理還沒處理的 hash
       if (state.songs && !state.initialHashHandled)
         exec_hash();
@@ -33,7 +35,32 @@ export function renderWithCachedData() {
   if (state.songs) {
     updateListUI(state.songs);
     console.log('rendered with cached data');
+  } else {
+    renderWithSnapshot();
   }
+}
+
+// 沒有 localStorage 快取（第一次來）時，讀部署時產生的 songs.json；沒有這個檔案就略過
+function renderWithSnapshot() {
+  fetch('songs.json')
+    .then((response) => (response.ok ? response.json() : null))
+    .then((snapshot) => {
+      // 試算表的最新資料已經先到了，就不用快照
+      if (!snapshot || state.songs)
+        return;
+      state.songs = snapshot.songs;
+      // 拿不到最新資料時，快照就是能用的最新資料，網址指定的歌也要在這時處理
+      updateListUI(state.songs, state.newestUnavailable);
+      console.log('rendered with snapshot updated at', snapshot.updated);
+    })
+    .catch((err) => console.log('no snapshot', err));
+}
+
+// Google 載入器無法使用時呼叫：只能用快取或快照
+export function markNewestUnavailable() {
+  state.newestUnavailable = true;
+  if (state.songs && !state.initialHashHandled)
+    exec_hash();
 }
 
 // isNewest: songData 是試算表的最新資料（false 表示是 localStorage 的快取）

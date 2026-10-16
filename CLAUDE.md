@@ -18,6 +18,8 @@
   `js/package.json` 的 `"type": "module"` 是讓 Node 把 `js/*.js` 當 ES modules 載入，不要刪。
 - 初始化順序：`main.js` 的 `renderWithCachedData()` 要放在事件監聽註冊之後（以前太早執行造成 #2 的 TypeError）。
 - 部署時 `js/` 整個資料夾都要上傳；網站要透過伺服器開，`file://` 無法載入 ES modules。
+- `songs.json`（`npm run update-songs` 產生的試算表快照）含整份歌譜與歌詞，repo 是公開的，絕對不要 commit；
+  測試不讀本機的 `songs.json`，要用快照就在測試裡設 `snapshot` 選項。
 
 ## 環境注意事項
 
