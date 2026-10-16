@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { key_display_name } from './abc.js';
 import { getSongData } from './list.js';
 import { parse_hash, update_hash } from './route.js';
-import { save_scroll, restore_scroll } from './dom.js';
+import { save_scroll, restore_scroll, toggleClass } from './dom.js';
 import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
@@ -121,15 +121,15 @@ export function close_score(){
   restore_scroll('html');
 }
 
-// 移調輸入框的 onchange
-export function set_transpose(value){
-  render_score(window.event);
+// 移調輸入框的 change
+function set_transpose(value, event){
+  render_score(event);
   value = Number(value) || undefined; // remove hash when value is zero
   update_hash('transpose', value);
 }
 
 // 移調的 ▴▾ 按鈕：this 是按鈕，data-target 指向輸入框，data-add／data-value 是要加的值／要設的值
-export function value_modify(event) {
+function value_modify(event) {
   var target = document.querySelector(this.dataset.target);
   if(this.dataset.value != null)
     target.value = this.dataset.value;
@@ -137,5 +137,21 @@ export function value_modify(event) {
     target.value = Number(target.value) + Number(this.dataset.add);
   else
     console.log('No specified method for modification.', '\n trigger:', this, '\n target:', target);
-  target.onchange();
+  target.dispatchEvent(new Event('change'));
+}
+
+// 註冊譜面彈窗（背景、換歌、上方工具列）的事件
+export function setup_score_controls() {
+  document.querySelector('#score_popup_bg').addEventListener('click', function(event){
+    if(event.target == this)
+      close_score();
+  });
+  document.querySelector('.change-song.prev').addEventListener('click', ()=>{ open_score('prev'); });
+  document.querySelector('.change-song.next').addEventListener('click', ()=>{ open_score('next'); });
+  document.querySelector('#transpose').addEventListener('change', function(event){ set_transpose(this.value, event); });
+  for(const button of document.querySelectorAll('.popup-button[data-target]'))
+    button.addEventListener('click', value_modify);
+  document.querySelector('#print_button').addEventListener('click', ()=>{ window.print(); });
+  document.querySelector('#play_button').addEventListener('click', ()=>{ toggleClass('#player-set', 'hide'); });
+  document.querySelector('#close_score_button').addEventListener('click', ()=>{ close_score(); });
 }

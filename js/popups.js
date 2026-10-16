@@ -52,3 +52,17 @@ export function open_feedback_popup(timeout=5) {
     }
   }, timeout * 1000);
 }
+
+// 註冊資訊彈窗與意見回饋提示的事件
+export function setup_popups() {
+  document.querySelector('#info-popup-container .popup-bg').addEventListener('click', function(event){
+    if(event.target == this)
+      closeDom('#info-popup-container');
+  });
+  document.querySelector('#info-popup-window .popup-window-close').addEventListener('click', ()=>{ closeDom('#info-popup-container'); });
+  document.querySelector('#feedback_popup_content').addEventListener('click', function(event){
+    closeDom(this.parentElement);
+    event.stopPropagation();
+  });
+  window.addEventListener('click', function (){ open_feedback_popup(5); });
+}

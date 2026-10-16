@@ -5,13 +5,13 @@ import { openDom, isOpenDom, closeDom } from './dom.js';
 import { open_score } from './score.js';
 
 // 點歌號：開小鍵盤，記下原本的歌號並清空，等待輸入
-export function begin_song_id_edit(label){
+function begin_song_id_edit(label){
   openDom(label.dataset.open);
   state.originalSongId = state.targetSongId = label.textContent;
   label.textContent = '';
 }
 
-export function song_id_popup_control(btn){
+function song_id_popup_control(btn){
   var song_id_dom = document.querySelector('#current_song_id');
   var song_id_popup = document.querySelector('#song_id_popup');
   switch(btn) {
@@ -38,7 +38,7 @@ export function song_id_popup_control(btn){
     song_id_dom.focus();
 }
 
-export function song_id_keydown_handler(event){
+function song_id_keydown_handler(event){
   console.log(event);
   var btn = keypad_button_for_key(event.key);
   btn && song_id_popup_control(btn);
@@ -47,4 +47,24 @@ export function song_id_keydown_handler(event){
 function restore_edited_song_id(){
   var song_id_dom = document.querySelector('#current_song_id');
   song_id_dom.textContent = state.originalSongId;
+}
+
+// 產生小鍵盤按鈕，註冊歌號與小鍵盤的事件
+export function setup_song_id_input() {
+  var buttons = [0,1,2,3,4,5,6,7,8,9,'inc','dec','del','clr','esc','ent'];
+  var parent = document.querySelector('#song_id_popup .popup-window');
+  var div = document.createElement('div');
+  div.className = 'button cc';
+  buttons.forEach(v=>{
+    div.dataset.value = v;
+    parent.append(div.cloneNode());
+  });
+
+  var label = document.querySelector('#current_song_id');
+  label.addEventListener('click', function(){ begin_song_id_edit(this); });
+  label.addEventListener('keydown', song_id_keydown_handler);
+  // 點按鈕送出按鈕的值；點小鍵盤外的背景（data-value="esc"）等於取消
+  document.querySelector('#song_id_popup').addEventListener('click', function(event){
+    song_id_popup_control(event.target.dataset.value);
+  });
 }

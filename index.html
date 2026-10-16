@@ -38,7 +38,7 @@
 				<tr>
 					<th colspan="10">
 						<div id="song_list_filters">
-							<input id="song_search" type="search" placeholder="搜尋" oninput="filter_song(this.value)" autofocus/>
+							<input id="song_search" type="search" placeholder="搜尋" autofocus/>
 						</div>
 					</th>
 				</tr>
@@ -53,91 +53,73 @@
 		</table>
 	</div>
 	<div id='score_popup_container'>
-		<div id='score_popup_bg' data-close='#score_popup_container' onclick="if(event.target==this)close_score()">
+		<div id='score_popup_bg' data-close='#score_popup_container'>
 			<div id='score_popup_window'>
 				<div id='score_paper'>
 				</div>
 			</div>
-			<div class="change-song prev" onclick="open_score('prev');"></div>
-			<div class="change-song next" onclick="open_score('next');"></div>
+			<div class="change-song prev"></div>
+			<div class="change-song next"></div>
 		</div>
 		<div id='score_popup_top_bar'>
 			<!-- add tabindex to enable the keydown event -->
 			<label id="current_song_id"
 				data-open="#song_id_popup"
-				tabindex="0"
-				onclick="begin_song_id_edit(this)"
-				onkeydown="song_id_keydown_handler(event)"></label>
-			<div id="song_id_popup" class="popup-set popup-bg" data-value="esc"
-				onclick="song_id_popup_control(event.target.dataset.value);"
-				>
-				<div id="song_id_popup_window" class="popup-window">
-					<script type="text/javascript">
-						var buttons = [0,1,2,3,4,5,6,7,8,9,'inc','dec','del','clr','esc','ent'];
-						var parent = document.querySelector('#song_id_popup .popup-window');
-						var div = document.createElement('div');
-						div.className = 'button cc';
-						buttons.forEach(v=>{
-							div.dataset.value = v;
-							parent.append(div.cloneNode());
-						});
-					</script>
-				</div>
+				tabindex="0"></label>
+			<div id="song_id_popup" class="popup-set popup-bg" data-value="esc">
+				<!-- 按鈕由 js/song-id-input.js 產生 -->
+				<div id="song_id_popup_window" class="popup-window"></div>
 			</div>
 			<span>|</span>
 			<label>調性:</label>
 			<span id="current_visual_tone"></span>
 			<label>移調</label>
 			<span class="popup-base">
-				<input id="transpose" type="number" value="0"
-					onchange="set_transpose(this.value)"/>
+				<input id="transpose" type="number" value="0"/>
 				<div class="popup-button-base">
 					<label class="popup-button"
 						for="transpose"
-						onclick="value_modify.call(this,event)"
 						data-target="#transpose"
 						data-add="+1"
 					>▴</label>
 					<label class="popup-button"
 						for="transpose"
-						onclick="value_modify.call(this,event)"
 						data-target="#transpose"
 						data-add="-1"
 					>▾</label>
 				</div>
 			</span>
 			<span>|</span>
-			<label onclick="window.print()">列印</label>
+			<label id="print_button">列印</label>
 			<span>|</span>
-			<label onclick="toggleClass('#player-set', 'hide')">播放</label>
+			<label id="play_button">播放</label>
 			<div id="player-set" class="hide">
 				<div id="player-control"></div>
 			</div>
 			<span>|</span>
-			<label onclick="toggleClass('#editor-menu', 'hide')">編輯
+			<label id="edit_button">編輯
 				<div id="editor-menu" class="hide menu">
 					<div class="menu-bg"></div>
-					<label class="menu-item" onclick="open_chord_editor(parse_hash().song_id)">和弦編輯器</label>
-					<label class="menu-item" onclick="open_editor(parse_hash().song_id)">進階編輯器</label>
+					<label id="chord_editor_item" class="menu-item">和弦編輯器</label>
+					<label id="song_editor_item" class="menu-item">進階編輯器</label>
 				</div>
 			</label>
 			<span>|</span>
-			<label data-close='#score_popup_container' onclick="close_score()">關閉</label>
+			<label id="close_score_button" data-close='#score_popup_container'>關閉</label>
 		</div>
 	</div>
   <div id="info-popup-container">
-    <div class="popup-bg" onclick="if(event.target==this)closeDom('#info-popup-container')">
+    <div class="popup-bg">
         <div id="info-popup-window">
             <div class="popup-window-title">
-                <button class="popup-window-close" onclick="closeDom('#info-popup-container')"></button>
+                <button class="popup-window-close"></button>
             </div>
             <div class="popup-window-content"></div>
         </div>
     </div>
 </div>
   <div id="feedback_popup" class="">
-		<div id="feedback_popup_content" class="no-select"
-      onclick="closeDom(this.parentElement);event.stopPropagation();">找不到想找的歌嗎？
+		<div id="feedback_popup_content" class="no-select">找不到想找的歌嗎？
       <a href="https://docs.google.com/forms/d/e/1FAIpQLSdwK5DtTSFJ_1kFJcCZlXpzxbDf5iEUy4tYEn0aFHWpKtdhSg/viewform?usp=sf_link">
       反應意見
       </a>
