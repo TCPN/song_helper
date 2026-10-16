@@ -1,0 +1,47 @@
+name: Claude Code Review
+
+# 有新 PR（或 PR 推了新 commit）時，讓 Claude 自動 review 並在 PR 上留意見。
+# 需要：repo 安裝 Claude GitHub App，並設定 secret CLAUDE_CODE_OAUTH_TOKEN（或改用 ANTHROPIC_API_KEY）。
+# 注意：claude-code-action 會檢查這個檔案和預設分支（master）上的版本一致，所以改動要同步進 master 才會生效。
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # 若改用 API key，把上一行換成：
+          # anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            請 review 這個 pull request，重點：
+            - 正確性與潛在 bug
+            - 是否破壞網址 hash（#song_id=…&transpose=…）這個對外契約
+            - 行為改變時，Playwright 測試（tests/）是否一併更新
+            - 安全性與效能問題
+
+            請遵守 repo 根目錄 CLAUDE.md 的維護規則。
+            具體問題用 `mcp__github_inline_comment__create_inline_comment` 留在對應的程式行上，
+            整體意見用 `gh pr comment` 留一則總結。只留有實質內容的意見，請用繁體中文。
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"

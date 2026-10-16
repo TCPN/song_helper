@@ -23,4 +23,6 @@
 - 沙盒裡 `gh pr create` 走 GraphQL 會被擋，改用 REST：`gh api -X POST repos/{owner}/{repo}/pulls …`。
 - `package-lock.json` 已提交；CI（`.github/workflows/test.yml`）用 `npm ci` 安裝，改依賴時記得一起更新 lock 檔。
 - PR 與推到 `dev`／`master` 時 GitHub Actions 會跑 `npm test`（只裝 Chromium）。
+- 開 PR 或推新 commit 時，`.github/workflows/claude-code-review.yml` 會讓 Claude 自動 review。
+  這支 workflow 必須和 `master` 上的版本一字不差才會跑（claude-code-action 的檢查），改它時要同步進 `master`。
 - 測試用的歌曲請維持自編或公有領域的短 ABC，不要把有版權的歌詞放進公開 repo。
