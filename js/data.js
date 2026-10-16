@@ -19,6 +19,7 @@ export function loadData() {
       // 拿不到最新資料：若有快取，就用快取處理還沒處理的 hash
       if (state.songs && !state.initialHashHandled)
         exec_hash();
+      showNoDataIfNeeded();
       return;
     }
     var data = response.getDataTable();
@@ -40,13 +41,16 @@ export function renderWithCachedData() {
   }
 }
 
+// 快照讀取完成（或不需要讀）時 resolve
+var snapshotSettled = Promise.resolve();
+
 // 沒有 localStorage 快取（第一次來）時，讀部署時產生的 songs.json；沒有這個檔案就略過
 function renderWithSnapshot() {
-  fetch('songs.json')
+  snapshotSettled = fetch('songs.json')
     .then((response) => (response.ok ? response.json() : null))
     .then((snapshot) => {
       // 試算表的最新資料已經先到了，就不用快照
-      if (!snapshot || state.songs)
+      if (!snapshot || state.songs || !Array.isArray(snapshot.songs) || snapshot.songs.length === 0)
         return;
       state.songs = snapshot.songs;
       // 拿不到最新資料時，快照就是能用的最新資料，網址指定的歌也要在這時處理
@@ -61,6 +65,15 @@ export function markNewestUnavailable() {
   state.newestUnavailable = true;
   if (state.songs && !state.initialHashHandled)
     exec_hash();
+  showNoDataIfNeeded();
+}
+
+// 最新資料、快取、快照都拿不到時，把 Loading... 換成錯誤訊息，不要讓它一直轉
+function showNoDataIfNeeded() {
+  snapshotSettled.then(() => {
+    if (!state.songs)
+      document.querySelector('#loading_icon_center').textContent = '無法載入歌曲資料，請稍後重新整理';
+  });
 }
 
 // isNewest: songData 是試算表的最新資料（false 表示是 localStorage 的快取）

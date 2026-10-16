@@ -63,11 +63,12 @@ test.describe('abc 只有標頭、沒有實際樂句的歌', () => {
 test.describe('試算表查詢失敗', () => {
   test.use({ queryError: { message: 'boom', detail: 'sheet is gone' } });
 
-  test('跳出錯誤提示，列表維持空白且 Loading 不消失', async ({ app }) => {
+  test('跳出錯誤提示，列表維持空白，載入畫面改顯示錯誤訊息', async ({ app }) => {
     await app.goto('', { waitReady: false });
     await expect.poll(() => app.dialogs.length).toBe(1);
     expect(app.dialogs[0]).toBe('Error in query: boom sheet is gone');
     await expect(app.rows()).toHaveCount(0);
     await expect(app.page.locator('#loading_icon')).not.toHaveClass(/hide/);
+    await expect(app.page.locator('#loading_icon_center')).toHaveText('無法載入歌曲資料，請稍後重新整理');
   });
 });

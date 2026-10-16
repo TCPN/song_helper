@@ -85,5 +85,22 @@ test.describe('songs.json 快照', () => {
       await app.goto();
       await expect(app.rows()).toHaveCount(SONGS.length);
     });
+
+    test('快取與快照都沒有時，載入畫面改顯示錯誤訊息', async ({ app }) => {
+      await app.goto('', { waitReady: false });
+      await expect(app.page.locator('#loading_icon_center')).toHaveText('無法載入歌曲資料，請稍後重新整理');
+      await expect(app.rows()).toHaveCount(0);
+    });
+  });
+
+  test.describe('快照格式不對', () => {
+    test.use({ snapshot: { updated: '2026-10-01T00:00:00.000Z', songs: 'not an array' }, googleUnavailable: true });
+
+    test('不使用壞掉的快照，改顯示錯誤訊息', async ({ app }) => {
+      await app.goto('#song_id=1', { waitReady: false });
+      await expect(app.page.locator('#loading_icon_center')).toHaveText('無法載入歌曲資料，請稍後重新整理');
+      await expect(app.rows()).toHaveCount(0);
+      expect(app.errors).toEqual([]);
+    });
   });
 });

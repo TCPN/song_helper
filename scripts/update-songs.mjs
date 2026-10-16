@@ -7,14 +7,15 @@ import { SPREADSHEET_KEY, parse_gviz_response, getSongArray } from '../js/song-d
 const QUERY_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_KEY}/gviz/tq?tqx=out:json`;
 const OUTPUT = fileURLToPath(new URL('../songs.json', import.meta.url));
 
-const response = await fetch(QUERY_URL);
+const response = await fetch(QUERY_URL, { signal: AbortSignal.timeout(30000) });
 if (!response.ok)
   throw new Error(`試算表下載失敗：HTTP ${response.status}`);
 const songs = getSongArray(parse_gviz_response(await response.text()));
 
 // 防呆：資料看起來不對就不要覆寫，以免部署出空白或錯位的列表
-if (songs.length === 0 || typeof songs[0].id !== 'number' || typeof songs[0].name !== 'string')
-  throw new Error('試算表資料格式和預期不同，沒有寫入 songs.json：' + JSON.stringify(songs[0]));
+const badSong = songs.find((song) => typeof song.id !== 'number' || typeof song.name !== 'string');
+if (songs.length === 0 || badSong)
+  throw new Error('試算表資料格式和預期不同，沒有寫入 songs.json：' + JSON.stringify(badSong));
 
 writeFileSync(OUTPUT, JSON.stringify({ updated: new Date().toISOString(), songs }) + '\n');
 console.log(`已寫入 ${OUTPUT}（${songs.length} 首）`);
