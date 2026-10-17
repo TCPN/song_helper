@@ -8,6 +8,8 @@ export const state = {
   displayingSong: null,
   // 網址 hash 只在載入時處理一次（之後交給 hashchange）；見 updateListUI
   initialHashHandled: false,
+  // 拿不到試算表最新資料（查詢失敗，或 Google 載入器無法使用）
+  newestUnavailable: false,
   // 譜面上方歌號輸入：開始編輯前的歌號，與目前指向的歌號
   originalSongId: undefined,
   targetSongId: undefined,

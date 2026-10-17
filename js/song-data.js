@@ -1,5 +1,8 @@
 // 試算表資料 → 歌曲物件
 
+// 歌曲資料的 Google 試算表（網站即時查詢與 scripts/update-songs.mjs 產生快照都用它）
+export const SPREADSHEET_KEY = '1_8-RZ_a_f47I0IavWYOwg5W07d_M3nQx8VK6wzEvfoM';
+
 // data 是 google.visualization.DataTable（只用到 getNumberOfRows／getValue）
 export function getSongArray(data) {
   /*
@@ -29,4 +32,23 @@ export function getSongArray(data) {
     songArray.push(song);
   }
   return songArray;
+}
+
+// 試算表 gviz 查詢（tqx=out:json）的回應文字 → 和 DataTable 相同介面的物件，可直接交給 getSongArray
+// 回應長這樣：/*O_o*/\ngoogle.visualization.Query.setResponse({...});
+export function parse_gviz_response(text) {
+  var m = text.match(/setResponse\(([\s\S]*)\)\s*;?\s*$/);
+  if (!m)
+    throw new Error('無法解析試算表回應');
+  var response = JSON.parse(m[1]);
+  if (response.status === 'error')
+    throw new Error('試算表查詢失敗：' + JSON.stringify(response.errors));
+  var rows = response.table.rows;
+  return {
+    getNumberOfRows: () => rows.length,
+    getValue: (r, c) => {
+      var cell = rows[r].c[c];
+      return cell == null || cell.v === undefined ? null : cell.v;
+    },
+  };
 }
