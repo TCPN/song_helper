@@ -16,6 +16,11 @@ export function loadData() {
   var controller = new AbortController();
   var timer = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
   fetch(SHEET_QUERY_URL, { signal: controller.signal })
+    .catch((err) => {
+      // 連不上（離線、逾時）：和試算表回報錯誤分開，不跳提示
+      err.offline = true;
+      throw err;
+    })
     .then((response) => {
       if (!response.ok)
         throw new Error('HTTP ' + response.status);
@@ -39,7 +44,11 @@ function renderWithNewestData(songs) {
 
 // 拿不到最新資料：只能用快取或快照
 function handleQueryError(err) {
-  alert('Error in query: ' + err.message);
+  // 離線時每次開站都跳提示太干擾；有快取或快照就安靜使用，都沒有時畫面會顯示錯誤訊息
+  if (err.offline)
+    console.log('sheet unreachable', err);
+  else
+    alert('Error in query: ' + err.message);
   state.newestUnavailable = true;
   // 若已有快取（或快照），就用它處理還沒處理的 hash
   if (state.songs && !state.initialHashHandled)

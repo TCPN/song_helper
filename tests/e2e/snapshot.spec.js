@@ -93,10 +93,13 @@ test.describe('songs.json 快照', () => {
       });
     });
 
-    test('有 localStorage 快取時用快取顯示', async ({ app }) => {
+    test('有 localStorage 快取時用快取顯示，不跳錯誤提示', async ({ app }) => {
       await app.seedCache();
+      const unreachable = app.page.waitForEvent('console', (msg) => msg.text().startsWith('sheet unreachable'));
       await app.goto();
       await expect(app.rows()).toHaveCount(SONGS.length);
+      await unreachable;
+      expect(app.dialogs).toEqual([]);
     });
 
     test('快取與快照都沒有時，載入畫面改顯示錯誤訊息', async ({ app }) => {

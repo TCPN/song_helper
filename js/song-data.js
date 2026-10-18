@@ -45,7 +45,7 @@ export function parse_gviz_response(text) {
   var response = JSON.parse(m[1]);
   // 錯誤訊息只放 gviz 給的說明（例如「boom sheet is gone」），前綴由呼叫端決定
   if (response.status === 'error')
-    throw new Error((response.errors || []).map((e) => [e.message, e.detailed_message].filter(Boolean).join(' ') || e.reason).join('; '));
+    throw new Error((response.errors || []).map((e) => [e.message, e.detailed_message].filter(Boolean).join(' ') || e.reason).join('; ') || '試算表回報錯誤');
   var rows = response.table.rows;
   return {
     getNumberOfRows: () => rows.length,

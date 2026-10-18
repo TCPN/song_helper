@@ -36,3 +36,8 @@ test('parse_gviz_response：查詢錯誤的訊息是 gviz 的說明文字', () =
   const text = '/*O_o*/\ngoogle.visualization.Query.setResponse(' + JSON.stringify(body) + ');';
   assert.throws(() => parse_gviz_response(text), { message: 'boom sheet is gone' });
 });
+
+test('parse_gviz_response：查詢錯誤沒有說明時用預設訊息', () => {
+  const text = '/*O_o*/\ngoogle.visualization.Query.setResponse(' + JSON.stringify({ status: 'error', errors: [] }) + ');';
+  assert.throws(() => parse_gviz_response(text), { message: '試算表回報錯誤' });
+});
