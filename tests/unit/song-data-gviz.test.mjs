@@ -27,6 +27,12 @@ test('parse_gviz_response：空白格（null 或沒有 v）為 null', () => {
 });
 
 test('parse_gviz_response：查詢錯誤或格式不對時丟出錯誤', () => {
-  assert.throws(() => parse_gviz_response(gviz([], 'error')), /試算表查詢失敗/);
+  assert.throws(() => parse_gviz_response(gviz([], 'error')), /^Error: access_denied$/);
   assert.throws(() => parse_gviz_response('<html>login</html>'), /無法解析/);
+});
+
+test('parse_gviz_response：查詢錯誤的訊息是 gviz 的說明文字', () => {
+  const body = { status: 'error', errors: [{ reason: 'invalid_query', message: 'boom', detailed_message: 'sheet is gone' }] };
+  const text = '/*O_o*/\ngoogle.visualization.Query.setResponse(' + JSON.stringify(body) + ');';
+  assert.throws(() => parse_gviz_response(text), { message: 'boom sheet is gone' });
 });

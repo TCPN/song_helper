@@ -1,34 +1,44 @@
 // 歌曲資料載入：先用 localStorage 快取（第一次來則用部署時產生的 songs.json 快照）渲染，
 // 再用 Google 試算表的最新資料更新
 import { state } from './state.js';
-import { getSongArray, SPREADSHEET_KEY } from './song-data.js';
+import { getSongArray, parse_gviz_response, SHEET_QUERY_URL } from './song-data.js';
 import { getCachedData, setCachedData } from './cache.js';
 import { createList, setup_song_list_selection, fixedListWidth } from './list.js';
 import { exec_hash, hash_song_openable } from './route.js';
 import { render_score, close_score } from './score.js';
 
-// Google Visualization API 載入後的 callback：查詢試算表
+// 試算表查詢多久沒回應就放棄，改用快取或快照
+const QUERY_TIMEOUT_MS = 30000;
+
+// 向試算表查詢最新資料
 export function loadData() {
-  /*var URL = 'https://docs.google.com/spreadsheet/tq?key=0AvTQcvEt3SwvdEdaOUpVVHRSMkVXUXlHX1hZbFBzWkE';*//* file deleted! */
-  var URL = 'https://docs.google.com/spreadsheet/tq?key=' + SPREADSHEET_KEY;
-  var query = new google.visualization.Query(URL);
-  query.send(function handleQueryResponse(response) {
-    if (response.isError()) {
-      alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
-      state.newestUnavailable = true;
-      // 拿不到最新資料：若有快取，就用快取處理還沒處理的 hash
-      if (state.songs && !state.initialHashHandled)
-        exec_hash();
-      showNoDataIfNeeded();
-      return;
-    }
-    var data = response.getDataTable();
-    state.songs = getSongArray(data);
-    updateListUI(state.songs, true);
-    console.log('rendered with newest data');
-    setCachedData(state.songs);
-    console.log('cached data updated');
-  });
+  fetch(SHEET_QUERY_URL, { signal: AbortSignal.timeout(QUERY_TIMEOUT_MS) })
+    .then((response) => {
+      if (!response.ok)
+        throw new Error('HTTP ' + response.status);
+      return response.text();
+    })
+    .then((text) => getSongArray(parse_gviz_response(text)))
+    // 第二個參數只接查詢與解析的錯誤；渲染時的錯誤不要被當成查詢失敗
+    .then(renderWithNewestData, handleQueryError);
+}
+
+function renderWithNewestData(songs) {
+  state.songs = songs;
+  updateListUI(state.songs, true);
+  console.log('rendered with newest data');
+  setCachedData(state.songs);
+  console.log('cached data updated');
+}
+
+// 拿不到最新資料：只能用快取或快照
+function handleQueryError(err) {
+  alert('Error in query: ' + err.message);
+  state.newestUnavailable = true;
+  // 若已有快取（或快照），就用它處理還沒處理的 hash
+  if (state.songs && !state.initialHashHandled)
+    exec_hash();
+  showNoDataIfNeeded();
 }
 
 export function renderWithCachedData() {
@@ -64,14 +74,6 @@ function renderWithSnapshot() {
       console.log('rendered with snapshot updated at', snapshot.updated);
     })
     .catch((err) => console.log('no snapshot', err));
-}
-
-// Google 載入器無法使用時呼叫：只能用快取或快照
-export function markNewestUnavailable() {
-  state.newestUnavailable = true;
-  if (state.songs && !state.initialHashHandled)
-    exec_hash();
-  showNoDataIfNeeded();
 }
 
 // 最新資料、快取、快照都拿不到時，把 Loading... 換成錯誤訊息，不要讓它一直轉

@@ -1,19 +1,32 @@
 // 所有 E2E 測試共用的 fixture。
 //
 // 做了這些事，讓測試完全不依賴外部網路，也不受本機檔案影響：
-//   1. 把 https://www.google.com/jsapi 換成 tests/support/google-stub.js（googleUnavailable 時讓它載入失敗）
+//   1. 試算表的 gviz 查詢由測試回應：內容是 songs 選項的歌曲，可模擬查詢錯誤、連不上與延遲
 //   2. 其餘非本機的請求一律中止，並記錄在 app.blocked
 //   3. songs.json 快照由測試決定（snapshot 選項；預設 404，就算本機有產生過 songs.json 也不會用到）
-//   4. 在頁面載入前注入測試歌曲，並把 window.print 換成計數器
+//   4. 把 window.print 換成計數器
 //
 // 另外自動收集頁面錯誤（app.errors）與 alert/confirm 訊息（app.dialogs）。
-const fs = require('fs');
-const path = require('path');
 const base = require('@playwright/test');
 const { SONGS } = require('./fixtures/songs');
 
-const GOOGLE_STUB = fs.readFileSync(path.join(__dirname, 'support', 'google-stub.js'), 'utf8');
 const LOCAL_HOSTS = ['127.0.0.1', 'localhost'];
+
+const SHEET_QUERY_PATH = /^\/spreadsheets\/d\/[^/]+\/gviz\/tq$/;
+
+// 對應試算表欄位順序：0 編號, 1 歌名, 2 調號, 3 拍號, 4 首句旋律, 5 出處, 6 分類, 7 譜, 8 投影片, 9 ppt, 10 abc
+function songToCells(song) {
+  return [song.id, song.name, song.tone, song.timesig, song.melody, null, null, null, null, null, song.abc]
+    .map((v) => (v === null || v === undefined ? null : { v }));
+}
+
+// 仿照試算表 gviz 查詢（tqx=out:json）的回應；error 為 { message, detail } 時回應查詢錯誤
+function gvizResponse(songs, error) {
+  const body = error
+    ? { version: '0.6', status: 'error', errors: [{ reason: 'invalid_query', message: error.message, detailed_message: error.detail }] }
+    : { version: '0.6', status: 'ok', table: { cols: [], rows: songs.map((song) => ({ c: songToCells(song) })) } };
+  return '/*O_o*/\ngoogle.visualization.Query.setResponse(' + JSON.stringify(body) + ');';
+}
 
 const test = base.test.extend({
   // 測試檔可用 test.use({ songs: [...] }) 或 test.use({ queryError: {...} }) 覆寫
@@ -23,15 +36,17 @@ const test = base.test.extend({
   snapshot: [null, { option: true }],
   // songs.json 延遲幾毫秒才回應（測試快照比試算表晚到的情況）
   snapshotDelay: [0, { option: true }],
-  // true 時 Google 的載入器（jsapi）載入失敗
-  googleUnavailable: [false, { option: true }],
+  // true 時連不上試算表（請求被中止）
+  sheetUnreachable: [false, { option: true }],
   // 預設任何未捕捉的頁面錯誤都會讓測試失敗；已知問題的測試可設為 true 後自行檢查 app.errors
   allowPageErrors: [false, { option: true }],
 
-  app: async ({ page, songs, queryError, snapshot, snapshotDelay, googleUnavailable, allowPageErrors }, use) => {
+  app: async ({ page, songs, queryError, snapshot, snapshotDelay, sheetUnreachable, allowPageErrors }, use) => {
     const errors = [];
     const dialogs = [];
     const blocked = [];
+    const queryUrls = [];
+    let queryDelay = 0;
 
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('dialog', (dialog) => {
@@ -50,26 +65,31 @@ const test = base.test.extend({
         }
         return route.continue();
       }
-      if (url.href === 'https://www.google.com/jsapi') {
-        if (googleUnavailable) return route.abort();
-        return route.fulfill({ contentType: 'text/javascript', body: GOOGLE_STUB });
+      if (url.hostname === 'docs.google.com' && SHEET_QUERY_PATH.test(url.pathname)) {
+        queryUrls.push(url.href);
+        if (queryDelay) await new Promise((resolve) => setTimeout(resolve, queryDelay));
+        if (sheetUnreachable) return route.abort();
+        return route.fulfill({
+          contentType: 'application/javascript',
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: gvizResponse(songs, queryError),
+        });
       }
       blocked.push(url.href);
       return route.abort();
     });
 
-    await page.addInitScript(({ songs, queryError }) => {
-      window.__TEST_SONGS__ = songs;
-      window.__TEST_QUERY_ERROR__ = queryError;
+    await page.addInitScript(() => {
       window.__printCalls__ = 0;
       window.print = () => { window.__printCalls__ += 1; };
-    }, { songs, queryError });
+    });
 
     const app = {
       page,
       errors,
       dialogs,
       blocked,
+      queryUrls,
 
       // 開啟網站（可帶 hash，例如 '#song_id=1'），並等歌曲列表載入完成
       async goto(hash = '', { waitReady = true } = {}) {
@@ -111,9 +131,9 @@ const test = base.test.extend({
           localStorage.setItem('song_data', JSON.stringify(data));
         }, cachedSongs);
       },
-      // 讓假的試算表查詢延遲 ms 毫秒才回應。要在 goto 之前呼叫。
+      // 讓試算表查詢延遲 ms 毫秒才回應。要在 goto 之前呼叫。
       async delayQuery(ms) {
-        await page.addInitScript((delay) => { window.__TEST_QUERY_DELAY__ = delay; }, ms);
+        queryDelay = ms;
       },
       // 按 ▴／▾ 移調。這兩個按鈕平常是隱藏的，輸入框取得焦點（或滑鼠移上去）時才會出現。
       async stepTranspose(delta) {

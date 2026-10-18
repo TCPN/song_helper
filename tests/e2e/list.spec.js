@@ -38,9 +38,8 @@ test.describe('歌曲列表', () => {
 
   test('只向試算表查詢一次，且不發出任何外部請求', async ({ app }) => {
     await app.goto();
-    const urls = await app.page.evaluate(() => window.__TEST_QUERY_URLS__);
-    expect(urls).toHaveLength(1);
-    expect(urls[0]).toContain('docs.google.com/spreadsheet/tq?key=');
+    expect(app.queryUrls).toHaveLength(1);
+    expect(app.queryUrls[0]).toBe('https://docs.google.com/spreadsheets/d/1_8-RZ_a_f47I0IavWYOwg5W07d_M3nQx8VK6wzEvfoM/gviz/tq?tqx=out:json');
     expect(app.blocked).toEqual([]);
   });
 });

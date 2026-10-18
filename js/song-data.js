@@ -2,8 +2,10 @@
 
 // 歌曲資料的 Google 試算表（網站即時查詢與 scripts/update-songs.mjs 產生快照都用它）
 export const SPREADSHEET_KEY = '1_8-RZ_a_f47I0IavWYOwg5W07d_M3nQx8VK6wzEvfoM';
+// 試算表的 gviz 查詢，回應交給 parse_gviz_response
+export const SHEET_QUERY_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_KEY}/gviz/tq?tqx=out:json`;
 
-// data 是 google.visualization.DataTable（只用到 getNumberOfRows／getValue）
+// data 只要有 getNumberOfRows／getValue（parse_gviz_response 的回傳值）
 export function getSongArray(data) {
   /*
   0  編號
@@ -41,8 +43,9 @@ export function parse_gviz_response(text) {
   if (!m)
     throw new Error('無法解析試算表回應');
   var response = JSON.parse(m[1]);
+  // 錯誤訊息只放 gviz 給的說明（例如「boom sheet is gone」），前綴由呼叫端決定
   if (response.status === 'error')
-    throw new Error('試算表查詢失敗：' + JSON.stringify(response.errors));
+    throw new Error((response.errors || []).map((e) => [e.message, e.detailed_message].filter(Boolean).join(' ') || e.reason).join('; '));
   var rows = response.table.rows;
   return {
     getNumberOfRows: () => rows.length,
