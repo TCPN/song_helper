@@ -49,17 +49,19 @@ jobs:
 
             請遵守 repo 根目錄 CLAUDE.md 的維護規則。只留有實質內容的意見，請用繁體中文。
 
-            避免重複留言：
-            - 先用 `gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments`
-              看已有的行內意見；同樣的問題已經有人留過就不要再留。
-            - 具體問題用 `mcp__github_inline_comment__create_inline_comment` 留在對應的程式行上。
-            - 整體總結只保留一則：第一行放 `<!-- claude-code-review -->` 標記。
-              先用 `gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments`
-              找有這個標記的留言；找到就用
-              `gh api -X PATCH repos/${{ github.repository }}/issues/comments/<留言 id> -f body=...` 改寫它，
-              找不到才用 `gh pr comment` 新增。
-            - 若 EVENT 是 synchronize（推了新 commit），把重點放在上次 review 之後的改動，
-              總結裡註明這是針對哪個 commit 的 review。
+            留言方式：
+            - 先用 `gh pr view ${{ github.event.pull_request.number }} --comments` 讀之前的總結和其他人的回覆，
+              再用 `gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments`
+              讀已有的行內意見與回覆。
+            - 具體問題用 `mcp__github_inline_comment__create_inline_comment` 留在對應的程式行上；
+              同樣的問題已經有人留過就不要再留。
+            - 每次 review 用 `gh pr comment` 新增一則總結（不要改寫舊的），開頭註明這次看的是哪個 commit。
+            - 若之前已經 review 過（例如 EVENT 是 synchronize），總結依序寫兩段：
+              1.「這次的修改」：說明上次 review 之後新推送的修改做了什麼，逐一對照之前留言提到的問題，
+                說明哪些已被這次修改解決、哪些改了但還不完整，以及新修改本身有沒有新問題。
+              2.「目前尚未解決／回應的問題」：彙整到目前為止仍未解決、也還沒有人回覆說明的問題；
+                已經有人回覆說明不處理的，標註回覆的結論即可。都處理完了就直接說沒有。
+            - 第一次 review 則照常寫一則整體總結。
 
           claude_args: |
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments:*)"
