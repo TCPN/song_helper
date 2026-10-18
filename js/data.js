@@ -12,13 +12,19 @@ const QUERY_TIMEOUT_MS = 30000;
 
 // 向試算表查詢最新資料
 export function loadData() {
-  fetch(SHEET_QUERY_URL, { signal: AbortSignal.timeout(QUERY_TIMEOUT_MS) })
+  // 不用 AbortSignal.timeout()：舊的 Safari／Chrome 沒有它，會在 promise 鏈外丟錯
+  var controller = new AbortController();
+  var timer = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
+  fetch(SHEET_QUERY_URL, { signal: controller.signal })
     .then((response) => {
       if (!response.ok)
         throw new Error('HTTP ' + response.status);
       return response.text();
     })
-    .then((text) => getSongArray(parse_gviz_response(text)))
+    .then((text) => {
+      clearTimeout(timer);
+      return getSongArray(parse_gviz_response(text));
+    })
     // 第二個參數只接查詢與解析的錯誤；渲染時的錯誤不要被當成查詢失敗
     .then(renderWithNewestData, handleQueryError);
 }
