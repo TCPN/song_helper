@@ -16,19 +16,20 @@ export function loadData() {
   var controller = new AbortController();
   var timer = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
   fetch(SHEET_QUERY_URL, { signal: controller.signal })
+    .then((response) => (response.ok
+      ? response.text().then((text) => ({ text }))
+      : { status: response.status }))
     .catch((err) => {
-      // 連不上（離線、逾時）：和試算表回報錯誤分開，不跳提示
+      // 連不上（離線、逾時，包括讀到一半斷線）：和試算表回報錯誤分開，不跳提示
       err.offline = true;
       throw err;
     })
-    .then((response) => {
-      if (!response.ok)
-        throw new Error('HTTP ' + response.status);
-      return response.text();
-    })
-    .then((text) => {
+    .then((result) => {
       clearTimeout(timer);
-      return getSongArray(parse_gviz_response(text));
+      // HTTP 錯誤（例如試算表被刪除）要提示
+      if (result.status)
+        throw new Error('HTTP ' + result.status);
+      return getSongArray(parse_gviz_response(result.text));
     })
     // 第二個參數只接查詢與解析的錯誤；渲染時的錯誤不要被當成查詢失敗
     .then(renderWithNewestData, handleQueryError);
