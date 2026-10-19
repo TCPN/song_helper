@@ -36,7 +36,8 @@
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
 | `abcjs_midi_5.8.0-min-mod.js` | 實際使用的 abcjs（修改版）。其餘 `abcjs_midi_*.js` 為舊版，目前沒有被引用 |
 
-資料來源是 `js/data.js` 裡的 Google 試算表查詢（`docs.google.com/spreadsheet/tq?key=…`），
+資料來源是 Google 試算表：`js/data.js` 直接 `fetch` 試算表的 gviz 查詢（`js/song-data.js` 的 `SHEET_QUERY_URL`），
+不需要載入 Google 的 JavaScript。試算表必須維持「知道連結的人都能檢視」。
 欄位以固定索引對應：0 編號、1 歌名、2 調號、3 拍號、4 首句旋律、10 abc。
 快取存在 localStorage 的 `song_data`（歌曲陣列的 JSON）與 `song_data_timestamp`。
 
@@ -44,7 +45,7 @@
 
 `npm run update-songs` 會抓試算表，在網站根目錄產生 `songs.json`，可以當作試算表的備份，也可以跟網站一起部署。
 有部署這個檔案時，第一次來的訪客（沒有 localStorage 快取）會先看到快照的列表，再更新成試算表的最新資料；
-Google 的載入器（`www.google.com/jsapi`）無法使用時，網站也能靠它顯示。沒有這個檔案時，網站照常運作。
+連不上試算表時，網站也能靠它顯示。沒有這個檔案時，網站照常運作。
 
 `songs.json` 含整份歌譜與歌詞，而 repo 是公開的，所以它列在 `.gitignore`，**不要 commit**。
 部署出去的 `songs.json` 任何人都能下載（內容和網站上看得到的一樣）；快照不會自己更新，部署前請重新執行一次 `npm run update-songs`。
@@ -75,7 +76,7 @@ npm run serve        # 靜態伺服器，預設 http://127.0.0.1:4173
 
 E2E 測試使用 [Playwright](https://playwright.dev/)，測試完全不連外部網路：
 
-- `https://www.google.com/jsapi` 會被換成 `tests/support/google-stub.js`（可模擬查詢失敗與延遲）
+- 試算表查詢由 `tests/app.js` 回應假的 gviz 資料（可模擬查詢錯誤、連不上與延遲）
 - 歌曲資料來自 `tests/fixtures/songs.js`（自編的短 ABC，不是真實歌曲）
 - 其他非本機的請求一律中止
 

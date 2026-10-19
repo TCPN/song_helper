@@ -1,7 +1,7 @@
 const { test, expect, SONGS } = require('../app');
 
 // 部署時產生的 songs.json 快照：第一次來（沒有 localStorage 快取）時先用它顯示列表，
-// 之後一樣用試算表的最新資料更新；Google 載入器無法使用時，網站靠它也能用。
+// 之後一樣用試算表的最新資料更新；連不上試算表時，網站靠它也能用。
 function snapshotOf(songs, rename) {
   const copy = songs.map((song) => ({ ...song }));
   if (rename) copy[0].name = rename;
@@ -69,8 +69,8 @@ test.describe('songs.json 快照', () => {
     });
   });
 
-  test.describe('Google 載入器無法使用', () => {
-    test.use({ googleUnavailable: true });
+  test.describe('連不上試算表', () => {
+    test.use({ sheetUnreachable: true });
 
     test.describe('有快照', () => {
       test.use({ snapshot: snapshotOf(SONGS) });
@@ -93,10 +93,13 @@ test.describe('songs.json 快照', () => {
       });
     });
 
-    test('有 localStorage 快取時用快取顯示', async ({ app }) => {
+    test('有 localStorage 快取時用快取顯示，不跳錯誤提示', async ({ app }) => {
       await app.seedCache();
+      const unreachable = app.page.waitForEvent('console', (msg) => msg.text().startsWith('sheet unreachable'));
       await app.goto();
       await expect(app.rows()).toHaveCount(SONGS.length);
+      await unreachable;
+      expect(app.dialogs).toEqual([]);
     });
 
     test('快取與快照都沒有時，載入畫面改顯示錯誤訊息', async ({ app }) => {
@@ -107,7 +110,7 @@ test.describe('songs.json 快照', () => {
   });
 
   test.describe('快照格式不對', () => {
-    test.use({ snapshot: { updated: '2026-10-01T00:00:00.000Z', songs: 'not an array' }, googleUnavailable: true });
+    test.use({ snapshot: { updated: '2026-10-01T00:00:00.000Z', songs: 'not an array' }, sheetUnreachable: true });
 
     test('不使用壞掉的快照，改顯示錯誤訊息', async ({ app }) => {
       await app.goto('#song_id=1', { waitReady: false });
