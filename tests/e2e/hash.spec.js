@@ -7,13 +7,13 @@ test.describe('網址 hash 的格式與行為', () => {
     await app.goto('#song_id=2');
     await expect(app.popup()).toHaveClass(/open/);
     await expect(app.currentSongId()).toHaveText('2');
-    // 現況：沒有 transpose 參數時，輸入框是空白（視同 0），不是顯示 0
-    await expect(app.transposeInput()).toHaveValue('');
+    // 沒有 transpose 參數時顯示 0
+    await expect(app.transposeValue()).toHaveText('0');
   });
 
   test('#song_id=N&transpose=M 開啟該首並套用移調', async ({ app }) => {
     await app.goto('#song_id=2&transpose=2');
-    await expect(app.transposeInput()).toHaveValue('2');
+    await expect(app.transposeValue()).toHaveText('2');
     await expect(app.currentTone()).toHaveText('A');
   });
 
@@ -25,7 +25,7 @@ test.describe('網址 hash 的格式與行為', () => {
 
   test('支援負的移調值', async ({ app }) => {
     await app.goto('#song_id=1&transpose=-1');
-    await expect(app.transposeInput()).toHaveValue('-1');
+    await expect(app.transposeValue()).toHaveText('-1');
     await expect(app.currentTone()).toHaveText('B');
   });
 
@@ -82,7 +82,7 @@ test.describe('不合法的 hash', () => {
     await app.goto('#song_id=1&transpose=abc');
     await expect.poll(() => app.dialogs).toEqual(['Invalid transpose is ignored: abc']);
     await expect(app.popup()).toHaveClass(/open/);
-    await expect(app.transposeInput()).toHaveValue('0');
+    await expect(app.transposeValue()).toHaveText('0');
     await expect(app.currentTone()).toHaveText('C');
   });
 

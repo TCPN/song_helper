@@ -70,22 +70,19 @@
 				<div id="song_id_popup_window" class="popup-window"></div>
 			</div>
 			<span>|</span>
-			<label>調性:</label>
-			<span id="current_visual_tone"></span>
-			<label>移調</label>
-			<span class="popup-base">
-				<input id="transpose" type="number" value="0"/>
-				<div class="popup-button-base">
-					<label class="popup-button"
-						for="transpose"
-						data-target="#transpose"
-						data-add="+1"
-					>▴</label>
-					<label class="popup-button"
-						for="transpose"
-						data-target="#transpose"
-						data-add="-1"
-					>▾</label>
+			<!-- 「調性:」和調性按鈕包在一起，移調選單就能對齊在它們正下方 -->
+			<span id="key_group">
+				<label>調性:</label>
+				<!-- 調性和移調合成一顆按鈕：顯示目前的調與移調半音數，點了才出現 −／半音數／＋ -->
+				<div id="transpose_button" title="移調" aria-label="移調" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+					<span id="current_visual_tone"></span><span id="transpose_badge"></span>
+				</div>
+				<div id="transpose-menu" class="hide menu">
+					<div class="transpose-row">
+						<span class="step-button" data-target="#transpose" data-add="-1" title="降一個半音" role="button" tabindex="0">−</span>
+						<output id="transpose" aria-label="移調半音數">0</output>
+						<span class="step-button" data-target="#transpose" data-add="+1" title="升一個半音" role="button" tabindex="0">+</span>
+					</div>
 				</div>
 			</span>
 			<!-- wide-only 只在工具列夠寬時顯示，compact-only 只在不夠寬時顯示（js/toolbar.js） -->

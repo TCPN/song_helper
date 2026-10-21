@@ -10,8 +10,8 @@ test.describe('開啟與關閉譜面', () => {
     expect(await app.hashParams()).toEqual({ song_id: '1' });
     await expect(app.currentSongId()).toHaveText('1');
     await expect(app.currentTone()).toHaveText('C');
-    // 現況：還沒移調時輸入框是空白（視同 0）
-    await expect(app.transposeInput()).toHaveValue('');
+    // 還沒移調時顯示 0
+    await expect(app.transposeValue()).toHaveText('0');
     await expect(app.page).toHaveTitle('測試歌一 (C)');
     await expect(app.page.locator('#score_paper svg').first()).toBeVisible();
   });
@@ -44,7 +44,7 @@ test.describe('開啟與關閉譜面', () => {
     await expect(app.popup()).not.toHaveClass(/open/);
     expect(await app.hashParams()).toEqual({});
     await expect(app.page).toHaveTitle('移調小幫手');
-    await expect(app.transposeInput()).toHaveValue('');
+    await expect(app.transposeValue()).toHaveText('0');
   });
 
   test('點彈窗背景的空白處也會關閉', async ({ app }) => {
@@ -56,11 +56,11 @@ test.describe('開啟與關閉譜面', () => {
     expect(await app.hashParams()).toEqual({});
   });
 
-  test('關閉後再開另一首，移調值重置（視同 0）', async ({ app }) => {
+  test('關閉後再開另一首，移調值重置為 0', async ({ app }) => {
     await app.goto('#song_id=1&transpose=3');
     await app.page.getByLabel('關閉', { exact: true }).click();
     await app.openScore(2);
-    await expect(app.transposeInput()).toHaveValue('');
+    await expect(app.transposeValue()).toHaveText('0');
     expect(await app.hashParams()).toEqual({ song_id: '2' });
     await expect(app.currentTone()).toHaveText('G');
   });

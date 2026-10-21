@@ -122,7 +122,7 @@ function updateListUI(songData, isNewest) {
       close_score();
     } else if (newest.abc !== state.displayingSong.abc) {
       state.displayingSong = newest;
-      render_score(); // 沿用目前輸入框裡的移調值；標題也會用最新的歌名
+      render_score(); // 沿用目前選單裡的移調值；標題也會用最新的歌名
     } else {
       state.displayingSong = newest;
       document.title = `${newest.name} (${document.querySelector('#current_visual_tone').textContent})`;

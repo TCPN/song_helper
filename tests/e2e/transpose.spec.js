@@ -2,21 +2,21 @@ const { test, expect } = require('../app');
 
 // 調性顯示使用 abcjs 的結果：升降記號固定用 ♭（C 升一個半音顯示 D♭，不是 C♯）。
 test.describe('移調', () => {
-  test('▴ 升一個半音：輸入框、網址、調性與標題一起更新', async ({ app }) => {
+  test('＋ 升一個半音：半音數、網址、調性與標題一起更新', async ({ app }) => {
     await app.goto('#song_id=1');
     await app.stepTranspose(1);
 
-    await expect(app.transposeInput()).toHaveValue('1');
+    await expect(app.transposeValue()).toHaveText('1');
     expect(await app.hashParams()).toEqual({ song_id: '1', transpose: '1' });
     await expect(app.currentTone()).toHaveText('D♭');
     await expect(app.page).toHaveTitle('測試歌一 (D♭)');
   });
 
-  test('▾ 降一個半音', async ({ app }) => {
+  test('− 降一個半音', async ({ app }) => {
     await app.goto('#song_id=1');
     await app.stepTranspose(-1);
 
-    await expect(app.transposeInput()).toHaveValue('-1');
+    await expect(app.transposeValue()).toHaveText('-1');
     expect(await app.hashParams()).toEqual({ song_id: '1', transpose: '-1' });
     await expect(app.currentTone()).toHaveText('B');
   });
@@ -25,26 +25,16 @@ test.describe('移調', () => {
     await app.goto('#song_id=1');
     await app.stepTranspose(1);
     await app.stepTranspose(1);
-    await expect(app.transposeInput()).toHaveValue('2');
+    await expect(app.transposeValue()).toHaveText('2');
     await expect(app.currentTone()).toHaveText('D');
   });
 
   test('移回 0 時，網址不保留 transpose 參數', async ({ app }) => {
     await app.goto('#song_id=1&transpose=1');
     await app.stepTranspose(-1);
-    // 現況：網址移除 transpose 後重新套用，輸入框會變成空白（視同 0）
-    await expect(app.transposeInput()).toHaveValue('');
+    await expect(app.transposeValue()).toHaveText('0');
     expect(await app.hashParams()).toEqual({ song_id: '1' });
     await expect(app.currentTone()).toHaveText('C');
-  });
-
-  test('直接在輸入框輸入數字也會移調', async ({ app }) => {
-    await app.goto('#song_id=2');
-    await app.transposeInput().fill('2');
-    await app.transposeInput().press('Tab');
-
-    expect(await app.hashParams()).toEqual({ song_id: '2', transpose: '2' });
-    await expect(app.currentTone()).toHaveText('A');
   });
 
   test('小調也會正確移調（Am 升兩個半音為 Bm）', async ({ app }) => {
@@ -73,8 +63,99 @@ test.describe('移調', () => {
     await app.goto('#song_id=1&transpose=2');
     await app.page.locator('.change-song.next').click();
     await expect(app.currentSongId()).toHaveText('2');
-    await expect(app.transposeInput()).toHaveValue('2');
+    await expect(app.transposeValue()).toHaveText('2');
     await expect(app.currentTone()).toHaveText('A');
     expect(await app.hashParams()).toEqual({ song_id: '2', transpose: '2' });
+  });
+
+  test('移調選單平常收起，點 icon 才出現；連續按 ＋／− 選單不會收起，點外面才收起', async ({ app }) => {
+    await app.goto('#song_id=1');
+    const menu = app.page.locator('#transpose-menu');
+    await expect(menu).toHaveClass(/hide/);
+    await expect(app.page.locator('#transpose_button')).toHaveAttribute('aria-label', '移調');
+
+    await expect(app.page.locator('#transpose_button')).toHaveAttribute('aria-expanded', 'false');
+    await app.page.locator('#transpose_button').click();
+    await expect(menu).not.toHaveClass(/hide/);
+    await expect(app.page.locator('#transpose_button')).toHaveAttribute('aria-expanded', 'true');
+    await menu.locator('.step-button[data-add="+1"]').click();
+    await menu.locator('.step-button[data-add="+1"]').click();
+    await expect(menu).not.toHaveClass(/hide/);
+    await expect(app.transposeValue()).toHaveText('2');
+    // 點到選單的內距也不會收起
+    await menu.click({ position: { x: 2, y: 2 } });
+    await expect(menu).not.toHaveClass(/hide/);
+
+    await app.page.mouse.click(10, 300);
+    await expect(menu).toHaveClass(/hide/);
+    await expect(app.page.locator('#transpose_button')).toHaveAttribute('aria-expanded', 'false');
+    await expect(app.popup()).toHaveClass(/open/);
+  });
+
+  test('調性按鈕右上角顯示目前的半音數，0 時不顯示', async ({ app }) => {
+    const badge = app.page.locator('#transpose_badge');
+    await app.goto('#song_id=1&transpose=2');
+    await expect(badge).toHaveText('+2');
+    await app.goto('#song_id=1&transpose=-3');
+    await expect(badge).toHaveText('-3');
+    await app.goto('#song_id=1');
+    await expect(badge).toHaveText('');
+  });
+
+  test('可以只用鍵盤移調：Enter 打開選單，Tab 到 ＋ 再按 Enter', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await app.page.locator('#transpose_button').focus();
+    await app.page.keyboard.press('Enter');
+    await expect(app.page.locator('#transpose-menu')).not.toHaveClass(/hide/);
+    await app.page.locator('#transpose-menu .step-button[data-add="+1"]').focus();
+    await app.page.keyboard.press('Enter');
+    await expect(app.transposeValue()).toHaveText('1');
+    expect(await app.hashParams()).toEqual({ song_id: '1', transpose: '1' });
+    await expect(app.page.locator('#transpose-menu')).not.toHaveClass(/hide/);
+  });
+
+  test('移調選單開著時，其他按鈕照樣能按（例如播放），選單同時收起', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await app.openTranspose();
+    await app.page.locator('label.play-button').click();
+    await expect(app.page.locator('#player-set')).not.toHaveClass(/hide/);
+    await expect(app.page.locator('#transpose-menu')).toHaveClass(/hide/);
+  });
+
+  test('移調選單可以按 Esc 收起，焦點留在調性按鈕', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await app.page.locator('#transpose_button').focus();
+    await app.page.keyboard.press('Enter');
+    await expect(app.page.locator('#transpose-menu')).not.toHaveClass(/hide/);
+    await app.page.locator('#transpose-menu .step-button[data-add="+1"]').focus();
+    await app.page.keyboard.press('Escape');
+    await expect(app.page.locator('#transpose-menu')).toHaveClass(/hide/);
+    await expect(app.page.locator('#transpose_button')).toBeFocused();
+  });
+
+  test('移調選單開著時關閉譜面，下一首打開時選單是收起的', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await app.openTranspose();
+    await expect(app.page.locator('#transpose_button')).toHaveAttribute('aria-expanded', 'true');
+    // 選單沒有遮罩，開著時也能直接按 ✕
+    await app.page.getByLabel('關閉').click();
+    await expect(app.popup()).not.toHaveClass(/open/);
+    await app.openScore('2');
+    await expect(app.page.locator('#transpose-menu')).toHaveClass(/hide/);
+    await expect(app.page.locator('#transpose_button')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('調性和移調數字改變時，工具列其他項目的位置不變', async ({ app }) => {
+    const positions = () => app.page.evaluate(() =>
+      ['#transpose_button', '#edit_button', '#close_score_button']
+        .map((sel) => Math.round(document.querySelector(sel).getBoundingClientRect().left)));
+    await app.goto('#song_id=1');
+    await expect(app.currentTone()).toHaveText('C');
+    const base = await positions();
+    for (const [hash, tone] of [['#song_id=4&transpose=1', 'B♭m'], ['#song_id=1&transpose=-11', 'D♭'], ['#song_id=1&transpose=10', 'B♭']]) {
+      await app.goto(hash);
+      await expect(app.currentTone()).toHaveText(tone);
+      expect(await positions(), hash).toEqual(base);
+    }
   });
 });
