@@ -257,9 +257,12 @@ table#song_list .song_score a.note_score {
 }
 
 /* 調性與移調數字用固定寬度，字數改變時其他按鈕的位置才不會跟著移動。
- * 用 min-width：一般的調（最長像 B♭m）都放得下，少見的調式（像 DDor）就撐寬，不會蓋到旁邊 */
+ * 用 min-width：一般的調（最長像 B♭m）都放得下，少見的調式（像 DDor）就撐寬，不會蓋到旁邊。
+ * 高度也固定：♭ 常由備用字型畫出，字型的上下高度不同會把行高撐大，移調時按鈕會跟著變高 */
 #current_visual_tone {
 	display: inline-block;
+	height: 1.2em;
+	line-height: 1.2em;
 	min-width: 2.2em;
 	text-align: center;
 	vertical-align: middle;
