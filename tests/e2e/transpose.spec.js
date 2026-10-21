@@ -158,4 +158,17 @@ test.describe('移調', () => {
       expect(await positions(), hash).toEqual(base);
     }
   });
+  test('調性有 ♭ 時，調性按鈕和工具列的高度不變', async ({ app }) => {
+    const heights = () => app.page.evaluate(() =>
+      ['#transpose_button', '#score_popup_top_bar']
+        .map((sel) => Math.round(document.querySelector(sel).getBoundingClientRect().height * 10) / 10));
+    await app.goto('#song_id=1');
+    await expect(app.currentTone()).toHaveText('C');
+    const base = await heights();
+    for (const [hash, tone] of [['#song_id=1&transpose=1', 'D♭'], ['#song_id=4&transpose=1', 'B♭m'], ['#song_id=1&transpose=2', 'D']]) {
+      await app.goto(hash);
+      await expect(app.currentTone()).toHaveText(tone);
+      expect(await heights(), hash).toEqual(base);
+    }
+  });
 });
