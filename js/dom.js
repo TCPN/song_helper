@@ -64,3 +64,21 @@ export function toggle_menu(button, menu) {
   if(!expanded && menu.contains(document.activeElement))
     button.focus();
 }
+
+// 不用遮罩的下拉選單（選單不放在按鈕裡面）：點按鈕開關；開著時其他按鈕照樣能按，
+// 點按鈕和選單以外的地方或按 Esc 就收起
+export function setup_dropdown(button, menu) {
+  button = getDom(button);
+  menu = getDom(menu);
+  button.addEventListener('click', ()=>{ toggle_menu(button, menu); });
+  click_on_enter(button);
+  document.addEventListener('click', (event)=>{
+    if(!menu.classList.contains('hide') && !button.contains(event.target) && !menu.contains(event.target))
+      toggle_menu(button, menu);
+  });
+  for(const target of [button, menu])
+    target.addEventListener('keydown', (event)=>{
+      if(event.key == 'Escape' && !menu.classList.contains('hide'))
+        toggle_menu(button, menu);
+    });
+}

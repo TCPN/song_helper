@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { key_display_name } from './abc.js';
 import { getSongData } from './list.js';
 import { parse_hash, update_hash } from './route.js';
-import { save_scroll, restore_scroll, toggleClass, toggle_menu, click_on_enter } from './dom.js';
+import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdown } from './dom.js';
 import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
 
@@ -166,21 +166,11 @@ export function setup_score_controls() {
   document.querySelector('.change-song.next').addEventListener('click', ()=>{ open_score('next'); });
   document.querySelector('#transpose').addEventListener('change', function(event){ set_transpose(this.value, event); });
   // 點調性按鈕開關移調選單
-  document.querySelector('#transpose_button').addEventListener('click', ()=>{ toggle_menu('#transpose_button', '#transpose-menu'); });
-  // 移調選單不用遮罩：開著時其他按鈕照樣能按，點按鈕和選單以外的地方或按 Esc 就收起
-  document.addEventListener('click', (event)=>{
-    if(!document.querySelector('#transpose-menu').classList.contains('hide') && !event.target.closest('#transpose_button, #transpose-menu'))
-      toggle_menu('#transpose_button', '#transpose-menu');
-  });
-  document.querySelector('#key_group').addEventListener('keydown', (event)=>{
-    if(event.key == 'Escape' && !document.querySelector('#transpose-menu').classList.contains('hide'))
-      toggle_menu('#transpose_button', '#transpose-menu');
-  });
+  setup_dropdown('#transpose_button', '#transpose-menu');
   for(const button of document.querySelectorAll('.step-button[data-target]')){
     button.addEventListener('click', value_modify);
     click_on_enter(button);
   }
-  click_on_enter('#transpose_button');
   click_on_enter('#close_score_button');
   // 工具列上和「⋮」選單裡各有一組列印、播放
   for(const button of document.querySelectorAll('.print-button'))
