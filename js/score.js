@@ -125,7 +125,7 @@ export function close_score(){
   document.title = state.originalTitle;
   document.querySelector('#score_popup_container').classList.remove('open');
   // 收起譜面上的選單，下一首才不會一打開就是展開的
-  for(const [button, menu] of [['#transpose_button', '#transpose-menu'], ['#more_button', '#more-menu'], ['#edit_button', '#editor-menu']]){
+  for(const [button, menu] of [['#transpose_button', '#transpose-menu'], ['#view_button', '#view-menu'], ['#more_button', '#more-menu'], ['#edit_button', '#editor-menu']]){
     document.querySelector(menu).classList.add('hide');
     document.querySelector(button).setAttribute('aria-expanded', false);
   }
@@ -158,8 +158,12 @@ function value_modify(event) {
 
 // 註冊譜面彈窗（背景、換歌、上方工具列）的事件
 export function setup_score_controls() {
+  // 點譜紙以外的暗色背景就關閉；#score_popup_window 是蓋滿背景、可捲動的那一層，
+  // 點在它的捲軸上（offsetX／offsetY 超出內容區）不算
   document.querySelector('#score_popup_bg').addEventListener('click', function(event){
-    if(event.target == this)
+    var win = event.target;
+    if(event.target == this
+      || (win.id == 'score_popup_window' && event.offsetX < win.clientWidth && event.offsetY < win.clientHeight))
       close_score();
   });
   document.querySelector('.change-song.prev').addEventListener('click', ()=>{ open_score('prev'); });
