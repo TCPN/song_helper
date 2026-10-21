@@ -71,7 +71,7 @@
 				<!-- 按鈕由 js/song-id-input.js 產生 -->
 				<div id="song_id_popup_window" class="popup-window"></div>
 			</div>
-			<span>|</span>
+			<span class="separator">|</span>
 			<!-- 「調性:」和調性按鈕包在一起，移調選單就能對齊在它們正下方 -->
 			<span id="key_group">
 				<label>調性:</label>
@@ -88,14 +88,14 @@
 				</div>
 			</span>
 			<!-- wide-only 只在工具列夠寬時顯示，compact-only 只在不夠寬時顯示（js/toolbar.js） -->
-			<span class="wide-only">|</span>
+			<span class="separator wide-only">|</span>
 			<label class="print-button wide-only">列印</label>
-			<span class="wide-only">|</span>
+			<span class="separator wide-only">|</span>
 			<label class="play-button wide-only">播放</label>
 			<div id="player-set" class="hide">
 				<div id="player-control"></div>
 			</div>
-			<span>|</span>
+			<span class="separator">|</span>
 			<!-- 「檢視」：譜面的顯示方式（js/score-view.js）；工具列不夠寬時也留在工具列上 -->
 			<span id="view_group">
 				<div id="view_button" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">檢視</div>
@@ -105,7 +105,7 @@
 					<span class="menu-item" data-fit="width" role="menuitemradio" tabindex="0">符合寬度</span>
 				</div>
 			</span>
-			<span class="wide-only">|</span>
+			<span class="separator wide-only">|</span>
 			<label id="edit_button" class="wide-only" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">編輯
 				<div id="editor-menu" class="hide menu" role="menu">
 					<div class="menu-bg"></div>
@@ -113,7 +113,7 @@
 					<label class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</label>
 				</div>
 			</label>
-			<span class="compact-only">|</span>
+			<span class="separator compact-only">|</span>
 			<!-- 工具列不夠寬時，列印、播放、編輯收在這個選單裡 -->
 			<div id="more_button" class="compact-only" title="更多" aria-label="更多" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
 				<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -127,7 +127,7 @@
 					<span class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</span>
 				</div>
 			</div>
-			<span>|</span>
+			<span class="separator">|</span>
 			<label id="close_score_button" data-close='#score_popup_container' title="關閉" aria-label="關閉" role="button" tabindex="0">
 				<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
 					<path d="M5 5 19 19M19 5 5 19" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
