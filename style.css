@@ -193,6 +193,11 @@ table#song_list .song_score a.note_score {
 	white-space: nowrap;
 }
 
+/* 按鈕之間的分隔線用深灰色，不跟按鈕文字搶眼（#35） */
+#score_popup_top_bar .separator {
+	color: #555;
+}
+
 #score_popup_top_bar:not(.compact) .compact-only,
 #score_popup_top_bar.compact .wide-only {
 	display: none;
