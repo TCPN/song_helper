@@ -191,6 +191,17 @@ table#song_list .song_score a.note_score {
 	margin: 0.5ex;
 }
 
+.icon {
+	width: 1.2em;
+	height: 1.2em;
+	fill: currentColor;
+	vertical-align: middle;
+}
+
+#close_score_button {
+	cursor: pointer;
+}
+
 @media (max-width: 360px) {
 	#score_popup_top_bar {
 		justify-content: space-around;

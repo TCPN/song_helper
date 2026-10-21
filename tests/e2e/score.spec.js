@@ -35,11 +35,11 @@ test.describe('開啟與關閉譜面', () => {
     expect(text).toContain('do');
   });
 
-  test('「關閉」收起彈窗，清除網址參數、標題與移調值', async ({ app }) => {
+  test('「關閉」（X icon）收起彈窗，清除網址參數、標題與移調值', async ({ app }) => {
     await app.goto('#song_id=1&transpose=2');
     await expect(app.popup()).toHaveClass(/open/);
 
-    await app.page.getByText('關閉', { exact: true }).click();
+    await app.page.getByLabel('關閉', { exact: true }).click();
 
     await expect(app.popup()).not.toHaveClass(/open/);
     expect(await app.hashParams()).toEqual({});
@@ -58,7 +58,7 @@ test.describe('開啟與關閉譜面', () => {
 
   test('關閉後再開另一首，移調值重置（視同 0）', async ({ app }) => {
     await app.goto('#song_id=1&transpose=3');
-    await app.page.getByText('關閉', { exact: true }).click();
+    await app.page.getByLabel('關閉', { exact: true }).click();
     await app.openScore(2);
     await expect(app.transposeInput()).toHaveValue('');
     expect(await app.hashParams()).toEqual({ song_id: '2' });

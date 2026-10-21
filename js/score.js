@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { key_display_name } from './abc.js';
 import { getSongData } from './list.js';
 import { parse_hash, update_hash } from './route.js';
-import { save_scroll, restore_scroll, toggleClass } from './dom.js';
+import { save_scroll, restore_scroll, toggleClass, click_on_enter } from './dom.js';
 import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
@@ -153,5 +153,6 @@ export function setup_score_controls() {
     button.addEventListener('click', value_modify);
   document.querySelector('#print_button').addEventListener('click', ()=>{ window.print(); });
   document.querySelector('#play_button').addEventListener('click', ()=>{ toggleClass('#player-set', 'hide'); });
+  click_on_enter('#close_score_button');
   document.querySelector('#close_score_button').addEventListener('click', ()=>{ close_score(); });
 }

@@ -40,3 +40,15 @@ export function restore_scroll(selector){
   var dom = document.querySelector(selector);
   dom.scrollTop = scroll_tmp[selector];
 }
+
+// 讓不是 <button> 的按鈕（要搭配 tabindex="0"）可以用 Enter／空白鍵觸發 click；
+// 只處理按鈕自己有焦點的時候，裡面的輸入框照常打字
+export function click_on_enter(target) {
+  target = getDom(target);
+  target.addEventListener('keydown', (event)=>{
+    if(event.target == target && (event.key == 'Enter' || event.key == ' ')){
+      event.preventDefault();
+      target.click();
+    }
+  });
+}
