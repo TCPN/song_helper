@@ -3,8 +3,9 @@ import { state } from './state.js';
 import { key_display_name } from './abc.js';
 import { getSongData } from './list.js';
 import { parse_hash, update_hash } from './route.js';
-import { save_scroll, restore_scroll, toggleClass } from './dom.js';
+import { save_scroll, restore_scroll, toggleClass, toggle_menu, click_on_enter } from './dom.js';
 import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
+import { update_toolbar_layout } from './toolbar.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
 var clickListener = console.log;
@@ -95,8 +96,18 @@ export function render_score(event){
   }
   display_tone = key_display_name(tone_signature);
   document.querySelector('#current_visual_tone').textContent = display_tone;
+  // 移調 icon 旁邊顯示目前的半音數（0 時不顯示）
+  document.querySelector('#transpose_badge').textContent = transpose_badge(settings.visualTranspose);
+  // 曲號、調性、移調的字數會影響工具列寬度
+  update_toolbar_layout();
   document.title = `${song.name} (${display_tone})`
   state.displayingSong = song;
+}
+
+function transpose_badge(transpose){
+  if(!transpose)
+    return '';
+  return (transpose > 0 ? '+' : '') + transpose;
 }
 
 function getUserSettings(){
@@ -107,12 +118,17 @@ function getUserSettings(){
 }
 
 function clearSettings(){
-  document.querySelector('#transpose').value = undefined;
+  document.querySelector('#transpose').value = 0;
 }
 
 export function close_score(){
   document.title = state.originalTitle;
   document.querySelector('#score_popup_container').classList.remove('open');
+  // 收起譜面上的選單，下一首才不會一打開就是展開的
+  for(const [button, menu] of [['#transpose_button', '#transpose-menu'], ['#more_button', '#more-menu'], ['#edit_button', '#editor-menu']]){
+    document.querySelector(menu).classList.add('hide');
+    document.querySelector(button).setAttribute('aria-expanded', false);
+  }
   state.displayingSong = null;
   clearSettings();
   save_scroll('html');
@@ -121,14 +137,14 @@ export function close_score(){
   restore_scroll('html');
 }
 
-// 移調輸入框的 change
+// 移調半音數（#transpose）的 change，由 ＋／− 按鈕觸發
 function set_transpose(value, event){
   render_score(event);
   value = Number(value) || undefined; // remove hash when value is zero
   update_hash('transpose', value);
 }
 
-// 移調的 ▴▾ 按鈕：this 是按鈕，data-target 指向輸入框，data-add／data-value 是要加的值／要設的值
+// 移調選單的 −／＋ 按鈕：this 是按鈕，data-target 指向顯示半音數的 <output>，data-add／data-value 是要加的值／要設的值
 function value_modify(event) {
   var target = document.querySelector(this.dataset.target);
   if(this.dataset.value != null)
@@ -149,9 +165,27 @@ export function setup_score_controls() {
   document.querySelector('.change-song.prev').addEventListener('click', ()=>{ open_score('prev'); });
   document.querySelector('.change-song.next').addEventListener('click', ()=>{ open_score('next'); });
   document.querySelector('#transpose').addEventListener('change', function(event){ set_transpose(this.value, event); });
-  for(const button of document.querySelectorAll('.popup-button[data-target]'))
+  // 點調性按鈕開關移調選單
+  document.querySelector('#transpose_button').addEventListener('click', ()=>{ toggle_menu('#transpose_button', '#transpose-menu'); });
+  // 移調選單不用遮罩：開著時其他按鈕照樣能按，點按鈕和選單以外的地方或按 Esc 就收起
+  document.addEventListener('click', (event)=>{
+    if(!document.querySelector('#transpose-menu').classList.contains('hide') && !event.target.closest('#transpose_button, #transpose-menu'))
+      toggle_menu('#transpose_button', '#transpose-menu');
+  });
+  document.querySelector('#key_group').addEventListener('keydown', (event)=>{
+    if(event.key == 'Escape' && !document.querySelector('#transpose-menu').classList.contains('hide'))
+      toggle_menu('#transpose_button', '#transpose-menu');
+  });
+  for(const button of document.querySelectorAll('.step-button[data-target]')){
     button.addEventListener('click', value_modify);
-  document.querySelector('#print_button').addEventListener('click', ()=>{ window.print(); });
-  document.querySelector('#play_button').addEventListener('click', ()=>{ toggleClass('#player-set', 'hide'); });
+    click_on_enter(button);
+  }
+  click_on_enter('#transpose_button');
+  click_on_enter('#close_score_button');
+  // 工具列上和「⋮」選單裡各有一組列印、播放
+  for(const button of document.querySelectorAll('.print-button'))
+    button.addEventListener('click', ()=>{ window.print(); });
+  for(const button of document.querySelectorAll('.play-button'))
+    button.addEventListener('click', ()=>{ toggleClass('#player-set', 'hide'); });
   document.querySelector('#close_score_button').addEventListener('click', ()=>{ close_score(); });
 }

@@ -40,3 +40,27 @@ export function restore_scroll(selector){
   var dom = document.querySelector(selector);
   dom.scrollTop = scroll_tmp[selector];
 }
+
+// 讓不是 <button> 的按鈕（要搭配 tabindex="0"）可以用 Enter／空白鍵觸發 click；
+// 只處理按鈕自己有焦點的時候，裡面的輸入框照常打字
+export function click_on_enter(target) {
+  target = getDom(target);
+  target.addEventListener('keydown', (event)=>{
+    if(event.target == target && (event.key == 'Enter' || event.key == ' ')){
+      event.preventDefault();
+      target.click();
+    }
+  });
+}
+
+// 開關按鈕的下拉選單（選單用 hide class 收起），並更新按鈕的 aria-expanded
+export function toggle_menu(button, menu) {
+  button = getDom(button);
+  menu = getDom(menu);
+  toggleClass(menu, 'hide');
+  var expanded = !menu.classList.contains('hide');
+  button.setAttribute('aria-expanded', expanded);
+  // 用鍵盤選了項目後選單收起，焦點還給按鈕，不要掉在隱藏的項目上
+  if(!expanded && menu.contains(document.activeElement))
+    button.focus();
+}

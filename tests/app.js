@@ -104,7 +104,7 @@ const test = base.test.extend({
       rows: () => page.locator('#song_list tbody tr'),
       visibleRows: () => page.locator('#song_list tbody tr:not(.hide)'),
       popup: () => page.locator('#score_popup_container'),
-      transposeInput: () => page.locator('#transpose'),
+      transposeValue: () => page.locator('#transpose'),
       currentTone: () => page.locator('#current_visual_tone'),
       currentSongId: () => page.locator('#current_song_id'),
 
@@ -135,10 +135,16 @@ const test = base.test.extend({
       async delayQuery(ms) {
         queryDelay = ms;
       },
-      // 按 ▴／▾ 移調。這兩個按鈕平常是隱藏的，輸入框取得焦點（或滑鼠移上去）時才會出現。
+      // 打開移調選單（點工具列上的移調 icon）；已經打開就不動
+      async openTranspose() {
+        if (await page.locator('#transpose-menu').evaluate((m) => m.classList.contains('hide')))
+          await page.locator('#transpose_button').click();
+        await base.expect(page.locator('#transpose-menu')).not.toHaveClass(/hide/);
+      },
+      // 在移調選單裡按 ＋／− 移調
       async stepTranspose(delta) {
-        await app.transposeInput().focus();
-        await page.locator(`.popup-button[data-add="${delta > 0 ? '+1' : '-1'}"]`).click();
+        await app.openTranspose();
+        await page.locator(`#transpose-menu .step-button[data-add="${delta > 0 ? '+1' : '-1'}"]`).click();
       },
       async openScore(songId) {
         await app.scoreLink(songId).click();

@@ -43,7 +43,7 @@ export function exec_hash(){
     if(dsongobj){
       select_song(dsongobj.id);
       state.displayingSong = dsongobj;
-      document.querySelector('#transpose').value = transpose;
+      document.querySelector('#transpose').value = transpose || 0;
       render_score();
     }else{
       close_score();
