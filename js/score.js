@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { key_display_name } from './abc.js';
 import { getSongData } from './list.js';
 import { parse_hash, update_hash } from './route.js';
-import { save_scroll, restore_scroll, toggleClass, toggle_menu, click_on_enter } from './dom.js';
+import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdown } from './dom.js';
 import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
 
@@ -125,7 +125,7 @@ export function close_score(){
   document.title = state.originalTitle;
   document.querySelector('#score_popup_container').classList.remove('open');
   // 收起譜面上的選單，下一首才不會一打開就是展開的
-  for(const [button, menu] of [['#transpose_button', '#transpose-menu'], ['#more_button', '#more-menu'], ['#edit_button', '#editor-menu']]){
+  for(const [button, menu] of [['#transpose_button', '#transpose-menu'], ['#view_button', '#view-menu'], ['#more_button', '#more-menu'], ['#edit_button', '#editor-menu']]){
     document.querySelector(menu).classList.add('hide');
     document.querySelector(button).setAttribute('aria-expanded', false);
   }
@@ -158,29 +158,23 @@ function value_modify(event) {
 
 // 註冊譜面彈窗（背景、換歌、上方工具列）的事件
 export function setup_score_controls() {
+  // 點譜紙以外的暗色背景就關閉；#score_popup_window 是蓋滿背景、可捲動的那一層，
+  // 點在它的捲軸上（offsetX／offsetY 超出內容區）不算
   document.querySelector('#score_popup_bg').addEventListener('click', function(event){
-    if(event.target == this)
+    var win = event.target;
+    if(event.target == this
+      || (win.id == 'score_popup_window' && event.offsetX < win.clientWidth && event.offsetY < win.clientHeight))
       close_score();
   });
   document.querySelector('.change-song.prev').addEventListener('click', ()=>{ open_score('prev'); });
   document.querySelector('.change-song.next').addEventListener('click', ()=>{ open_score('next'); });
   document.querySelector('#transpose').addEventListener('change', function(event){ set_transpose(this.value, event); });
   // 點調性按鈕開關移調選單
-  document.querySelector('#transpose_button').addEventListener('click', ()=>{ toggle_menu('#transpose_button', '#transpose-menu'); });
-  // 移調選單不用遮罩：開著時其他按鈕照樣能按，點按鈕和選單以外的地方或按 Esc 就收起
-  document.addEventListener('click', (event)=>{
-    if(!document.querySelector('#transpose-menu').classList.contains('hide') && !event.target.closest('#transpose_button, #transpose-menu'))
-      toggle_menu('#transpose_button', '#transpose-menu');
-  });
-  document.querySelector('#key_group').addEventListener('keydown', (event)=>{
-    if(event.key == 'Escape' && !document.querySelector('#transpose-menu').classList.contains('hide'))
-      toggle_menu('#transpose_button', '#transpose-menu');
-  });
+  setup_dropdown('#transpose_button', '#transpose-menu');
   for(const button of document.querySelectorAll('.step-button[data-target]')){
     button.addEventListener('click', value_modify);
     click_on_enter(button);
   }
-  click_on_enter('#transpose_button');
   click_on_enter('#close_score_button');
   // 工具列上和「⋮」選單裡各有一組列印、播放
   for(const button of document.querySelectorAll('.print-button'))

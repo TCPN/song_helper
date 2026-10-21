@@ -205,7 +205,7 @@ table#song_list .song_score a.note_score {
 	vertical-align: middle;
 }
 
-#transpose_button, #more_button, #close_score_button {
+#transpose_button, #view_button, #more_button, #close_score_button {
 	cursor: pointer;
 }
 
@@ -310,32 +310,74 @@ table#song_list .song_score a.note_score {
 	}
 }
 
+/*
+ * 譜面的顯示方式（js/score-view.js）：
+ * #score_popup_window 蓋滿暗色背景、負責捲動，並當 container query 的容器，
+ * 譜紙 #score_page 依顯示方式用 cqw／cqh 算寬度；
+ * 譜紙至少是直式 3:4，譜比較長時往下延伸。
+ * 尺寸不直接設在 #score_paper：abcjs 渲染時會在它上面加 inline style（width: 100% 等）。
+ */
 #score_popup_window {
-	height: 120vw;
-	width: 90vw;
-	/*
-	height: 80vmin;
-	width: 60vmin;
-	*/
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	overflow: auto;
+	container-type: size;
+	display: flex;
+}
+
+#score_page {
+	/* 符合寬度時左右留空間給上一首／下一首的箭頭；窄螢幕直接占滿 */
+	--full-width: 90cqw;
+	--fit-width: var(--full-width);
+	flex: none;
+	/* 用 auto margin 置中：譜紙比畫面大時（例如直式螢幕上的符合高度）才不會被切掉左邊和上面 */
+	margin: auto;
+	width: var(--fit-width);
+	aspect-ratio: 3 / 4;
+	background: #fff;
 }
 
 @media screen and (max-width: 420px){
-	#score_popup_window, #score_paper {
-		height: 133vw;
-		width: 100vw;
+	#score_page {
+		--full-width: 100cqw;
 	}
 }
 
-#score_popup_window {
-	max-height: 100%;
-	background: #fff;
-	overflow-y: auto;
+.fit-page #score_page {
+	--fit-width: min(var(--full-width), 75cqh);
 }
 
-#score_paper {
-	height: fit-content;
-	width: 100%;
+.fit-height #score_page {
+	--fit-width: 75cqh;
 }
+
+/* 「檢視」選單在按鈕正下方，右邊對齊按鈕，往左展開，窄螢幕上才不會超出右邊 */
+#view_group {
+	position: relative;
+}
+
+#view-menu {
+	top: calc(100% + 0.5em);
+	right: 0;
+}
+
+/* 左邊留位置給打勾 */
+#view-menu .menu-item {
+	position: relative;
+	padding-left: 2em;
+}
+
+#view-menu .menu-item.selected::before {
+	content: '✓';
+	position: absolute;
+	left: 0.75em;
+}
+
+
+
 
 #score_paper .abcjs-note_selected {
 	fill: #000;
@@ -360,6 +402,18 @@ table#song_list .song_score a.note_score {
 		position: static !important;
 		height: unset;
 		max-height: unset;
+	}
+
+	/* 列印時不管螢幕上的顯示方式與縮放，譜紙就是整張紙寬 */
+	#score_popup_window {
+		overflow: visible;
+		container-type: normal;
+	}
+
+	#score_page {
+		width: 100%;
+		margin: 0;
+		aspect-ratio: auto;
 	}
 
 	#score_popup_bg {
