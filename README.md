@@ -14,6 +14,7 @@
 - 譜面工具列：關閉是 X icon
 - 上一首／下一首、曲號鍵盤快速跳轉
 - 「編輯」選單：和弦編輯器、進階編輯器（在新分頁開啟）
+- 工具列不夠寬時，列印、播放、編輯收進「⋮」選單
 - 點擊頁面任何地方，會短暫顯示「找不到想找的歌嗎？」的意見回饋提示
 - 狀態都記在網址 hash，例如 `#song_id=12&transpose=2`，方便分享與存書籤
 
@@ -29,7 +30,8 @@
 | `js/song-id-input.js` | 譜面上方的歌號小鍵盤與鍵盤操作 |
 | `js/popups.js` | 歌曲資訊彈窗、意見回饋提示 |
 | `js/route.js` | 網址 hash 的讀寫與執行 |
-| `js/editor-links.js` | 「編輯」選單的編輯器連結 |
+| `js/editor-links.js` | 「編輯」與「⋮」選單的開關、編輯器連結 |
+| `js/toolbar.js` | 譜面工具列不夠寬時切換成精簡版面（「⋮」選單） |
 | `js/state.js`, `js/dom.js` | 共用狀態、DOM 小工具 |
 | `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js` | 純函式（不碰 DOM，有單元測試） |
 | `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |

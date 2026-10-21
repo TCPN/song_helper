@@ -189,6 +189,13 @@ table#song_list .song_score a.note_score {
 
 #score_popup_top_bar > * {
 	margin: 0.5ex;
+	/* 不讓文字折行：放不下時改成精簡版面（js/toolbar.js） */
+	white-space: nowrap;
+}
+
+#score_popup_top_bar:not(.compact) .compact-only,
+#score_popup_top_bar.compact .wide-only {
+	display: none;
 }
 
 .icon {
@@ -198,17 +205,8 @@ table#song_list .song_score a.note_score {
 	vertical-align: middle;
 }
 
-#close_score_button {
+#more_button, #close_score_button {
 	cursor: pointer;
-}
-
-@media (max-width: 360px) {
-	#score_popup_top_bar {
-		justify-content: space-around;
-	}
-	#score_popup_top_bar > * {
-		margin: 0;
-	}
 }
 
 #current_visual_tone {
@@ -235,7 +233,7 @@ table#song_list .song_score a.note_score {
 	width: 5ex;
 }
 @media screen and (max-width: 480px){
-	#editor-menu.menu {
+	#editor-menu.menu, #more-menu.menu {
 		right: 0;
 	}
 }

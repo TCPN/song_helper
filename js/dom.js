@@ -52,3 +52,15 @@ export function click_on_enter(target) {
     }
   });
 }
+
+// 開關按鈕的下拉選單（選單用 hide class 收起），並更新按鈕的 aria-expanded
+export function toggle_menu(button, menu) {
+  button = getDom(button);
+  menu = getDom(menu);
+  toggleClass(menu, 'hide');
+  var expanded = !menu.classList.contains('hide');
+  button.setAttribute('aria-expanded', expanded);
+  // 用鍵盤選了項目後選單收起，焦點還給按鈕，不要掉在隱藏的項目上
+  if(!expanded && menu.contains(document.activeElement))
+    button.focus();
+}
