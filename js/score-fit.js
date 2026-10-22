@@ -9,3 +9,12 @@ export const DEFAULT_FIT_MODE = 'width';
 export function normalize_fit_mode(mode) {
   return FIT_MODES.includes(mode) ? mode : DEFAULT_FIT_MODE;
 }
+
+// 譜紙：A4（固定比例，目前是 3:4）、不分頁（高度依譜的內容）
+export const PAPER_MODES = ['a4', 'content'];
+// 沒設定過時用 A4（加入這個功能前的譜紙）
+export const DEFAULT_PAPER_MODE = 'a4';
+
+export function normalize_paper_mode(mode) {
+  return PAPER_MODES.includes(mode) ? mode : DEFAULT_PAPER_MODE;
+}

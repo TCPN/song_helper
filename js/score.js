@@ -6,6 +6,7 @@ import { parse_hash, update_hash } from './route.js';
 import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdown } from './dom.js';
 import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
+import { update_content_ratio } from './score-view.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
 var clickListener = console.log;
@@ -82,6 +83,8 @@ export function render_score(event){
   }
   // fix the line heights and line styles
   fix_score_line_heights('#score_paper');
+  // 不分頁時譜紙的高寬比依譜的內容
+  update_content_ratio();
 
   var display_tone = "";
   if(params.oneSvgPerLine) {

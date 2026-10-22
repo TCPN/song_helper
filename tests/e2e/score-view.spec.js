@@ -18,7 +18,7 @@ test.describe('譜面的顯示方式', () => {
     await expect(fit_item(app, 'width')).toHaveClass(/selected/);
     await expect(fit_item(app, 'width')).toHaveAttribute('aria-checked', 'true');
     await expect(fit_item(app, 'page')).not.toHaveClass(/selected/);
-    await expect(app.page.locator('#view-menu .menu-item')).toHaveText(['整頁可見', '符合高度', '符合寬度']);
+    await expect(app.page.locator('#view-menu [data-fit]')).toHaveText(['整頁可見', '符合高度', '符合寬度']);
 
     const box = await page_box(app);
     const win = await window_size(app);
@@ -199,4 +199,148 @@ test.describe('長譜', () => {
     const view = await win.boundingBox();
     expect(last.y + last.height).toBeLessThanOrEqual(view.y + view.height + 1);
   });
+});
+
+// 「檢視」選單：譜紙（A4／不分頁）
+test.describe('譜紙：A4／不分頁', () => {
+  const line = (i) => `"C"CDEF|"G"GFED|"C"CDEF|"G"GFED|\nw:l${i} b c d e f g h i j k l m n o p\n`;
+  const LONG = { id: 1, name: '長譜測試', tone: 'C', timesig: '4/4', melody: 'CDEF',
+    abc: 'X:1\nT:Long\nM:4/4\nL:1/4\nK:C\n' + Array.from({ length: 30 }, (_, i) => line(i)).join('') + 'C4|]\n' };
+  const SHORT = { id: 2, name: '短譜測試', tone: 'C', timesig: '4/4', melody: 'CDEF',
+    abc: 'X:2\nT:Short\nM:4/4\nL:1/4\nK:C\n"C"CDEF|"G"GFED|\n"C"CDEF|"G"G4|]\n' };
+  // 陣列要寫成 [值, 選項]，不然 Playwright 會把第二首歌當成 fixture 的選項
+  test.use({ songs: [[LONG, SHORT], { option: true }] });
+
+  const sizes = (app) => app.page.evaluate(() => {
+    const page = document.querySelector('#score_page').getBoundingClientRect();
+    const paper = document.querySelector('#score_paper').getBoundingClientRect();
+    const win = document.querySelector('#score_popup_window');
+    return { width: page.width, height: page.height, paper_height: paper.height,
+      win_width: win.clientWidth, win_height: win.clientHeight,
+      scroll_x: win.scrollWidth > win.clientWidth, scroll_y: win.scrollHeight > win.clientHeight };
+  });
+  const item = (app, attr, value) => app.page.locator(`#view-menu [data-${attr}="${value}"]`);
+
+  async function choose(app, attr, value) {
+    if (await app.page.locator('#view-menu').getAttribute('class').then((c) => c.includes('hide')))
+      await app.page.locator('#view_button').click();
+    await item(app, attr, value).click();
+    await expect(item(app, attr, value)).toHaveAttribute('aria-checked', 'true');
+  }
+
+  test('選單在顯示方式下面隔一條線，預設是 A4', async ({ app }) => {
+    await app.goto('#song_id=2');
+    await app.page.locator('#view_button').click();
+    await expect(app.page.locator('#view-menu .menu-separator')).toBeVisible();
+    await expect(app.page.locator('#view-menu [data-paper]')).toHaveText(['A4', '不分頁']);
+    await expect(item(app, 'paper', 'a4')).toHaveClass(/selected/);
+    await expect(item(app, 'paper', 'content')).toHaveAttribute('aria-checked', 'false');
+  });
+
+  test('不分頁：短的譜，譜紙高度就是譜的高度，切回 A4 又是 3:4', async ({ app }) => {
+    await app.goto('#song_id=2');
+    await choose(app, 'paper', 'content');
+    let size = await sizes(app);
+    expect(size.height).toBeCloseTo(size.paper_height, 0);
+    expect(size.height).toBeLessThan(size.width / 2);
+
+    await choose(app, 'paper', 'a4');
+    size = await sizes(app);
+    expect(size.height).toBeCloseTo(size.width * 4 / 3, 0);
+  });
+
+  test('不分頁＋整頁可見：長的譜整首都在畫面裡，不用捲動', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await choose(app, 'fit', 'page');
+    // A4 時長譜超出畫面
+    expect((await sizes(app)).scroll_y).toBe(true);
+
+    await choose(app, 'paper', 'content');
+    const size = await sizes(app);
+    expect(size.height).toBeCloseTo(size.win_height, 0);
+    expect(size.width).toBeLessThan(size.win_width);
+    expect(size.height).toBeCloseTo(size.paper_height, 0);
+    expect(size.scroll_x).toBe(false);
+    expect(size.scroll_y).toBe(false);
+  });
+
+  test('不分頁＋整頁可見：短的譜寬度占滿，高度依內容', async ({ app }) => {
+    await app.goto('#song_id=2');
+    await choose(app, 'fit', 'page');
+    await choose(app, 'paper', 'content');
+    const size = await sizes(app);
+    expect(size.width).toBeCloseTo(size.win_width * 0.9, 0);
+    expect(size.height).toBeLessThan(size.win_height);
+  });
+
+  test('不分頁＋符合高度：譜紙高度等於畫面高度，短的譜會比畫面寬', async ({ app }) => {
+    await app.goto('#song_id=2');
+    await choose(app, 'fit', 'height');
+    await choose(app, 'paper', 'content');
+    const size = await sizes(app);
+    expect(size.height).toBeCloseTo(size.win_height, 0);
+    expect(size.width).toBeGreaterThan(size.win_width);
+    expect(size.scroll_x).toBe(true);
+    expect(size.scroll_y).toBe(false);
+  });
+
+  test('不分頁時換歌、改視窗大小，譜紙都跟著新的譜', async ({ app }) => {
+    await app.goto('#song_id=2');
+    await choose(app, 'fit', 'page');
+    await choose(app, 'paper', 'content');
+    await app.page.keyboard.press('Escape');
+
+    await app.page.locator('.change-song.prev').click();
+    await expect(app.page.locator('#current_song_id')).toHaveText('1');
+    let size = await sizes(app);
+    expect(size.height).toBeCloseTo(size.win_height, 0);
+
+    await app.page.setViewportSize({ width: 900, height: 500 });
+    size = await sizes(app);
+    expect(size.height).toBeCloseTo(size.win_height, 0);
+    expect(size.scroll_y).toBe(false);
+  });
+
+  test('設定記在瀏覽器，重新載入沿用，網址 hash 不變', async ({ app }) => {
+    await app.goto('#song_id=2');
+    await choose(app, 'paper', 'content');
+    expect(await app.hashParams()).toEqual({ song_id: '2' });
+    expect(await app.page.evaluate(() => localStorage.getItem('score_paper_mode'))).toBe('content');
+
+    await app.page.reload();
+    await app.ready();
+    const size = await sizes(app);
+    expect(size.height).toBeCloseTo(size.paper_height, 0);
+    await app.page.locator('#view_button').click();
+    await expect(item(app, 'paper', 'content')).toHaveClass(/selected/);
+  });
+
+  test('localStorage 裡的值不對時用 A4', async ({ app }) => {
+    await app.page.addInitScript(() => {
+      localStorage.setItem('score_paper_mode', 'bogus');
+    });
+    await app.goto('#song_id=2');
+    await app.page.locator('#view_button').click();
+    await expect(item(app, 'paper', 'a4')).toHaveClass(/selected/);
+  });
+
+  // 列印不管螢幕上的顯示方式，譜紙就是整張紙寬；每行譜是一個 svg，塞不進這一頁時整行換到下一頁
+  for (const paper of ['a4', 'content']) {
+    test(`列印（${paper}）：長的譜印成好幾頁，每行譜不從中間切開`, async ({ app }) => {
+      await app.page.addInitScript((paper) => {
+        localStorage.setItem('score_paper_mode', paper);
+        localStorage.setItem('score_fit_mode', 'page');
+      }, paper);
+      await app.goto('#song_id=1');
+      await app.page.emulateMedia({ media: 'print' });
+      const lines = await app.page.locator('#score_paper .abcjs-container')
+        .evaluateAll((list) => list.map((c) => getComputedStyle(c).breakInside));
+      expect(lines.length).toBeGreaterThan(20);
+      expect(new Set(lines)).toEqual(new Set(['avoid']));
+
+      // 數 PDF 裡的頁面物件
+      const pdf = (await app.page.pdf({ format: 'A4' })).toString('latin1');
+      expect(pdf.match(/\/Type \/Page\b/g).length).toBeGreaterThan(1);
+    });
+  }
 });
