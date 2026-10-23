@@ -7,6 +7,7 @@ import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
 import { update_content_ratio } from './score-view.js';
 import { build_render_params, build_midi_params } from './render-params.js';
+import { current_layout } from './layout-panel.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
 var clickListener = console.log;
@@ -55,7 +56,7 @@ export function render_score(transpose){
     svg_elem_add_box(p);
   }
   // fix the line heights and line styles
-  fix_score_line_heights('#score_paper');
+  fix_score_line_heights('#score_paper', current_layout());
   // 不分頁時譜紙的高寬比依譜的內容
   update_content_ratio();
 
@@ -99,7 +100,7 @@ export function close_score(){
   document.title = state.originalTitle;
   document.querySelector('#score_popup_container').classList.remove('open');
   // 收起譜面上的選單，下一首才不會一打開就是展開的
-  for(const [button, menu] of [['#transpose_button', '#transpose-menu'], ['#view_button', '#view-menu'], ['#more_button', '#more-menu'], ['#edit_button', '#editor-menu']]){
+  for(const [button, menu] of [['#transpose_button', '#transpose-menu'], ['#view_button', '#view-menu'], ['#more_button', '#more-menu'], ['#edit_button', '#editor-menu'], ['#view_button', '#layout-panel']]){
     document.querySelector(menu).classList.add('hide');
     document.querySelector(button).setAttribute('aria-expanded', false);
   }

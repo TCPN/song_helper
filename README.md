@@ -15,6 +15,9 @@
   設定記在 localStorage 的 `score_fit_mode`，不放進網址 hash
 - 「檢視」選單也可切換譜紙：A4（目前是固定 3:4，預設）或不分頁（譜紙高度依譜的內容）；
   設定記在 localStorage 的 `score_paper_mode`，不放進網址 hash。列印時每行譜不會從中間切開
+- 「檢視」選單的「排版…」面板（沒有遮罩，點外面或按 Esc 收起）：行間距均等化開／關（預設開：除了最後一行，
+  每行譜下方的空間都取最大值；關掉時每行只占自己需要的高度）、行距（行與行之間再加的空間，預設 0）、重設。
+  設定所有歌共用，整包存在 localStorage 的 `score_layout`（JSON），不放進網址 hash；改設定時不重新渲染，畫面最上面的那一行留在原位
 - 譜面工具列：調性就是移調按鈕（有移調時右上角浮出半音數），點了才出現 −／半音數／＋；關閉是 X icon
 - 上一首／下一首、曲號鍵盤快速跳轉
 - 「編輯」選單：和弦編輯器、進階編輯器（在新分頁開啟）
@@ -35,10 +38,11 @@
 | `js/popups.js` | 歌曲資訊彈窗、意見回饋提示 |
 | `js/route.js` | 網址 hash 的讀寫與執行 |
 | `js/score-view.js` | 「檢視」選單：譜面的顯示方式與譜紙 |
+| `js/layout-panel.js` | 「檢視」選單的「排版…」面板（行間距均等化、行距） |
 | `js/editor-links.js` | 「編輯」與「⋮」選單的開關、編輯器連結 |
 | `js/toolbar.js` | 譜面工具列不夠寬時切換成精簡版面（「⋮」選單） |
 | `js/state.js`, `js/dom.js` | 共用狀態、DOM 小工具 |
-| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js` | 純函式（不碰 DOM，有單元測試） |
+| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js` | 純函式（不碰 DOM，有單元測試） |
 | `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
@@ -97,7 +101,7 @@ npm test
 PR 與推到 `dev`／`master` 時，GitHub Actions（`.github/workflows/test.yml`）會自動跑同樣的測試。
 
 測試分成幾個檔案（`tests/e2e/`）：列表、搜尋、譜面、移調、曲號鍵盤、網址 hash、
-快取、資訊彈窗、列表選取與意見回饋，以及已知問題。
+快取、資訊彈窗、列表選取與意見回饋、排版設定，以及已知問題。
 
 ### 測試的寫法約定
 

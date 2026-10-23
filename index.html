@@ -106,6 +106,23 @@
 					<span class="menu-separator" role="separator"></span>
 					<span class="menu-item" data-paper="a4" role="menuitemradio" tabindex="0">A4</span>
 					<span class="menu-item" data-paper="content" role="menuitemradio" tabindex="0">不分頁</span>
+					<span class="menu-separator" role="separator"></span>
+					<span class="menu-item" data-open-layout role="menuitem" tabindex="0" aria-haspopup="dialog">排版…</span>
+				</div>
+				<!-- 「排版…」面板（js/layout-panel.js）：所有歌共用的排版設定，一個設定一列 -->
+				<div id="layout-panel" class="hide menu" role="dialog" aria-label="排版">
+					<div class="layout-row">
+						<span class="layout-label" id="layout_equalize_label">行間距均等化</span>
+						<span class="layout-toggle" data-layout-toggle="equalize" role="switch" tabindex="0" aria-labelledby="layout_equalize_label"></span>
+					</div>
+					<div class="layout-row">
+						<span class="layout-label" id="layout_line_gap_label">行距</span>
+						<span class="step-button" data-layout-step="line_gap" data-steps="-1" title="行距縮小" aria-label="行距縮小" role="button" tabindex="0">−</span>
+						<output class="layout-value" data-layout-value="line_gap" aria-labelledby="layout_line_gap_label"></output>
+						<span class="step-button" data-layout-step="line_gap" data-steps="1" title="行距加大" aria-label="行距加大" role="button" tabindex="0">+</span>
+					</div>
+					<span class="menu-separator" role="separator"></span>
+					<span class="menu-item" id="layout_reset" role="button" tabindex="0">重設</span>
 				</div>
 			</span>
 			<span class="separator wide-only">|</span>
