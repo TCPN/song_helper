@@ -70,6 +70,26 @@ test.describe('分頁顯示', () => {
     await expect(app.popup()).toHaveClass(/open/);
   });
 
+  test('鍵盤換頁：→／PageDown 下一頁，←／PageUp 上一頁；焦點在工具列上時不換頁', async ({ app }) => {
+    await app.goto('#song_id=1');
+    const pages = await page_count(app);
+    // 焦點留在譜面後面的搜尋框（autofocus）也能換頁
+    await app.page.keyboard.press('ArrowRight');
+    await expect(indicator(app)).toHaveText(`2 / ${pages}`);
+    await app.page.keyboard.press('PageDown');
+    await expect(indicator(app)).toHaveText(`3 / ${pages}`);
+    await app.page.keyboard.press('ArrowLeft');
+    await expect(indicator(app)).toHaveText(`2 / ${pages}`);
+    await app.page.keyboard.press('PageUp');
+    await expect(indicator(app)).toHaveText(`1 / ${pages}`);
+    await app.page.keyboard.press('PageUp');
+    await expect(indicator(app)).toHaveText(`1 / ${pages}`);
+
+    await app.page.locator('#view_button').focus();
+    await app.page.keyboard.press('ArrowRight');
+    await expect(indicator(app)).toHaveText(`1 / ${pages}`);
+  });
+
   test('換頁後捲回這頁的最上面', async ({ app }) => {
     await app.page.setViewportSize({ width: 375, height: 667 });
     await app.goto('#song_id=1');

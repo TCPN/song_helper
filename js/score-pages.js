@@ -1,4 +1,4 @@
-// 分頁顯示：譜紙是「分頁」時一次顯示一頁，點畫面下半部換下一頁、上半部回上一頁；「不分頁」時整首上下捲動。
+// 分頁顯示：譜紙是「分頁」時一次顯示一頁，點畫面下半部換下一頁、上半部回上一頁（鍵盤用 ←／→、PageUp／PageDown）；「不分頁」時整首上下捲動。
 // 每行譜（.abcjs-container）都還在 #score_paper 裡，不在目前這頁的加上 off-page class 藏起來（列印時全部印出），
 // 每頁最後一行加上 page-end class，列印時從那裡換頁。
 import { paginate, page_of_line, A4_RATIO } from './pagination.js';
@@ -74,8 +74,25 @@ export function reset_pages() {
   pages = { list: [], current: 0, song: null };
 }
 
+// 鍵盤換頁：→／PageDown 下一頁，←／PageUp 上一頁。
+// 焦點在工具列（按鈕、選單、歌號輸入）上時不搶，那些地方的方向鍵有自己的用途；
+// 其他地方（例如譜面後面列表的搜尋框，從列表開譜時焦點常留在那裡）都換頁
+const PAGE_KEYS = { ArrowRight: 1, PageDown: 1, ArrowLeft: -1, PageUp: -1 };
+function page_keydown(event) {
+  var step = PAGE_KEYS[event.key];
+  if(!step || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+    return;
+  if(!container().classList.contains('open') || !is_paged() || pages.list.length < 2)
+    return;
+  if(document.querySelector('#score_popup_top_bar').contains(event.target))
+    return;
+  event.preventDefault();
+  turn_page(step);
+}
+
 // 點譜紙換頁；有選單開著時這一下只是收起選單（dom.js 的 setup_dropdown），不換頁
 export function setup_score_pages() {
+  document.addEventListener('keydown', page_keydown);
   document.querySelector('#score_page').addEventListener('click', (event)=>{
     if(!is_paged() || pages.list.length < 2)
       return;
