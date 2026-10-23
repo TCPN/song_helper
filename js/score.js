@@ -1,21 +1,15 @@
 // 譜面彈窗：用 abcjs 渲染譜面、移調、換歌、關閉
 import { state } from './state.js';
 import { key_display_name } from './abc.js';
-import { getSongData } from './list.js';
 import { parse_hash, update_hash } from './route.js';
 import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdown } from './dom.js';
 import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
 import { update_content_ratio } from './score-view.js';
+import { build_render_params, build_midi_params } from './render-params.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
 var clickListener = console.log;
-
-function findTargetSongFromParents(dom){
-  while(dom.dataset.target == null)
-    dom = dom.parentElement;
-  return getSongData(dom.dataset.target);
-}
 
 // song_id 為 'next'／'prev' 時相對於目前網址的歌；歌存在才改網址，傳回是否存在
 export function open_score(song_id){
@@ -34,8 +28,9 @@ export function open_score(song_id){
     return false;
 }
 
-export function render_score(event){
-  var song = state.displayingSong || findTargetSongFromParents(event.target) || event.target.song_obj;
+// 渲染 state.displayingSong 的譜；transpose 是移調半音數（呼叫端決定，這裡不讀 #transpose）
+export function render_score(transpose){
+  var song = state.displayingSong;
   var score_container = document.querySelector('#score_popup_container');
   score_container.classList.add('open');
   // open at the first so the abcjs can measure the elements' boxes and do good arrangement
@@ -49,32 +44,10 @@ export function render_score(event){
   const song_item_in_list = document.querySelector(`#song_list tbody [data-target="${song.id}"]`);
   song_item_in_list.scrollIntoView({ block: 'nearest' });
 
-  var settings = getUserSettings();
-  var presetSettings = {
-    // TODO: decide the staffwidth dynamically
-    //staffwidth: 800,
-    responsive: 'resize',
-    //wrap: {
-      //minSpacing: 1.8,
-      //maxSpacing: 3,
-      //preferredMeasuresPerLine: 4,
-    //},
-    oneSvgPerLine: true,
-    add_classes: true,
-    // generate_midi: true,
-    // midi_id: 'player_control',
-    clickListener: function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);},
-    format: {
-      gchordfont: 'Times New Roman',
-      textfont: 'Times New Roman',
-      partsfont: '14px Times New Roman',
-      // vocalfont: 'PMingLiU',
-      // titlefont: '"Microsoft JhengHei" 24px',
-    },
-  };
-  var params = Object.assign({}, presetSettings, settings);
+  var params = build_render_params({ transpose });
+  params.clickListener = function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);};
   var tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
-  ABCJS.renderMidi('player-control', song.abc, settings);
+  ABCJS.renderMidi('player-control', song.abc, build_midi_params({ transpose }));
 
   // add bounding box of the part marks
   var part_texts = document.querySelectorAll('.abcjs-part');
@@ -100,7 +73,7 @@ export function render_score(event){
   display_tone = key_display_name(tone_signature);
   document.querySelector('#current_visual_tone').textContent = display_tone;
   // 移調 icon 旁邊顯示目前的半音數（0 時不顯示）
-  document.querySelector('#transpose_badge').textContent = transpose_badge(settings.visualTranspose);
+  document.querySelector('#transpose_badge').textContent = transpose_badge(transpose);
   // 曲號、調性、移調的字數會影響工具列寬度
   update_toolbar_layout();
   document.title = `${song.name} (${display_tone})`
@@ -113,11 +86,9 @@ function transpose_badge(transpose){
   return (transpose > 0 ? '+' : '') + transpose;
 }
 
-function getUserSettings(){
-  var settings = {};
-  settings.visualTranspose = Number(document.querySelector('#transpose').value);
-  //settings.midiTranspose = Number(document.querySelector('#transpose').value);
-  return settings;
+// 移調選單目前的半音數
+export function current_transpose(){
+  return Number(document.querySelector('#transpose').value);
 }
 
 function clearSettings(){
@@ -141,8 +112,8 @@ export function close_score(){
 }
 
 // 移調半音數（#transpose）的 change，由 ＋／− 按鈕觸發
-function set_transpose(value, event){
-  render_score(event);
+function set_transpose(value){
+  render_score(Number(value));
   value = Number(value) || undefined; // remove hash when value is zero
   update_hash('transpose', value);
 }
@@ -171,7 +142,7 @@ export function setup_score_controls() {
   });
   document.querySelector('.change-song.prev').addEventListener('click', ()=>{ open_score('prev'); });
   document.querySelector('.change-song.next').addEventListener('click', ()=>{ open_score('next'); });
-  document.querySelector('#transpose').addEventListener('change', function(event){ set_transpose(this.value, event); });
+  document.querySelector('#transpose').addEventListener('change', function(){ set_transpose(this.value); });
   // 點調性按鈕開關移調選單
   setup_dropdown('#transpose_button', '#transpose-menu');
   for(const button of document.querySelectorAll('.step-button[data-target]')){

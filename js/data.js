@@ -5,7 +5,7 @@ import { getSongArray, parse_gviz_response, SHEET_QUERY_URL } from './song-data.
 import { getCachedData, setCachedData } from './cache.js';
 import { createList, setup_song_list_selection, fixedListWidth } from './list.js';
 import { exec_hash, hash_song_openable } from './route.js';
-import { render_score, close_score } from './score.js';
+import { render_score, close_score, current_transpose } from './score.js';
 
 // 試算表查詢多久沒回應就放棄，改用快取或快照
 const QUERY_TIMEOUT_MS = 30000;
@@ -122,7 +122,7 @@ function updateListUI(songData, isNewest) {
       close_score();
     } else if (newest.abc !== state.displayingSong.abc) {
       state.displayingSong = newest;
-      render_score(); // 沿用目前選單裡的移調值；標題也會用最新的歌名
+      render_score(current_transpose()); // 沿用目前選單裡的移調值；標題也會用最新的歌名
     } else {
       state.displayingSong = newest;
       document.title = `${newest.name} (${document.querySelector('#current_visual_tone').textContent})`;
