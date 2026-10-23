@@ -118,6 +118,40 @@ test.describe('譜面的顯示方式', () => {
     expect(box.x + box.width).toBeLessThanOrEqual(280);
   });
 
+  test('工具列的選單預設左邊對齊按鈕；右邊放不下時改成右邊對齊', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await open_view_menu(app);
+    let group = await app.page.locator('#view_group').boundingBox();
+    let menu = await app.page.locator('#view-menu').boundingBox();
+    expect(menu.x).toBeCloseTo(group.x, 0);
+
+    // 窄螢幕上「⋮」在工具列最右邊，選單往右展開會超出畫面
+    await app.page.setViewportSize({ width: 280, height: 600 });
+    await app.page.locator('#more_button').click();
+    await expect(app.page.locator('#more-menu')).toHaveClass(/align-right/);
+    group = await app.page.locator('#more_group').boundingBox();
+    menu = await app.page.locator('#more-menu').boundingBox();
+    expect(menu.x + menu.width).toBeCloseTo(group.x + group.width, 0);
+    expect(menu.x).toBeGreaterThanOrEqual(0);
+    // 選單寬度依項目文字，不會被擠成按鈕的寬度
+    expect(await app.page.locator('#more-menu').evaluate((m) => m.scrollWidth <= m.clientWidth)).toBe(true);
+    expect(menu.width).toBeGreaterThan(group.width);
+  });
+
+  test('手機寬度（375px）：「編輯」選單右邊放不下，改成右邊對齊按鈕，寬度不被擠窄', async ({ app }) => {
+    await app.page.setViewportSize({ width: 375, height: 667 });
+    await app.goto('#song_id=1');
+    await app.page.locator('#edit_button').click();
+    const menu_locator = app.page.locator('#editor-menu');
+    await expect(menu_locator).toHaveClass(/align-right/);
+    const group = await app.page.locator('#edit_group').boundingBox();
+    const menu = await menu_locator.boundingBox();
+    expect(menu.x + menu.width).toBeCloseTo(group.x + group.width, 0);
+    expect(menu.x).toBeGreaterThanOrEqual(0);
+    expect(menu.width).toBeGreaterThan(group.width);
+    expect(await menu_locator.evaluate((m) => m.scrollWidth <= m.clientWidth)).toBe(true);
+  });
+
   test('設定記在瀏覽器，重新載入或換歌都沿用，網址 hash 不變', async ({ app }) => {
     await app.goto('#song_id=1');
     await open_view_menu(app);

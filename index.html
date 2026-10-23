@@ -109,27 +109,29 @@
 				</div>
 			</span>
 			<span class="separator wide-only">|</span>
-			<label id="edit_button" class="wide-only" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">編輯
+			<!-- 「編輯」選單不放在按鈕裡面，和「檢視」一樣沒有遮罩（js/dom.js 的 setup_dropdown） -->
+			<span id="edit_group" class="wide-only">
+				<label id="edit_button" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">編輯</label>
 				<div id="editor-menu" class="hide menu" role="menu">
-					<div class="menu-bg"></div>
 					<label class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</label>
 					<label class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</label>
 				</div>
-			</label>
+			</span>
 			<span class="separator compact-only">|</span>
 			<!-- 工具列不夠寬時，列印、播放、編輯收在這個選單裡 -->
-			<div id="more_button" class="compact-only" title="更多" aria-label="更多" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-				<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-					<circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
-				</svg>
+			<span id="more_group" class="compact-only">
+				<div id="more_button" title="更多" aria-label="更多" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+					<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+						<circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
+					</svg>
+				</div>
 				<div id="more-menu" class="hide menu" role="menu">
-					<div class="menu-bg"></div>
 					<span class="print-button menu-item" role="menuitem" tabindex="0">列印</span>
 					<span class="play-button menu-item" role="menuitem" tabindex="0">播放</span>
 					<span class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</span>
 					<span class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</span>
 				</div>
-			</div>
+			</span>
 			<span class="separator">|</span>
 			<label id="close_score_button" data-close='#score_popup_container' title="關閉" aria-label="關閉" role="button" tabindex="0">
 				<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">

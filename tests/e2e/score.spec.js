@@ -156,9 +156,33 @@ test.describe('編輯選單', () => {
     await expect(menu(app)).not.toHaveClass(/hide/);
     let opened = false;
     app.page.on('popup', () => { opened = true; });
-    await app.page.mouse.click(10, 300);
+    // 點譜紙：選單收起，譜面還開著
+    await app.page.locator('#score_page').click({ position: { x: 20, y: 400 } });
     await expect(menu(app)).toHaveClass(/hide/);
+    await expect(editLabel(app)).toHaveAttribute('aria-expanded', 'false');
+    await expect(app.popup()).toHaveClass(/open/);
     expect(opened).toBe(false);
+  });
+
+  test('選單沒有遮罩：開著時其他按鈕照樣能按，選單同時收起', async ({ app }) => {
+    await app.goto('#song_id=2');
+    await editLabel(app).click();
+    await expect(menu(app)).not.toHaveClass(/hide/);
+    await app.page.locator('label.play-button').click();
+    await expect(app.page.locator('#player-set')).not.toHaveClass(/hide/);
+    await expect(menu(app)).toHaveClass(/hide/);
+  });
+
+  test('按 Esc 收起選單，焦點回到「編輯」', async ({ app }) => {
+    await app.goto('#song_id=2');
+    await editLabel(app).focus();
+    await app.page.keyboard.press('Enter');
+    await expect(menu(app)).not.toHaveClass(/hide/);
+    await app.page.keyboard.press('Tab');
+    await expect(menu(app).getByRole('menuitem', { name: '和弦編輯器' })).toBeFocused();
+    await app.page.keyboard.press('Escape');
+    await expect(menu(app)).toHaveClass(/hide/);
+    await expect(editLabel(app)).toBeFocused();
   });
 
   test('「進階編輯器」在新分頁開啟 /song_edit/，並帶上目前的曲號', async ({ app }) => {
@@ -229,6 +253,33 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await expect(menu(app).getByRole('menuitem', { name: '播放' })).toBeFocused();
     await app.page.keyboard.press('Enter');
     await expect(app.page.locator('#player-set')).not.toHaveClass(/hide/);
+    await expect(menu(app)).toHaveClass(/hide/);
+    await expect(moreButton(app)).toBeFocused();
+  });
+
+  test('選單沒有遮罩：開著時其他按鈕照樣能按（例如調性、檢視），選單同時收起', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await moreButton(app).click();
+    await expect(menu(app)).not.toHaveClass(/hide/);
+    await app.page.locator('#transpose_button').click();
+    await expect(app.page.locator('#transpose-menu')).not.toHaveClass(/hide/);
+    await expect(menu(app)).toHaveClass(/hide/);
+    await expect(moreButton(app)).toHaveAttribute('aria-expanded', 'false');
+
+    await moreButton(app).click();
+    await expect(menu(app)).not.toHaveClass(/hide/);
+    await app.page.locator('#view_button').click();
+    await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
+    await expect(menu(app)).toHaveClass(/hide/);
+  });
+
+  test('⋮ 選單按 Esc 收起，焦點回到 ⋮', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await moreButton(app).focus();
+    await app.page.keyboard.press('Enter');
+    await expect(menu(app)).not.toHaveClass(/hide/);
+    await app.page.keyboard.press('Tab');
+    await app.page.keyboard.press('Escape');
     await expect(menu(app)).toHaveClass(/hide/);
     await expect(moreButton(app)).toBeFocused();
   });
