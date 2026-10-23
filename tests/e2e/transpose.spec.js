@@ -145,7 +145,7 @@ test.describe('移調', () => {
     await expect(app.page.locator('#transpose_button')).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('「調性:」和調號在同一條基線上，中間隔一個空白，移調數字貼在調號右上角', async ({ app }) => {
+  test('「調性:」和調號在同一條基線上，中間隔一個空白，移調數字在調號右上角', async ({ app }) => {
     await app.goto('#song_id=1&transpose=1');
     await expect(app.currentTone()).toHaveText('D♭');
     await expect(app.page.locator('#transpose_button')).toHaveText(/調性: D♭/);
@@ -164,8 +164,9 @@ test.describe('移調', () => {
         tone_box: r('#current_visual_tone'), badge: r('#transpose_badge') };
     });
     expect(Math.abs(box.label - box.tone)).toBeLessThan(1);
-    expect(box.badge.left - box.tone_box.right).toBeGreaterThanOrEqual(0);
-    expect(box.badge.left - box.tone_box.right).toBeLessThan(4);
+    // 移調數字在調號的右上角：右邊超出調號一點，上緣比調號高
+    expect(box.badge.right).toBeGreaterThan(box.tone_box.right);
+    expect(box.badge.right - box.tone_box.right).toBeLessThan(12);
     expect(box.badge.top).toBeLessThan(box.tone_box.top);
   });
 

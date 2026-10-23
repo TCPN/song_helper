@@ -233,9 +233,8 @@ table#song_list .song_score a.note_score {
 /* 移調數字浮在調號右上角，不佔按鈕的寬度，移調時工具列不會動；沒移調就不顯示 */
 #transpose_badge {
 	position: absolute;
-	top: -0.5em;
-	left: 100%;
-	margin-left: 0.1em;
+	top: -0.7em;
+	right: -0.7em;
 	color: #8cc8ff;
 	font-family: ui-monospace, Menlo, Consolas, monospace;
 	font-size: 0.7em;
@@ -276,12 +275,14 @@ table#song_list .song_score a.note_score {
 	text-align: center;
 }
 
-/* 調號的寬度跟著字數走；高度固定：♭ 常由備用字型畫出，字型的上下高度不同會把行高撐大，
+/* 調號至少 2em 寬、置中，長的調號（像 B♭m）就撐寬；高度固定：♭ 常由備用字型畫出，字型的上下高度不同會把行高撐大，
  * 移調時按鈕會跟著變高。inline-block 的基線就是文字的基線，和「調性:」對齊 */
 #current_visual_tone {
 	display: inline-block;
 	height: 1.2em;
 	line-height: 1.2em;
+	min-width: 2em;
+	text-align: center;
 }
 
 /* 移調數字對齊在調號的右上角 */
