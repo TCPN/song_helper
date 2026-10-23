@@ -193,6 +193,11 @@ table#song_list .song_score a.note_score {
 	white-space: nowrap;
 }
 
+/* 文字按鈕之間沒有分隔線，間距和以前隔著分隔線時一樣 */
+#score_popup_top_bar > .toolbar-item {
+	margin: 0.5ex 0.55em;
+}
+
 /* 按鈕之間的分隔線用深灰色，不跟按鈕文字搶眼（#35） */
 #score_popup_top_bar .separator {
 	color: #555;
@@ -403,13 +408,13 @@ table#song_list .song_score a.note_score {
 	padding-left: 2em;
 }
 
-/* 工具列不夠寬時「檢視」「排版」按鈕收起來，群組不佔寬度，選單就出現在「⋮」旁邊；
-   放一個零寬的字撐出一行的高度，選單才會和「⋮」選單一樣高 */
-#score_popup_top_bar.compact #view_group, #score_popup_top_bar.compact #layout_group {
+/* 工具列不夠寬時「排版」按鈕收起來，群組不佔寬度，面板就出現在「⋮」旁邊；
+   放一個零寬的字撐出一行的高度，面板才會和「⋮」選單一樣高 */
+#score_popup_top_bar.compact #layout_group {
 	margin: 0;
 }
 
-#score_popup_top_bar.compact #view_group::before, #score_popup_top_bar.compact #layout_group::before {
+#score_popup_top_bar.compact #layout_group::before {
 	content: '\200b';
 }
 

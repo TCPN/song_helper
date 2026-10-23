@@ -87,31 +87,33 @@
 					</div>
 				</div>
 			</span>
-			<!-- wide-only 只在工具列夠寬時顯示，compact-only 只在不夠寬時顯示（js/toolbar.js） -->
+			<!-- wide-only 只在工具列夠寬時顯示，compact-only 只在不夠寬時顯示（js/toolbar.js）。
+			     分隔線只留在編號右邊、調性右邊、關閉左邊（精簡版面只留編號右邊）；
+			     文字按鈕（toolbar-item）之間不放分隔線，用間距隔開 -->
 			<span class="separator wide-only">|</span>
-			<label class="print-button wide-only">列印</label>
-			<span class="separator wide-only">|</span>
-			<label class="play-button wide-only">播放</label>
+			<label class="print-button wide-only toolbar-item">列印</label>
+			<label class="play-button wide-only toolbar-item">播放</label>
 			<div id="player-set" class="hide">
 				<div id="player-control"></div>
 			</div>
-			<span class="separator wide-only">|</span>
-			<!-- 「檢視」：譜面的顯示方式與譜紙（js/score-view.js）。工具列不夠寬時按鈕收進「⋮」選單，
-			     選單留在這裡（群組寬度變 0，緊鄰「⋮」），從「⋮」打開；data-compact-button 是那時焦點要還給的按鈕 -->
-			<span id="view_group">
-				<div id="view_button" class="wide-only" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="view-menu" data-compact-button="#more_button">檢視</div>
+			<!-- 「檢視」：譜面的顯示方式與譜紙（js/score-view.js）。工具列不夠寬時文字換成 icon（文件和指向上下邊的箭頭） -->
+			<span id="view_group" class="toolbar-item">
+				<div id="view_button" title="檢視" aria-label="檢視" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="view-menu"><span class="wide-only" aria-hidden="true">檢視</span><svg class="icon compact-only" viewBox="0 0 24 24" aria-hidden="true">
+						<rect x="4.5" y="1.5" width="15" height="21" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+						<path d="M12 4.5 16 10H8ZM12 19.5 16 14H8Z"/>
+					</svg></div>
 				<div id="view-menu" class="hide menu" role="menu">
 					<span class="menu-item" data-fit="page" role="menuitemradio" tabindex="0">整頁可見</span>
 					<span class="menu-item" data-fit="height" role="menuitemradio" tabindex="0">符合高度</span>
 					<span class="menu-item" data-fit="width" role="menuitemradio" tabindex="0">符合寬度</span>
 					<span class="menu-separator" role="separator"></span>
-					<span class="menu-item" data-paper="a4" role="menuitemradio" tabindex="0">A4</span>
+					<span class="menu-item" data-paper="a4" role="menuitemradio" tabindex="0">分頁</span>
 					<span class="menu-item" data-paper="content" role="menuitemradio" tabindex="0">不分頁</span>
 				</div>
 			</span>
-			<span class="separator wide-only">|</span>
-			<!-- 「排版」：所有歌共用的排版設定，一個設定一列（js/layout-panel.js）；工具列不夠寬時和「檢視」一樣從「⋮」打開 -->
-			<span id="layout_group">
+			<!-- 「排版」：所有歌共用的排版設定，一個設定一列（js/layout-panel.js）。工具列不夠寬時按鈕收進「⋮」選單，
+			     面板留在這裡（群組寬度變 0，緊鄰「⋮」），從「⋮」打開；data-compact-button 是那時焦點要還給的按鈕 -->
+			<span id="layout_group" class="toolbar-item">
 				<div id="layout_button" class="wide-only" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="layout-panel" data-compact-button="#more_button">排版</div>
 				<div id="layout-panel" class="hide menu" role="dialog" aria-label="排版">
 					<div class="layout-row">
@@ -146,17 +148,15 @@
 					<span class="menu-item" id="layout_reset" role="button" tabindex="0">重設</span>
 				</div>
 			</span>
-			<span class="separator wide-only">|</span>
 			<!-- 「編輯」選單不放在按鈕裡面，和「檢視」一樣沒有遮罩（js/dom.js 的 setup_dropdown） -->
-			<span id="edit_group" class="wide-only">
+			<span id="edit_group" class="wide-only toolbar-item">
 				<label id="edit_button" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">編輯</label>
 				<div id="editor-menu" class="hide menu" role="menu">
 					<label class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</label>
 					<label class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</label>
 				</div>
 			</span>
-			<span class="separator compact-only">|</span>
-			<!-- 工具列不夠寬時，列印、播放、編輯、檢視、排版收在這個選單裡 -->
+			<!-- 工具列不夠寬時，列印、播放、編輯、排版收在這個選單裡 -->
 			<span id="more_group" class="compact-only">
 				<div id="more_button" title="更多" aria-label="更多" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
 					<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -169,11 +169,10 @@
 					<span class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</span>
 					<span class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</span>
 					<span class="menu-separator" role="separator"></span>
-					<span class="menu-item" data-open-menu="#view_button" role="menuitem" tabindex="0" aria-haspopup="true">檢視…</span>
 					<span class="menu-item" data-open-menu="#layout_button" role="menuitem" tabindex="0" aria-haspopup="dialog">排版…</span>
 				</div>
 			</span>
-			<span class="separator">|</span>
+			<span class="separator wide-only">|</span>
 			<label id="close_score_button" data-close='#score_popup_container' title="關閉" aria-label="關閉" role="button" tabindex="0">
 				<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
 					<path d="M5 5 19 19M19 5 5 19" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>

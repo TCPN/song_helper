@@ -81,7 +81,7 @@ export function toggle_menu(button, menu) {
     visible_button(button).focus();
 }
 
-// 按鈕被收起來時（工具列不夠寬，「檢視」「排版」改從「⋮」打開），改用 data-compact-button 指定的按鈕
+// 按鈕被收起來時（工具列不夠寬，「排版」改從「⋮」打開），改用 data-compact-button 指定的按鈕
 function visible_button(button) {
   if(button.offsetParent == null && button.dataset.compactButton)
     return document.querySelector(button.dataset.compactButton);

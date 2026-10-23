@@ -1,4 +1,4 @@
-// 「檢視」選單：譜面的顯示方式（整頁可見／符合高度／符合寬度）與譜紙（A4／不分頁）。
+// 「檢視」選單：譜面的顯示方式（整頁可見／符合高度／符合寬度）與譜紙（分頁／不分頁）。
 // 只改 CSS（#score_popup_container 的 class），不用重新渲染譜面；
 // 選擇記在 localStorage，下次開譜沿用（不放進網址 hash）。
 import { normalize_fit_mode, FIT_MODES, normalize_paper_mode, PAPER_MODES } from './score-fit.js';

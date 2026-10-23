@@ -24,7 +24,7 @@ export function setup_editor_menu() {
       click_on_enter(item);
     }
   }
-  // 工具列不夠寬時「⋮」裡的「檢視…」「排版…」：「⋮」收起（上面註冊的），打開按鈕被收起來的那個選單
+  // 工具列不夠寬時「⋮」裡的「排版…」：「⋮」收起（上面註冊的），打開按鈕被收起來的那個選單
   for(const item of document.querySelectorAll('#more-menu [data-open-menu]')){
     item.addEventListener('click', (event)=>{
       // 不讓這次點擊傳到 document，不然剛打開的選單會被當成點了外面而收起
