@@ -235,9 +235,7 @@ table#song_list .song_score a.note_score {
 	position: absolute;
 	top: -0.6em;
 	right: -0.8em;
-	padding: 0 0.35em;
-	border-radius: 1em;
-	background: #1e4a8c;
+	color: #8cc8ff;
 	font-family: ui-monospace, Menlo, Consolas, monospace;
 	font-size: 0.7em;
 	line-height: 1.4;
@@ -289,7 +287,7 @@ table#song_list .song_score a.note_score {
 	vertical-align: middle;
 }
 
-/* 調性＋移調的按鈕：深色圓角方塊，看得出是一顆可以按的按鈕 */
+/* 調性＋移調的按鈕和移調選單 */
 #key_group {
 	position: relative;
 	display: inline-flex;
@@ -306,11 +304,11 @@ table#song_list .song_score a.note_score {
 	right: 0;
 }
 
+/* 「調性:」和調都在按鈕裡；平常沒有底色，滑過才有 */
 #transpose_button {
 	position: relative;
 	padding: 0.15em 0.4em;
 	border-radius: 0.4em;
-	background: #333;
 }
 
 #transpose_button:hover {

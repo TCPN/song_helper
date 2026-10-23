@@ -72,12 +72,11 @@
 				<div id="song_id_popup_window" class="popup-window"></div>
 			</div>
 			<span class="separator">|</span>
-			<!-- 「調性:」和調性按鈕包在一起，移調選單就能對齊在它們正下方 -->
+			<!-- 調性按鈕和移調選單包在一起，選單就能對齊在按鈕正下方 -->
 			<span id="key_group">
-				<label>調性:</label>
-				<!-- 調性和移調合成一顆按鈕：顯示目前的調與移調半音數，點了才出現 −／半音數／＋ -->
+				<!-- 「調性:」、調性和移調合成一顆按鈕：顯示目前的調與移調半音數，點了才出現 −／半音數／＋ -->
 				<div id="transpose_button" title="移調" aria-label="移調" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
-					<span id="current_visual_tone"></span><span id="transpose_badge"></span>
+					<span class="key-label">調性:</span><span id="current_visual_tone"></span><span id="transpose_badge"></span>
 				</div>
 				<div id="transpose-menu" class="hide menu">
 					<div class="transpose-row">
