@@ -12,7 +12,7 @@
 - 計畫中的方向（#9）：先以測試固定行為，再把程式依功能拆成 ES modules（不引入 bundler），
   最後才加新功能。
 - 進度：程式都在 `js/` 的 ES modules，進入點是 `js/main.js`。純函式（`hash.js`、`abc.js`、`song-data.js`、
-  `search.js`、`keypad.js`、`score-fit.js`、`render-params.js`、`line-heights.js`）不碰 DOM，有 `tests/unit/` 的單元測試；新的純函式也照這樣放，模組頂層不要碰 DOM。
+  `search.js`、`keypad.js`、`score-fit.js`、`render-params.js`、`line-heights.js`、`layout-settings.js`）不碰 DOM，有 `tests/unit/` 的單元測試；新的純函式也照這樣放，模組頂層不要碰 DOM。
   HTML 裡不寫 `onclick=` 等事件屬性：每個模組有自己的 `setup_*()` 用 `addEventListener` 註冊，由 `main.js` 呼叫；
   模組的函式不掛到 `window`。
   `js/package.json` 的 `"type": "module"` 是讓 Node 把 `js/*.js` 當 ES modules 載入，不要刪。

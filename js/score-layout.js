@@ -1,5 +1,5 @@
-// abcjs 渲染後的版面修正：段落記號加框、統一每行譜的高度
-import { equalized_line_heights } from './line-heights.js';
+// abcjs 渲染後的版面修正：段落記號加框、設定每行譜的高度
+import { line_heights } from './line-heights.js';
 
 export function svg_elem_add_box(elem) {
   var bbox = elem.getBBox();
@@ -47,11 +47,12 @@ function fix_line_styles(score_paper) {
   }
 }
 
-// 量測每行譜，再依 equalized_line_heights 設定高度
-export function fix_score_line_heights(selector){
+// 量測每行譜，再依 line_heights 設定高度；layout 是「排版…」的設定（均等化、行距）。
+// 只改 viewBox 高度、量的是元素本身的 bbox，所以改設定時對同一份譜再呼叫一次就好，不用重新渲染
+export function fix_score_line_heights(selector, layout){
   var score_paper = document.querySelector(selector);
 
-  var heights = equalized_line_heights(staff_bottoms(score_paper), line_needed_heights(score_paper));
+  var heights = line_heights(staff_bottoms(score_paper), line_needed_heights(score_paper), layout);
   set_line_height(line_svgs(score_paper), heights);
   fix_line_styles(score_paper);
 }

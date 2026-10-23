@@ -265,7 +265,7 @@ test.describe('譜紙：A4／不分頁', () => {
   test('選單在顯示方式下面隔一條線，預設是 A4', async ({ app }) => {
     await app.goto('#song_id=2');
     await app.page.locator('#view_button').click();
-    await expect(app.page.locator('#view-menu .menu-separator')).toBeVisible();
+    await expect(app.page.locator('#view-menu .menu-separator').first()).toBeVisible();
     await expect(app.page.locator('#view-menu [data-paper]')).toHaveText(['A4', '不分頁']);
     await expect(item(app, 'paper', 'a4')).toHaveClass(/selected/);
     await expect(item(app, 'paper', 'content')).toHaveAttribute('aria-checked', 'false');

@@ -8,6 +8,7 @@ import { setup_song_id_input } from './song-id-input.js';
 import { setup_popups } from './popups.js';
 import { setup_editor_menu } from './editor-links.js';
 import { setup_score_view } from './score-view.js';
+import { setup_layout_panel } from './layout-panel.js';
 import { setup_toolbar_layout } from './toolbar.js';
 import { save_scroll, restore_scroll } from './dom.js';
 
@@ -18,6 +19,7 @@ setup_score_controls();
 setup_song_id_input();
 setup_editor_menu();
 setup_score_view();
+setup_layout_panel();
 setup_toolbar_layout();
 setup_popups();
 window.addEventListener('hashchange', exec_hash);
