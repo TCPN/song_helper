@@ -260,6 +260,17 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     expect(view.x - (key.x + key.width)).toBeGreaterThan(40);
   });
 
+  test('螢幕寬度小於 450px 時是精簡版面，450px 以上是完整版面', async ({ app }) => {
+    const bar = app.page.locator('#score_popup_top_bar');
+    await app.page.setViewportSize({ width: 449, height: 667 });
+    await app.goto('#song_id=1');
+    await expect(bar).toHaveClass(/compact/);
+    await app.page.setViewportSize({ width: 450, height: 667 });
+    await expect(bar).not.toHaveClass(/compact/);
+    await app.page.setViewportSize({ width: 449, height: 667 });
+    await expect(bar).toHaveClass(/compact/);
+  });
+
   test('⋮ 可以用鍵盤打開，Tab 到選單項目按 Enter 執行', async ({ app }) => {
     await app.goto('#song_id=1');
     await moreButton(app).focus();

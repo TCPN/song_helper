@@ -175,8 +175,8 @@ test.describe('譜面的顯示方式', () => {
     expect(menu.width).toBeGreaterThan(group.width);
   });
 
-  test('手機寬度（430px）：「編輯」選單右邊放不下，改成右邊對齊按鈕，寬度不被擠窄', async ({ app }) => {
-    await app.page.setViewportSize({ width: 430, height: 932 });
+  test('寬度 460px（剛好是完整工具列）：「編輯」選單右邊放不下，改成右邊對齊按鈕，寬度不被擠窄', async ({ app }) => {
+    await app.page.setViewportSize({ width: 460, height: 932 });
     await app.goto('#song_id=1');
     await app.page.locator('#edit_button').click();
     const menu_locator = app.page.locator('#editor-menu');
