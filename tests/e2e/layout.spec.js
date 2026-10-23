@@ -293,6 +293,22 @@ test.describe('排版設定', () => {
     expect(await app.hashParams()).toEqual({ song_id: '3', transpose: '2' });
   });
 
+  test('改密度或字級只重畫譜面：不重建播放器、不捲動後面的歌單', async ({ app }) => {
+    await app.goto('#song_id=3');
+    await app.page.evaluate(() => {
+      document.querySelector('#player-control').firstElementChild.dataset.marker = 'kept';
+      window.scrollTo(0, 0);
+      window.__scrolled = 0;
+      window.addEventListener('scroll', () => { window.__scrolled++; });
+    });
+    await open_panel(app);
+    await step(app, 'density', 1).click();
+    await step(app, 'lyric_size', 1).click();
+    await expect(value(app, 'lyric_size')).toHaveText('14');
+    await expect(app.page.locator('#player-control [data-marker="kept"]')).toHaveCount(1);
+    expect(await app.page.evaluate(() => window.__scrolled)).toBe(0);
+  });
+
   test('改密度或字級（重新渲染）時，畫面最上面的那一行留在原本的位置', async ({ app }) => {
     await app.goto('#song_id=3');
     const win = app.page.locator('#score_popup_window');

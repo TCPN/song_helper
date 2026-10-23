@@ -35,20 +35,38 @@ export function render_score(transpose){
   var score_container = document.querySelector('#score_popup_container');
   score_container.classList.add('open');
   // open at the first so the abcjs can measure the elements' boxes and do good arrangement
-  // reset the score_paper
-  var score_paper = document.querySelector('#score_paper');
-  score_paper.className = '';
-  score_paper.style = '';
   document.querySelector('#current_song_id').textContent = song.id;
 
   //scroll to the song
   const song_item_in_list = document.querySelector(`#song_list tbody [data-target="${song.id}"]`);
   song_item_in_list.scrollIntoView({ block: 'nearest' });
 
+  var display_tone = draw_score(song, transpose);
+  ABCJS.renderMidi('player-control', song.abc, build_midi_params({ transpose }));
+  document.querySelector('#current_visual_tone').textContent = display_tone;
+  // 移調 icon 旁邊顯示目前的半音數（0 時不顯示）
+  document.querySelector('#transpose_badge').textContent = transpose_badge(transpose);
+  // 曲號、調性、移調的字數會影響工具列寬度
+  update_toolbar_layout();
+  document.title = `${song.name} (${display_tone})`
+  state.displayingSong = song;
+}
+
+// 只重畫譜面（「排版…」改了密度、字級時）：不重建播放器、不捲動歌單、工具列不變
+export function redraw_score(){
+  if(state.displayingSong)
+    draw_score(state.displayingSong, current_transpose());
+}
+
+// 用 abcjs 把譜畫到 #score_paper，再修正版面；傳回顯示用的調性名稱
+function draw_score(song, transpose){
+  // reset the score_paper
+  var score_paper = document.querySelector('#score_paper');
+  score_paper.className = '';
+  score_paper.style = '';
   var params = build_render_params({ transpose, layout: current_layout() });
   params.clickListener = function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);};
   var tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
-  ABCJS.renderMidi('player-control', song.abc, build_midi_params({ transpose }));
 
   // add bounding box of the part marks
   var part_texts = document.querySelectorAll('.abcjs-part');
@@ -60,7 +78,6 @@ export function render_score(transpose){
   // 不分頁時譜紙的高寬比依譜的內容
   update_content_ratio();
 
-  var display_tone = "";
   if(params.oneSvgPerLine) {
     try{
       var tone_signature = tuneObjectArray[0].lines[0].staff[0].key;
@@ -71,14 +88,7 @@ export function render_score(transpose){
       var tone_signature = tuneObjectArray[0].engraver.engraver.startlimitelem.abcelem;
     }catch(e){}
   }
-  display_tone = key_display_name(tone_signature);
-  document.querySelector('#current_visual_tone').textContent = display_tone;
-  // 移調 icon 旁邊顯示目前的半音數（0 時不顯示）
-  document.querySelector('#transpose_badge').textContent = transpose_badge(transpose);
-  // 曲號、調性、移調的字數會影響工具列寬度
-  update_toolbar_layout();
-  document.title = `${song.name} (${display_tone})`
-  state.displayingSong = song;
+  return key_display_name(tone_signature);
 }
 
 function transpose_badge(transpose){
