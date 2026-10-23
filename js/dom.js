@@ -53,12 +53,22 @@ export function click_on_enter(target) {
   });
 }
 
+// 下拉選單預設左邊對齊按鈕；右邊超出畫面時才改成右邊對齊（加 align-right class）
+export function place_menu(menu) {
+  menu = getDom(menu);
+  menu.classList.remove('align-right');
+  if(menu.getBoundingClientRect().right > document.documentElement.clientWidth)
+    menu.classList.add('align-right');
+}
+
 // 開關按鈕的下拉選單（選單用 hide class 收起），並更新按鈕的 aria-expanded
 export function toggle_menu(button, menu) {
   button = getDom(button);
   menu = getDom(menu);
   toggleClass(menu, 'hide');
   var expanded = !menu.classList.contains('hide');
+  if(expanded)
+    place_menu(menu);
   button.setAttribute('aria-expanded', expanded);
   // 用鍵盤選了項目後選單收起，焦點還給按鈕，不要掉在隱藏的項目上
   if(!expanded && menu.contains(document.activeElement))
@@ -75,6 +85,11 @@ export function setup_dropdown(button, menu) {
   document.addEventListener('click', (event)=>{
     if(!menu.classList.contains('hide') && !button.contains(event.target) && !menu.contains(event.target))
       toggle_menu(button, menu);
+  });
+  // 開著時視窗大小改變（轉向等），重新決定對齊哪一邊
+  window.addEventListener('resize', ()=>{
+    if(!menu.classList.contains('hide'))
+      place_menu(menu);
   });
   for(const target of [button, menu])
     target.addEventListener('keydown', (event)=>{

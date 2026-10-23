@@ -380,13 +380,19 @@ table#song_list .song_score a.note_score {
 	--fit-width: calc(100cqh / var(--content-ratio, 1.3333));
 }
 
-/* 「檢視」「編輯」「⋮」選單在按鈕正下方，右邊對齊按鈕，往左展開，窄螢幕上才不會超出右邊 */
+/* 「檢視」「編輯」「⋮」選單在按鈕正下方，左邊對齊按鈕往右展開；
+   右邊放不下時 JS 加上 align-right，改成右邊對齊按鈕往左展開（見 dom.js 的 place_menu） */
 #view_group, #edit_group, #more_group {
 	position: relative;
 }
 
 #view-menu, #editor-menu, #more-menu {
 	top: calc(100% + 0.5em);
+	left: 0;
+}
+
+.menu.align-right {
+	left: auto;
 	right: 0;
 }
 
