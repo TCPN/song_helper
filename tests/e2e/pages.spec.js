@@ -192,7 +192,10 @@ test.describe('分頁顯示', () => {
     expect(breaks.filter((b) => b == 'page').length).toBe(pages - 1);
     expect(breaks[breaks.length - 1]).not.toBe('page');
 
-    const pdf = (await app.page.pdf({ format: 'A4', margin: { top: '10mm', bottom: '10mm', left: '10mm', right: '10mm' } })).toString('latin1');
-    expect(pdf.match(/\/Type \/Page\b/g).length).toBe(pages);
+    // 紙張大小用 style.css 的 @page（A4），邊界一樣寬時每頁都放得下
+    for (const margin of ['0mm', '10mm', '20mm']) {
+      const pdf = (await app.page.pdf({ preferCSSPageSize: true, margin: { top: margin, bottom: margin, left: margin, right: margin } })).toString('latin1');
+      expect(pdf.match(/\/Type \/Page\b/g).length).toBe(pages);
+    }
   });
 });

@@ -535,6 +535,14 @@ table#song_list .song_score a.note_score {
 @media (orientation: portrait) {
 }
 
+/*
+ * 列印用 A4：螢幕上一頁的高是寬的 √2 倍，上下左右邊界一樣時，A4 扣掉邊界後的可印區域一定比 √2 長，
+ * 每一頁都放得下。Letter（高寬比約 1.29）會放不下，所以指定 A4
+ */
+@page {
+	size: A4;
+}
+
 @media print {
 	body > *, #score_popup_top_bar, body #feedback_popup {
 		display: none;
