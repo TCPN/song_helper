@@ -2,7 +2,7 @@
 // 整包存在 localStorage 的 score_layout（JSON），不放進網址 hash。
 // 面板裡每個設定一列：開關用 data-layout-toggle，數值用 −／＋（data-layout-step）加上顯示值（data-layout-value），
 // 之後要加設定只要在 layout-settings.js 加欄位、在 index.html 加一列
-import { parse_layout, normalize_layout, step_layout, needs_rerender, format_layout_value, DEFAULT_LAYOUT } from './layout-settings.js';
+import { parse_layout, normalize_layout, step_layout, at_limit, needs_rerender, format_layout_value, DEFAULT_LAYOUT } from './layout-settings.js';
 import { fix_score_line_heights } from './score-layout.js';
 import { update_content_ratio } from './score-view.js';
 import { click_on_enter, place_menu, toggle_menu } from './dom.js';
@@ -34,9 +34,10 @@ function used_value(key) {
   return layout[key];
 }
 
-// 已經是這首歌最小的譜面寬度時，「−」不能按
+// 到了範圍的上下限，或已經是這首歌最小的譜面寬度時，「−」／「＋」不能按
 function step_disabled(key, steps) {
-  return key == 'staff_width' && steps < 0 && state.staffwidthAtMin;
+  return at_limit(key, used_value(key), steps)
+    || (key == 'staff_width' && steps < 0 && state.staffwidthAtMin);
 }
 
 // 面板上的開關與數值跟著設定（渲染譜面後 score.js 也會呼叫，更新實際用的譜面寬度）

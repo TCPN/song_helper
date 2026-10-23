@@ -64,6 +64,14 @@ export function step_layout(layout, key, steps, from) {
   return normalize_layout({ ...current, [key]: range.min + target * range.step });
 }
 
+// value 已經到範圍的上限（steps > 0）或下限（steps < 0），再調也不會變
+export function at_limit(key, value, steps) {
+  var range = LAYOUT_STEPS[key];
+  if(!range)
+    return true;
+  return steps > 0 ? value >= range.max : value <= range.min;
+}
+
 // 從 old_layout 改成 new_layout 時要不要重新渲染譜面
 export function needs_rerender(old_layout, new_layout) {
   var a = normalize_layout(old_layout);

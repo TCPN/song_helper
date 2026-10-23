@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_LAYOUT, LAYOUT_STEPS, RERENDER_KEYS, normalize_layout, parse_layout, step_layout, needs_rerender, format_layout_value } from '../../js/layout-settings.js';
+import { DEFAULT_LAYOUT, LAYOUT_STEPS, RERENDER_KEYS, normalize_layout, parse_layout, step_layout, at_limit, needs_rerender, format_layout_value } from '../../js/layout-settings.js';
 
 test('DEFAULT_LAYOUT：預設是加入設定前的排版（均等化、不加行距、譜面寬度 740、abcjs 原本的字級）', () => {
   assert.deepEqual(DEFAULT_LAYOUT, { equalize: true, line_gap: 0, staff_width: 740, lyric_size: 13, chord_size: 12 });
@@ -84,4 +84,14 @@ test('format_layout_value：直接顯示數字', () => {
   assert.equal(format_layout_value('staff_width', 740), '740');
   assert.equal(format_layout_value('lyric_size', 13), '13');
   assert.equal(format_layout_value('line_gap', 0), '0');
+});
+
+test('at_limit：到上限時不能再加、到下限時不能再減', () => {
+  assert.equal(at_limit('staff_width', 1500, 1), true);
+  assert.equal(at_limit('staff_width', 1500, -1), false);
+  assert.equal(at_limit('staff_width', 1460, 1), false);
+  assert.equal(at_limit('line_gap', 0, -1), true);
+  assert.equal(at_limit('line_gap', 0, 1), false);
+  assert.equal(at_limit('lyric_size', 24, 1), true);
+  assert.equal(at_limit('unknown', 0, 1), true);
 });

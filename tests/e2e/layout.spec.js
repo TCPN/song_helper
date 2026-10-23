@@ -98,8 +98,9 @@ test.describe('排版設定', () => {
     for (let i = 0; i < 3; i++) expect(after[i]).toBeCloseTo(before[i] + 10, 1);
     expect(after[3]).toBeCloseTo(before[3], 1);
 
-    for (let i = 0; i < 4; i++) await gap_button(app, -1).click();
+    for (let i = 0; i < 2; i++) await gap_button(app, -1).click();
     await expect(gap_value(app)).toHaveText('0');
+    await expect(gap_button(app, -1)).toHaveAttribute('aria-disabled', 'true');
     expect_heights(await heights(app), before);
   });
 
@@ -379,6 +380,22 @@ test.describe('排版設定', () => {
       expect(Math.abs(after.y - before.y)).toBeLessThan(1);
       before = after;
     }
+  });
+
+  test('到了範圍的上下限，「−」／「＋」不能按', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await open_panel(app);
+    // 行距預設 0 是下限
+    await expect(gap_button(app, -1)).toHaveAttribute('aria-disabled', 'true');
+    await expect(gap_button(app, 1)).toHaveAttribute('aria-disabled', 'false');
+    const plus = step(app, 'staff_width', 1);
+    for (let i = 0; i < 25 && (await plus.getAttribute('aria-disabled')) != 'true'; i++) await plus.click();
+    await expect(value(app, 'staff_width')).toHaveText('1500');
+    await expect(plus).toHaveAttribute('aria-disabled', 'true');
+    await expect(step(app, 'staff_width', -1)).toHaveAttribute('aria-disabled', 'false');
+    // 不能按時按了也不變（aria-disabled 的按鈕 Playwright 不會點，直接送 click 事件）
+    await plus.dispatchEvent('click');
+    await expect(value(app, 'staff_width')).toHaveText('1500');
   });
 
   test('手機寬度（375px）：面板不超出畫面，控制項都在同一列', async ({ app }) => {

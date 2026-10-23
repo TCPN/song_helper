@@ -442,7 +442,7 @@ table#song_list .song_score a.note_score {
 	padding: 0.25em 0.6em;
 }
 
-/* 已經是這首歌最小的譜面寬度時，「−」不能按 */
+/* 到了上下限（或這首歌最小的譜面寬度）時，「−」／「＋」不能按 */
 #layout-panel .step-button[aria-disabled="true"] {
 	opacity: 0.35;
 	cursor: default;
