@@ -1,13 +1,13 @@
 // 譜面彈窗：用 abcjs 渲染譜面、移調、換歌、關閉
 import { state } from './state.js';
-import { key_display_name } from './abc.js';
+import { key_display_name, with_stretchlast } from './abc.js';
 import { parse_hash, update_hash } from './route.js';
 import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdown } from './dom.js';
-import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
+import { svg_elem_add_box, score_line_widths, fix_score_line_widths, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
 import { update_content_ratio } from './score-view.js';
-import { build_render_params, build_midi_params } from './render-params.js';
-import { current_layout } from './layout-panel.js';
+import { build_render_params, build_midi_params, widened_staffwidth } from './render-params.js';
+import { current_layout, show_layout } from './layout-panel.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
 var clickListener = console.log;
@@ -52,7 +52,7 @@ export function render_score(transpose){
   state.displayingSong = song;
 }
 
-// 只重畫譜面（「排版…」改了密度、字級時）：不重建播放器、不捲動歌單、工具列不變
+// 只重畫譜面（「排版…」改了譜面寬度、字級時）：不重建播放器、不捲動歌單、工具列不變
 export function redraw_score(){
   if(state.displayingSong)
     draw_score(state.displayingSong, current_transpose());
@@ -66,7 +66,20 @@ function draw_score(song, transpose){
   score_paper.style = '';
   var params = build_render_params({ transpose, layout: current_layout() });
   params.clickListener = function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);};
-  var tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
+  var abc = with_stretchlast(song.abc);
+  var tuneObjectArray = ABCJS.renderAbc('score_paper', abc, params);
+  // 有行塞不進譜面寬度時，用最寬那行的寬度重新渲染，每行才會一樣大；這就是這首歌最小的譜面寬度。
+  // 重新渲染後那行可能還是寬一點點，最後把每行 viewBox 的寬度對齊
+  var widened = widened_staffwidth(score_line_widths('#score_paper'), params.staffwidth);
+  if(widened){
+    params.staffwidth = widened;
+    tuneObjectArray = ABCJS.renderAbc('score_paper', abc, params);
+    fix_score_line_widths('#score_paper');
+  }
+  // 「排版…」面板顯示實際用的寬度
+  state.staffwidthUsed = params.staffwidth;
+  state.staffwidthAtMin = !!widened;
+  show_layout();
 
   // add bounding box of the part marks
   var part_texts = document.querySelectorAll('.abcjs-part');

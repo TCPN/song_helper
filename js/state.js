@@ -13,4 +13,7 @@ export const state = {
   // 譜面上方歌號輸入：開始編輯前的歌號，與目前指向的歌號
   originalSongId: undefined,
   targetSongId: undefined,
+  // 目前譜面實際用的譜面寬度（abcjs staffwidth），與是否已經是這首歌最小的寬度（設定的寬度塞不下而撐寬）
+  staffwidthUsed: null,
+  staffwidthAtMin: false,
 };

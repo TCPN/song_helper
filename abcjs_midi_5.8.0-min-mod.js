@@ -5374,7 +5374,7 @@
             c = u,
             l = f.spacingUnits,
             h = f.minSpace,
-            u = r && o / s < .66 && !a ? null : Math.abs(s - o) < 2 ? null : 0 < l ? (50 < (c = (s - (o - l * c)) / l) * h && (c = 50 / h),
+            u = r && o / s < .66 && !a ? null : Math.abs(s - o) < 2 ? null : 0 < l ? (/* song_helper: 排版寬度大於預設 740 時，間距上限跟著放寬，讓行能拉滿 */ (50 * Math.max(1, this.width / 740)) < (c = (s - (o - l * c)) / l) * h && (c = 50 * Math.max(1, this.width / 740) / h),
             c) : null,
             n && console.log("setXSpace", d, e.w, u, e.minspace),
             null === u)
