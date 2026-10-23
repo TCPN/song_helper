@@ -203,14 +203,12 @@ table#song_list .song_score a.note_score {
 	color: #555;
 }
 
-/* 精簡版面：「檢視」以右的 icon 按鈕貼右邊（留一點邊距），編號和調性在剩下的空間置中
-   （編號左邊和「檢視」左邊都是 auto，剩下的空間平分在兩邊） */
+/* 精簡版面：編號和調性貼左邊，「檢視」以右的 icon 按鈕貼右邊，兩邊都留一點邊距 */
 #score_popup_top_bar.compact {
 	justify-content: flex-start;
 	padding: 0 0.5em;
 }
 
-#score_popup_top_bar.compact #current_song_id,
 #score_popup_top_bar.compact #view_group {
 	margin-left: auto;
 }
