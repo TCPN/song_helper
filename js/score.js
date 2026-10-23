@@ -52,7 +52,7 @@ export function render_score(transpose){
   state.displayingSong = song;
 }
 
-// 只重畫譜面（「排版…」改了譜面寬度、字級時）：不重建播放器、不捲動歌單、工具列不變
+// 只重畫譜面（「排版」改了譜面寬度、字級時）：不重建播放器、不捲動歌單、工具列不變
 export function redraw_score(){
   if(state.displayingSong)
     draw_score(state.displayingSong, current_transpose());
@@ -76,7 +76,7 @@ function draw_score(song, transpose){
     tuneObjectArray = ABCJS.renderAbc('score_paper', abc, params);
     fix_score_line_widths('#score_paper');
   }
-  // 「排版…」面板顯示實際用的寬度
+  // 「排版」面板顯示實際用的寬度
   state.staffwidthUsed = params.staffwidth;
   state.staffwidthAtMin = !!widened;
   show_layout();
@@ -123,7 +123,7 @@ export function close_score(){
   document.title = state.originalTitle;
   document.querySelector('#score_popup_container').classList.remove('open');
   // 收起譜面上的選單，下一首才不會一打開就是展開的
-  for(const [button, menu] of [['#transpose_button', '#transpose-menu'], ['#view_button', '#view-menu'], ['#more_button', '#more-menu'], ['#edit_button', '#editor-menu'], ['#view_button', '#layout-panel']]){
+  for(const [button, menu] of [['#transpose_button', '#transpose-menu'], ['#view_button', '#view-menu'], ['#more_button', '#more-menu'], ['#edit_button', '#editor-menu'], ['#layout_button', '#layout-panel']]){
     document.querySelector(menu).classList.add('hide');
     document.querySelector(button).setAttribute('aria-expanded', false);
   }

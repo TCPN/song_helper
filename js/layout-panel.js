@@ -1,11 +1,11 @@
-// 「檢視」選單的「排版…」面板：行間距均等化、行距、譜面寬度、歌詞字級、和弦字級。設定所有歌共用，
+// 工具列「排版」選單的面板：行間距均等化、行距、譜面寬度、歌詞字級、和弦字級。設定所有歌共用，
 // 整包存在 localStorage 的 score_layout（JSON），不放進網址 hash。
 // 面板裡每個設定一列：開關用 data-layout-toggle，數值用 −／＋（data-layout-step）加上顯示值（data-layout-value），
 // 之後要加設定只要在 layout-settings.js 加欄位、在 index.html 加一列
 import { parse_layout, normalize_layout, step_layout, at_limit, needs_rerender, format_layout_value, DEFAULT_LAYOUT } from './layout-settings.js';
 import { fix_score_line_heights } from './score-layout.js';
 import { update_content_ratio } from './score-view.js';
-import { click_on_enter, place_menu, toggle_menu } from './dom.js';
+import { click_on_enter, setup_dropdown } from './dom.js';
 import { state } from './state.js';
 
 const LAYOUT_KEY = 'score_layout';
@@ -87,33 +87,6 @@ function set_layout(new_layout) {
   }
 }
 
-function is_open() {
-  return !document.querySelector(PANEL).classList.contains('hide');
-}
-
-// 從「檢視」選單打開面板：選單收起，面板出現在同一個位置，焦點移到面板的第一個控制項
-function open_panel() {
-  var panel = document.querySelector(PANEL);
-  var view_menu = document.querySelector('#view-menu');
-  if(!view_menu.classList.contains('hide'))
-    toggle_menu('#view_button', view_menu);
-  panel.classList.remove('hide');
-  place_menu(panel);
-  document.querySelector('#view_button').setAttribute('aria-expanded', true);
-  panel.querySelector('[tabindex]').focus();
-}
-
-// 和其他選單一樣：點面板以外的地方或按 Esc 收起；用鍵盤時焦點還給「檢視」按鈕
-function close_panel() {
-  var panel = document.querySelector(PANEL);
-  panel.classList.add('hide');
-  // 點「檢視」按鈕收起面板時，「檢視」選單已經打開了，按鈕維持展開
-  if(document.querySelector('#view-menu').classList.contains('hide'))
-    document.querySelector('#view_button').setAttribute('aria-expanded', false);
-  if(panel.contains(document.activeElement))
-    document.querySelector('#view_button').focus();
-}
-
 // rerender：用目前的設定重新渲染譜面
 export function setup_layout_panel({ rerender: rerender_score } = {}) {
   if(rerender_score)
@@ -121,22 +94,9 @@ export function setup_layout_panel({ rerender: rerender_score } = {}) {
   layout = load_layout();
   show_layout();
 
+  // 和「檢視」等選單一樣：點按鈕開關，點面板以外的地方或按 Esc 收起
   var panel = document.querySelector(PANEL);
-  var open_item = document.querySelector('#view-menu [data-open-layout]');
-  open_item.addEventListener('click', open_panel);
-  click_on_enter(open_item);
-  document.addEventListener('click', (event)=>{
-    if(is_open() && !panel.contains(event.target) && !open_item.contains(event.target))
-      close_panel();
-  });
-  panel.addEventListener('keydown', (event)=>{
-    if(event.key == 'Escape')
-      close_panel();
-  });
-  window.addEventListener('resize', ()=>{
-    if(is_open())
-      place_menu(panel);
-  });
+  setup_dropdown('#layout_button', panel);
 
   for(const item of panel.querySelectorAll('[data-layout-toggle]')){
     item.addEventListener('click', ()=>{

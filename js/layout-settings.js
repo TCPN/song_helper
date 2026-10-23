@@ -1,4 +1,4 @@
-// 「排版…」的設定（純函式，不碰 DOM）：所有歌共用，整包存成 localStorage 的一個 JSON，不放進網址 hash
+// 「排版」的設定（純函式，不碰 DOM）：所有歌共用，整包存成 localStorage 的一個 JSON，不放進網址 hash
 
 // 預設值就是加入這些設定前的排版
 export const DEFAULT_LAYOUT = {

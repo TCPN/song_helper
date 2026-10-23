@@ -223,12 +223,14 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await app.page.setViewportSize({ width: 200, height: 667 });
   });
 
-  test('很窄時：列印、播放、編輯收進 ⋮，工具列排成一行不折行', async ({ app }) => {
+  test('很窄時：列印、播放、編輯、排版收進 ⋮，「檢視」換成 icon，工具列排成一行不折行', async ({ app }) => {
     await app.goto('#song_id=2');
     const bar = app.page.locator('#score_popup_top_bar');
     await expect(bar).toHaveClass(/compact/);
     await expect(moreButton(app).locator('svg')).toBeVisible();
     await expect(app.page.locator('#edit_button')).toBeHidden();
+    await expect(app.page.locator('#view_button svg')).toBeVisible();
+    await expect(app.page.locator('#layout_button')).toBeHidden();
     await expect(bar.locator('.print-button.wide-only')).toBeHidden();
     // 每個項目都只有一行高
     const heights = await bar.evaluate((b) => Array.from(b.children)
@@ -239,7 +241,34 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await expect(menu(app)).toHaveClass(/hide/);
     await moreButton(app).click();
     await expect(menu(app)).not.toHaveClass(/hide/);
-    await expect(menu(app).locator('.menu-item')).toHaveText(['列印', '播放', '和弦編輯器', '進階編輯器']);
+    await expect(menu(app).locator('.menu-item')).toHaveText(['列印', '播放', '和弦編輯器', '進階編輯器', '排版…']);
+  });
+
+  test('很窄時：編號和調性貼左邊，「檢視」、⋮、關閉貼右邊，兩邊都留邊距', async ({ app }) => {
+    await app.page.setViewportSize({ width: 375, height: 667 });
+    await app.goto('#song_id=1');
+    const bar = await app.page.locator('#score_popup_top_bar').boundingBox();
+    const id = await app.page.locator('#current_song_id').boundingBox();
+    const view = await app.page.locator('#view_button').boundingBox();
+    const close = await app.page.locator('#close_score_button').boundingBox();
+    const key = await app.page.locator('#key_group').boundingBox();
+    expect(close.x + close.width).toBeLessThan(bar.x + bar.width - 4);
+    expect(close.x + close.width).toBeGreaterThan(bar.x + bar.width - 24);
+    expect(id.x).toBeGreaterThan(bar.x + 4);
+    expect(id.x).toBeLessThan(bar.x + 24);
+    // 調性和「檢視」之間空出來
+    expect(view.x - (key.x + key.width)).toBeGreaterThan(40);
+  });
+
+  test('螢幕寬度小於 450px 時是精簡版面，450px 以上是完整版面', async ({ app }) => {
+    const bar = app.page.locator('#score_popup_top_bar');
+    await app.page.setViewportSize({ width: 449, height: 667 });
+    await app.goto('#song_id=1');
+    await expect(bar).toHaveClass(/compact/);
+    await app.page.setViewportSize({ width: 450, height: 667 });
+    await expect(bar).not.toHaveClass(/compact/);
+    await app.page.setViewportSize({ width: 449, height: 667 });
+    await expect(bar).toHaveClass(/compact/);
   });
 
   test('⋮ 可以用鍵盤打開，Tab 到選單項目按 Enter 執行', async ({ app }) => {
@@ -257,7 +286,7 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await expect(moreButton(app)).toBeFocused();
   });
 
-  test('選單沒有遮罩：開著時其他按鈕照樣能按（例如調性、檢視），選單同時收起', async ({ app }) => {
+  test('選單沒有遮罩：開著時其他按鈕照樣能按（例如調性），選單同時收起', async ({ app }) => {
     await app.goto('#song_id=1');
     await moreButton(app).click();
     await expect(menu(app)).not.toHaveClass(/hide/);
@@ -271,6 +300,11 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await app.page.locator('#view_button').click();
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
     await expect(menu(app)).toHaveClass(/hide/);
+    // 檢視選單開著時再點 ⋮：檢視選單收起、⋮ 打開
+    await moreButton(app).click();
+    await expect(app.page.locator('#view-menu')).toHaveClass(/hide/);
+    await expect(menu(app)).not.toHaveClass(/hide/);
+    await expect(moreButton(app)).toHaveAttribute('aria-expanded', 'true');
   });
 
   test('⋮ 選單按 Esc 收起，焦點回到 ⋮', async ({ app }) => {

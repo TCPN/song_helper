@@ -145,19 +145,31 @@ test.describe('移調', () => {
     await expect(app.page.locator('#transpose_button')).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('調性和移調數字改變時，工具列其他項目的位置不變', async ({ app }) => {
-    const positions = () => app.page.evaluate(() =>
-      ['#transpose_button', '#edit_button', '#close_score_button']
-        .map((sel) => Math.round(document.querySelector(sel).getBoundingClientRect().left)));
-    await app.goto('#song_id=1');
-    await expect(app.currentTone()).toHaveText('C');
-    const base = await positions();
-    for (const [hash, tone] of [['#song_id=4&transpose=1', 'B♭m'], ['#song_id=1&transpose=-11', 'D♭'], ['#song_id=1&transpose=10', 'B♭']]) {
-      await app.goto(hash);
-      await expect(app.currentTone()).toHaveText(tone);
-      expect(await positions(), hash).toEqual(base);
-    }
+  test('「調性:」和調號在同一條基線上，中間隔一個空白，移調數字在調號右上角', async ({ app }) => {
+    await app.goto('#song_id=1&transpose=1');
+    await expect(app.currentTone()).toHaveText('D♭');
+    await expect(app.page.locator('#transpose_button')).toHaveText(/調性: D♭/);
+    const box = await app.page.evaluate(() => {
+      const r = (sel) => document.querySelector(sel).getBoundingClientRect();
+      // 用一個不佔位置的零寬元素量文字基線
+      const baseline = (sel) => {
+        const probe = document.createElement('span');
+        probe.style.cssText = 'display:inline-block;width:0;height:0;';
+        document.querySelector(sel).appendChild(probe);
+        const y = probe.getBoundingClientRect().bottom;
+        probe.remove();
+        return y;
+      };
+      return { label: baseline('.key-label'), tone: baseline('#current_visual_tone'),
+        tone_box: r('#current_visual_tone'), badge: r('#transpose_badge') };
+    });
+    expect(Math.abs(box.label - box.tone)).toBeLessThan(1);
+    // 移調數字在調號的右上角：右邊超出調號一點，上緣比調號高
+    expect(box.badge.right).toBeGreaterThan(box.tone_box.right);
+    expect(box.badge.right - box.tone_box.right).toBeLessThan(12);
+    expect(box.badge.top).toBeLessThan(box.tone_box.top);
   });
+
   test('調性有 ♭ 時，調性按鈕和工具列的高度不變', async ({ app }) => {
     const heights = () => app.page.evaluate(() =>
       ['#transpose_button', '#score_popup_top_bar']

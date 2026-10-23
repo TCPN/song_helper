@@ -106,16 +106,53 @@ test.describe('譜面的顯示方式', () => {
     await expect(app.page.locator('#view_button')).toBeFocused();
   });
 
-  test('工具列不夠寬時「檢視」仍留在工具列上', async ({ app }) => {
+  test('工具列不夠寬時「檢視」留在工具列上但換成 icon，選單在按鈕下方、不超出畫面', async ({ app }) => {
     await app.page.setViewportSize({ width: 280, height: 600 });
     await app.goto('#song_id=1');
     await expect(app.page.locator('#score_popup_top_bar')).toHaveClass(/compact/);
-    await expect(app.page.locator('#view_button')).toBeVisible();
+    const button = app.page.locator('#view_button');
+    await expect(button).toBeVisible();
+    await expect(button.locator('svg')).toBeVisible();
+    await expect(button.getByText('檢視')).toBeHidden();
+    await expect(button).toHaveAccessibleName('檢視');
+    await expect(app.page.locator('#more-menu .menu-item')).not.toContainText(['檢視…']);
     await open_view_menu(app);
-    // 選單不超出畫面
-    const box = await app.page.locator('#view-menu').boundingBox();
+    const menu = app.page.locator('#view-menu');
+    const box = await menu.boundingBox();
+    const icon = await button.boundingBox();
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(280);
+    expect(box.y).toBeGreaterThan(icon.y + icon.height);
+    // 選了項目選單不收起，點外面才收起
+    await app.page.locator('#view-menu [data-fit="page"]').click();
+    await expect(menu).not.toHaveClass(/hide/);
+    await app.page.mouse.click(10, 500);
+    await expect(menu).toHaveClass(/hide/);
+  });
+
+  test('工具列不夠寬時可以只用鍵盤操作「檢視」icon：Enter 打開、Tab 進選單、Esc 收起後焦點回到 icon', async ({ app }) => {
+    await app.page.setViewportSize({ width: 280, height: 600 });
+    await app.goto('#song_id=1');
+    await app.page.locator('#view_button').focus();
+    await app.page.keyboard.press('Enter');
+    await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
+    await app.page.keyboard.press('Tab');
+    await expect(fit_item(app, 'page')).toBeFocused();
+    await app.page.keyboard.press('Enter');
+    await expect(fit_item(app, 'page')).toHaveClass(/selected/);
+    await app.page.keyboard.press('Escape');
+    await expect(app.page.locator('#view-menu')).toHaveClass(/hide/);
+    await expect(app.page.locator('#view_button')).toBeFocused();
+  });
+
+  test('窄版打開「檢視」後視窗變寬：選單收起，之後不會自己冒出來', async ({ app }) => {
+    await app.page.setViewportSize({ width: 280, height: 600 });
+    await app.goto('#song_id=1');
+    await open_view_menu(app);
+    await app.page.setViewportSize({ width: 1280, height: 720 });
+    await expect(app.page.locator('#score_popup_top_bar')).not.toHaveClass(/compact/);
+    await expect(app.page.locator('#view-menu')).toHaveClass(/hide/);
+    await expect(app.page.locator('#view_button')).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('工具列的選單預設左邊對齊按鈕；右邊放不下時改成右邊對齊', async ({ app }) => {
@@ -138,8 +175,8 @@ test.describe('譜面的顯示方式', () => {
     expect(menu.width).toBeGreaterThan(group.width);
   });
 
-  test('手機寬度（375px）：「編輯」選單右邊放不下，改成右邊對齊按鈕，寬度不被擠窄', async ({ app }) => {
-    await app.page.setViewportSize({ width: 375, height: 667 });
+  test('寬度 460px（剛好是完整工具列）：「編輯」選單右邊放不下，改成右邊對齊按鈕，寬度不被擠窄', async ({ app }) => {
+    await app.page.setViewportSize({ width: 460, height: 932 });
     await app.goto('#song_id=1');
     await app.page.locator('#edit_button').click();
     const menu_locator = app.page.locator('#editor-menu');
@@ -235,8 +272,8 @@ test.describe('長譜', () => {
   });
 });
 
-// 「檢視」選單：譜紙（A4／不分頁）
-test.describe('譜紙：A4／不分頁', () => {
+// 「檢視」選單：譜紙（分頁／不分頁；分頁的值存成 a4）
+test.describe('譜紙：分頁／不分頁', () => {
   const line = (i) => `"C"CDEF|"G"GFED|"C"CDEF|"G"GFED|\nw:l${i} b c d e f g h i j k l m n o p\n`;
   const LONG = { id: 1, name: '長譜測試', tone: 'C', timesig: '4/4', melody: 'CDEF',
     abc: 'X:1\nT:Long\nM:4/4\nL:1/4\nK:C\n' + Array.from({ length: 30 }, (_, i) => line(i)).join('') + 'C4|]\n' };
@@ -262,11 +299,11 @@ test.describe('譜紙：A4／不分頁', () => {
     await expect(item(app, attr, value)).toHaveAttribute('aria-checked', 'true');
   }
 
-  test('選單在顯示方式下面隔一條線，預設是 A4', async ({ app }) => {
+  test('選單在顯示方式下面隔一條線，預設是分頁', async ({ app }) => {
     await app.goto('#song_id=2');
     await app.page.locator('#view_button').click();
     await expect(app.page.locator('#view-menu .menu-separator').first()).toBeVisible();
-    await expect(app.page.locator('#view-menu [data-paper]')).toHaveText(['A4', '不分頁']);
+    await expect(app.page.locator('#view-menu [data-paper]')).toHaveText(['分頁', '不分頁']);
     await expect(item(app, 'paper', 'a4')).toHaveClass(/selected/);
     await expect(item(app, 'paper', 'content')).toHaveAttribute('aria-checked', 'false');
   });
