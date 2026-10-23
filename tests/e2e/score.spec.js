@@ -244,6 +244,23 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await expect(menu(app).locator('.menu-item')).toHaveText(['列印', '播放', '和弦編輯器', '進階編輯器', '排版…']);
   });
 
+  test('很窄時：「檢視」、⋮、關閉貼右邊留邊距，編號和調性在剩下的空間置中', async ({ app }) => {
+    await app.page.setViewportSize({ width: 375, height: 667 });
+    await app.goto('#song_id=1');
+    const bar = await app.page.locator('#score_popup_top_bar').boundingBox();
+    const id = await app.page.locator('#current_song_id').boundingBox();
+    const view = await app.page.locator('#view_button').boundingBox();
+    const close = await app.page.locator('#close_score_button').boundingBox();
+    const key = await app.page.locator('#key_group').boundingBox();
+    expect(close.x + close.width).toBeLessThan(bar.x + bar.width - 4);
+    expect(close.x + close.width).toBeGreaterThan(bar.x + bar.width - 24);
+    // 編號左邊和調性右邊（到「檢視」）的空白一樣大
+    const left_space = id.x - bar.x;
+    const right_space = view.x - (key.x + key.width);
+    expect(left_space).toBeGreaterThan(20);
+    expect(Math.abs(left_space - right_space)).toBeLessThan(16);
+  });
+
   test('⋮ 可以用鍵盤打開，Tab 到選單項目按 Enter 執行', async ({ app }) => {
     await app.goto('#song_id=1');
     await moreButton(app).focus();
