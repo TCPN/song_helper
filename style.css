@@ -322,7 +322,7 @@ table#song_list .song_score a.note_score {
  * 譜面的顯示方式（js/score-view.js）：
  * #score_popup_window 蓋滿暗色背景、負責捲動，並當 container query 的容器，
  * 譜紙 #score_page 依顯示方式用 cqw／cqh 算寬度；
- * 譜紙至少是直式 3:4，譜比較長時往下延伸。
+ * 譜紙（A4）至少是直式 3:4，譜比較長時往下延伸；不分頁時高度依譜的內容。
  * 尺寸不直接設在 #score_paper：abcjs 渲染時會在它上面加 inline style（width: 100% 等）。
  */
 #score_popup_window {
@@ -362,6 +362,30 @@ table#song_list .song_score a.note_score {
 	--fit-width: 75cqh;
 }
 
+/*
+ * 不分頁：譜紙高度就是譜的高度（abcjs 在最上面和最下面都會留白邊）。
+ * 「整頁可見／符合高度」用 js 量到的高寬比 --content-ratio 算寬度。
+ * abcjs 把每行譜（和只有一行時的 #score_paper）設成 inline-block，下方會多出跟字型有關的固定空隙，
+ * 高寬比會隨寬度變；改成 block 讓譜的高度和寬度成正比。
+ */
+.paper-content #score_page {
+	aspect-ratio: auto;
+}
+
+.paper-content #score_paper,
+.paper-content #score_paper .abcjs-container,
+.paper-content #score_paper .abcjs-container > svg {
+	display: block !important;
+}
+
+.paper-content.fit-page #score_page {
+	--fit-width: min(var(--full-width), 100cqh / var(--content-ratio, 1.3333));
+}
+
+.paper-content.fit-height #score_page {
+	--fit-width: calc(100cqh / var(--content-ratio, 1.3333));
+}
+
 /* 「檢視」選單在按鈕正下方，右邊對齊按鈕，往左展開，窄螢幕上才不會超出右邊 */
 #view_group {
 	position: relative;
@@ -376,6 +400,11 @@ table#song_list .song_score a.note_score {
 #view-menu .menu-item {
 	position: relative;
 	padding-left: 2em;
+}
+
+#view-menu .menu-separator {
+	border-top: 1px solid #666;
+	margin: 0.25em 0;
 }
 
 #view-menu .menu-item.selected::before {
@@ -422,6 +451,11 @@ table#song_list .song_score a.note_score {
 		width: 100%;
 		margin: 0;
 		aspect-ratio: auto;
+	}
+
+	/* 每行譜是一個 svg（oneSvgPerLine），一行塞不進這一頁時整行換到下一頁，不從中間切開 */
+	#score_paper .abcjs-container {
+		break-inside: avoid;
 	}
 
 	#score_popup_bg {
