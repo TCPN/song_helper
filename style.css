@@ -391,7 +391,8 @@ table#song_list .song_score a.note_score {
 	left: 0;
 }
 
-.menu.align-right {
+/* 要用 id 選擇器，才蓋得過上面的 left: 0 */
+#view-menu.align-right, #editor-menu.align-right, #more-menu.align-right {
 	left: auto;
 	right: 0;
 }
