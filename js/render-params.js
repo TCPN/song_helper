@@ -34,7 +34,7 @@ export function build_render_params({ transpose = 0, layout = DEFAULT_LAYOUT } =
   };
 }
 
-// abcjs 每行 svg 的 viewBox 寬度是排版寬度加上左右邊界
+// abcjs 每行 svg 的 viewBox 寬度是排版寬度加上左右邊界（abcjs 5.8.0 是 15 + 15；升級 abcjs 時要重新確認）
 export const ABCJS_PADDING = 30;
 
 // 排版寬度太窄時，abcjs 會把塞不下的那一行撐寬，而每行是各自縮放到譜紙寬度的 svg，撐寬的行看起來就比較小。
