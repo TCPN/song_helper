@@ -81,7 +81,9 @@ function open_panel() {
 function close_panel() {
   var panel = document.querySelector(PANEL);
   panel.classList.add('hide');
-  document.querySelector('#view_button').setAttribute('aria-expanded', false);
+  // 點「檢視」按鈕收起面板時，「檢視」選單已經打開了，按鈕維持展開
+  if(document.querySelector('#view-menu').classList.contains('hide'))
+    document.querySelector('#view_button').setAttribute('aria-expanded', false);
   if(panel.contains(document.activeElement))
     document.querySelector('#view_button').focus();
 }

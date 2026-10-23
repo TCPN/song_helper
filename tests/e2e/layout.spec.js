@@ -142,6 +142,15 @@ test.describe('排版設定', () => {
     await expect(app.popup()).toHaveClass(/open/);
   });
 
+  test('面板開著時點「檢視」：面板收起、選單打開，按鈕是展開的', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await open_panel(app);
+    await app.page.locator('#view_button').click();
+    await expect(panel(app)).toHaveClass(/hide/);
+    await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
+    await expect(app.page.locator('#view_button')).toHaveAttribute('aria-expanded', 'true');
+  });
+
   test('可以只用鍵盤操作：Enter 打開、焦點在面板裡、Esc 收起後焦點回到「檢視」', async ({ app }) => {
     await app.goto('#song_id=1');
     await app.page.locator('#view_button').focus();
