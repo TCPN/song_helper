@@ -44,7 +44,7 @@ export function exec_hash(){
       select_song(dsongobj.id);
       state.displayingSong = dsongobj;
       document.querySelector('#transpose').value = transpose || 0;
-      render_score();
+      render_score(transpose || 0);
     }else{
       close_score();
     }

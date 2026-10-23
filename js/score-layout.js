@@ -1,4 +1,5 @@
 // abcjs 渲染後的版面修正：段落記號加框、統一每行譜的高度
+import { equalized_line_heights } from './line-heights.js';
 
 export function svg_elem_add_box(elem) {
   var bbox = elem.getBBox();
@@ -34,7 +35,8 @@ function line_needed_heights(score_paper){
 }
 function set_line_height(svgs, heights){
   svgs.forEach((svg,i)=>{
-    svg.viewBox.baseVal.height = heights[i];
+    if(heights[i] != null)
+      svg.viewBox.baseVal.height = heights[i];
   })
 }
 function fix_line_styles(score_paper) {
@@ -45,16 +47,11 @@ function fix_line_styles(score_paper) {
   }
 }
 
-// 除了最後一行，每行譜下方的空間取最大值，讓各行高度一致
+// 量測每行譜，再依 equalized_line_heights 設定高度
 export function fix_score_line_heights(selector){
   var score_paper = document.querySelector(selector);
 
-  var needed_heights = line_needed_heights(score_paper);
-  var bottoms = staff_bottoms(score_paper);
-  var height_below_staff = needed_heights.map((h,i)=>(h - bottoms[i]));
-  var max_height_below_staff = Math.max(...height_below_staff.slice(0, -1));
-  var fixed_heights = bottoms.map(b=>(b + max_height_below_staff));
-  set_line_height(line_svgs(score_paper).slice(0,-1), fixed_heights.slice(0,-1));
-  // set_line_height(line_svgs(score_paper), fixed_heights);
+  var heights = equalized_line_heights(staff_bottoms(score_paper), line_needed_heights(score_paper));
+  set_line_height(line_svgs(score_paper), heights);
   fix_line_styles(score_paper);
 }

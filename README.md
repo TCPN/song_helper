@@ -38,7 +38,7 @@
 | `js/editor-links.js` | 「編輯」與「⋮」選單的開關、編輯器連結 |
 | `js/toolbar.js` | 譜面工具列不夠寬時切換成精簡版面（「⋮」選單） |
 | `js/state.js`, `js/dom.js` | 共用狀態、DOM 小工具 |
-| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js` | 純函式（不碰 DOM，有單元測試） |
+| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js` | 純函式（不碰 DOM，有單元測試） |
 | `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
