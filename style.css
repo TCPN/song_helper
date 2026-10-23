@@ -256,7 +256,7 @@ table#song_list .song_score a.note_score {
 /* 中間只顯示半音數，不是輸入框 */
 #transpose-menu #transpose {
 	flex: 1;
-	min-width: 4ch;
+	min-width: 2.5ch;
 	font-family: ui-monospace, Menlo, Consolas, monospace;
 	text-align: center;
 }
