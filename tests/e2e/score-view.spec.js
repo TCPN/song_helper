@@ -12,7 +12,7 @@ test.describe('譜面的顯示方式', () => {
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
   }
 
-  test('預設是符合寬度，譜紙寬度是畫面的九成', async ({ app }) => {
+  test('預設是符合寬度，譜紙寬度是畫面的九成，高寬比是 A4 的 √2', async ({ app }) => {
     await app.goto('#song_id=1');
     await open_view_menu(app);
     await expect(fit_item(app, 'width')).toHaveClass(/selected/);
@@ -23,7 +23,7 @@ test.describe('譜面的顯示方式', () => {
     const box = await page_box(app);
     const win = await window_size(app);
     expect(box.width).toBeCloseTo(win.width * 0.9, 0);
-    expect(box.height).toBeCloseTo(box.width * 4 / 3, 0);
+    expect(box.height).toBeCloseTo(box.width * Math.SQRT2, 0);
   });
 
   test('整頁可見：整張譜紙都在畫面裡', async ({ app }) => {
@@ -253,7 +253,8 @@ test.describe('長譜', () => {
   test.use({ songs: [{ id: 1, name: '長譜測試', tone: 'C', timesig: '4/4', melody: 'CDEF',
     abc: 'X:1\nT:Long\nM:4/4\nL:1/4\nK:C\n' + line.repeat(30) + 'C4|]\n' }] });
 
-  test('譜比 3:4 的譜紙長時，譜紙往下延伸，捲到底看得到最後一行', async ({ app }) => {
+  test('不分頁：譜紙往下延伸，捲到底看得到最後一行', async ({ app }) => {
+    await app.page.addInitScript(() => { localStorage.setItem('score_paper_mode', 'content'); });
     await app.page.setViewportSize({ width: 375, height: 667 });
     await app.goto('#song_id=1');
     const size = await app.page.evaluate(() => {
@@ -261,7 +262,7 @@ test.describe('長譜', () => {
       const paper = document.querySelector('#score_paper');
       return { page_w: page.offsetWidth, page_h: page.offsetHeight, paper_h: paper.offsetHeight };
     });
-    expect(size.page_h).toBeGreaterThan(size.page_w * 4 / 3);
+    expect(size.page_h).toBeGreaterThan(size.page_w * 3);
     expect(size.page_h).toBeGreaterThanOrEqual(size.paper_h);
 
     const win = app.page.locator('#score_popup_window');
@@ -308,7 +309,7 @@ test.describe('譜紙：分頁／不分頁', () => {
     await expect(item(app, 'paper', 'content')).toHaveAttribute('aria-checked', 'false');
   });
 
-  test('不分頁：短的譜，譜紙高度就是譜的高度，切回 A4 又是 3:4', async ({ app }) => {
+  test('不分頁：短的譜，譜紙高度就是譜的高度，切回分頁又是 A4 比例', async ({ app }) => {
     await app.goto('#song_id=2');
     await choose(app, 'paper', 'content');
     let size = await sizes(app);
@@ -317,17 +318,20 @@ test.describe('譜紙：分頁／不分頁', () => {
 
     await choose(app, 'paper', 'a4');
     size = await sizes(app);
-    expect(size.height).toBeCloseTo(size.width * 4 / 3, 0);
+    expect(size.height).toBeCloseTo(size.width * Math.SQRT2, 0);
   });
 
   test('不分頁＋整頁可見：長的譜整首都在畫面裡，不用捲動', async ({ app }) => {
     await app.goto('#song_id=1');
     await choose(app, 'fit', 'page');
-    // A4 時長譜超出畫面
-    expect((await sizes(app)).scroll_y).toBe(true);
+    // 分頁時一次只顯示一頁，整頁在畫面裡
+    let size = await sizes(app);
+    expect(size.height).toBeCloseTo(size.win_height, 0);
+    expect(size.scroll_y).toBe(false);
+    expect(size.paper_height).toBeLessThan(size.height);
 
     await choose(app, 'paper', 'content');
-    const size = await sizes(app);
+    size = await sizes(app);
     expect(size.height).toBeCloseTo(size.win_height, 0);
     expect(size.width).toBeLessThan(size.win_width);
     expect(size.height).toBeCloseTo(size.paper_height, 0);

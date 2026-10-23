@@ -5,6 +5,7 @@
 import { parse_layout, normalize_layout, step_layout, at_limit, needs_rerender, format_layout_value, DEFAULT_LAYOUT } from './layout-settings.js';
 import { fix_score_line_heights } from './score-layout.js';
 import { update_content_ratio } from './score-view.js';
+import { paginate_score } from './score-pages.js';
 import { click_on_enter, setup_dropdown } from './dom.js';
 import { state } from './state.js';
 
@@ -81,6 +82,7 @@ function set_layout(new_layout) {
         rerender();
       else {
         fix_score_line_heights('#score_paper', layout);
+        paginate_score();
         update_content_ratio();
       }
     });

@@ -6,6 +6,7 @@ import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdow
 import { svg_elem_add_box, score_line_widths, fix_score_line_widths, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
 import { update_content_ratio } from './score-view.js';
+import { paginate_score, reset_pages } from './score-pages.js';
 import { build_render_params, build_midi_params, widened_staffwidth } from './render-params.js';
 import { current_layout, show_layout } from './layout-panel.js';
 
@@ -88,7 +89,8 @@ function draw_score(song, transpose){
   }
   // fix the line heights and line styles
   fix_score_line_heights('#score_paper', current_layout());
-  // 不分頁時譜紙的高寬比依譜的內容
+  // 分頁（行高定了才分），之後不分頁時譜紙的高寬比依譜的內容
+  paginate_score();
   update_content_ratio();
 
   if(params.oneSvgPerLine) {
@@ -128,6 +130,7 @@ export function close_score(){
     document.querySelector(button).setAttribute('aria-expanded', false);
   }
   state.displayingSong = null;
+  reset_pages();
   clearSettings();
   save_scroll('html');
   update_hash('song_id', undefined);

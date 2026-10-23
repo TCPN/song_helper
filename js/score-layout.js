@@ -64,6 +64,9 @@ export function fix_score_line_widths(selector){
 // 只改 viewBox 高度、量的是元素本身的 bbox，所以改設定時對同一份譜再呼叫一次就好，不用重新渲染
 export function fix_score_line_heights(selector, layout){
   var score_paper = document.querySelector(selector);
+  // 分頁時藏起來的行（score-pages.js）量不到 bbox，先全部顯示；之後重新分頁時再藏起來
+  for(const line of line_containers(score_paper))
+    line.classList.remove('off-page');
 
   var heights = line_heights(staff_bottoms(score_paper), line_needed_heights(score_paper), layout);
   set_line_height(line_svgs(score_paper), heights);

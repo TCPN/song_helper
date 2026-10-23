@@ -333,7 +333,8 @@ table#song_list .song_score a.note_score {
  * 譜面的顯示方式（js/score-view.js）：
  * #score_popup_window 蓋滿暗色背景、負責捲動，並當 container query 的容器，
  * 譜紙 #score_page 依顯示方式用 cqw／cqh 算寬度；
- * 譜紙（A4）至少是直式 3:4，譜比較長時往下延伸；不分頁時高度依譜的內容。
+ * 分頁時譜紙是 A4 直式（寬:高 = 1:√2），一次顯示一頁（js/score-pages.js），只有一行就比一頁高時往下延伸；
+ * 不分頁時高度依譜的內容。
  * 尺寸不直接設在 #score_paper：abcjs 渲染時會在它上面加 inline style（width: 100% 等）。
  */
 #score_popup_window {
@@ -355,7 +356,7 @@ table#song_list .song_score a.note_score {
 	/* 用 auto margin 置中：譜紙比畫面大時（例如直式螢幕上的符合高度）才不會被切掉左邊和上面 */
 	margin: auto;
 	width: var(--fit-width);
-	aspect-ratio: 3 / 4;
+	aspect-ratio: 1 / 1.41421356;
 	background: #fff;
 }
 
@@ -365,28 +366,53 @@ table#song_list .song_score a.note_score {
 	}
 }
 
+/* 「整頁可見／符合高度」以一頁為準 */
 .fit-page #score_page {
-	--fit-width: min(var(--full-width), 75cqh);
+	--fit-width: min(var(--full-width), 100cqh / 1.41421356);
 }
 
 .fit-height #score_page {
-	--fit-width: 75cqh;
+	--fit-width: calc(100cqh / 1.41421356);
 }
 
 /*
- * 不分頁：譜紙高度就是譜的高度（abcjs 在最上面和最下面都會留白邊）。
- * 「整頁可見／符合高度」用 js 量到的高寬比 --content-ratio 算寬度。
  * abcjs 把每行譜（和只有一行時的 #score_paper）設成 inline-block，下方會多出跟字型有關的固定空隙，
- * 高寬比會隨寬度變；改成 block 讓譜的高度和寬度成正比。
+ * 高寬比會隨寬度變；改成 block 讓譜的高度和寬度成正比（分頁用的行高、不分頁的高寬比才不隨寬度改變）。
+ */
+#score_paper,
+#score_paper .abcjs-container,
+#score_paper .abcjs-container > svg {
+	display: block !important;
+}
+
+/* 分頁時不在目前這頁的行；列印時全部印出 */
+@media screen {
+	#score_paper .abcjs-container.off-page {
+		display: none !important;
+	}
+}
+
+/* 分頁時的頁碼，在畫面下方中間；不擋點擊 */
+#page_indicator {
+	position: absolute;
+	bottom: 0.75em;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 0.15em 0.75em;
+	border-radius: 1em;
+	background: #000a;
+	color: #fff;
+	font-size: 0.85em;
+	pointer-events: none;
+	user-select: none;
+}
+
+/*
+ * 不分頁：譜紙高度就是譜的高度（abcjs 在最上面和最下面都會留白邊），上下捲動。
+ * 「整頁可見／符合高度」用 js 量到的高寬比 --content-ratio 算寬度。
  */
 .paper-content #score_page {
 	aspect-ratio: auto;
-}
-
-.paper-content #score_paper,
-.paper-content #score_paper .abcjs-container,
-.paper-content #score_paper .abcjs-container > svg {
-	display: block !important;
 }
 
 .paper-content.fit-page #score_page {
@@ -542,6 +568,15 @@ table#song_list .song_score a.note_score {
 	/* 每行譜是一個 svg（oneSvgPerLine），一行塞不進這一頁時整行換到下一頁，不從中間切開 */
 	#score_paper .abcjs-container {
 		break-inside: avoid;
+	}
+
+	/* 分頁時每一頁的最後一行之後換頁，印出來和螢幕上的分頁一樣 */
+	#score_paper .abcjs-container.page-end:not(:last-child) {
+		break-after: page;
+	}
+
+	#page_indicator {
+		display: none !important;
 	}
 
 	#score_popup_bg {
