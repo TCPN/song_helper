@@ -210,7 +210,7 @@ table#song_list .song_score a.note_score {
 	vertical-align: middle;
 }
 
-#transpose_button, #view_button, #more_button, #close_score_button {
+#transpose_button, #view_button, #edit_button, #more_button, #close_score_button {
 	cursor: pointer;
 }
 
@@ -312,12 +312,6 @@ table#song_list .song_score a.note_score {
 	background: #444;
 }
 
-@media screen and (max-width: 480px){
-	#editor-menu.menu, #more-menu.menu {
-		right: 0;
-	}
-}
-
 /*
  * 譜面的顯示方式（js/score-view.js）：
  * #score_popup_window 蓋滿暗色背景、負責捲動，並當 container query 的容器，
@@ -386,12 +380,12 @@ table#song_list .song_score a.note_score {
 	--fit-width: calc(100cqh / var(--content-ratio, 1.3333));
 }
 
-/* 「檢視」選單在按鈕正下方，右邊對齊按鈕，往左展開，窄螢幕上才不會超出右邊 */
-#view_group {
+/* 「檢視」「編輯」「⋮」選單在按鈕正下方，右邊對齊按鈕，往左展開，窄螢幕上才不會超出右邊 */
+#view_group, #edit_group, #more_group {
 	position: relative;
 }
 
-#view-menu {
+#view-menu, #editor-menu, #more-menu {
 	top: calc(100% + 0.5em);
 	right: 0;
 }
@@ -719,12 +713,4 @@ button.popup-window-close:hover {
 }
 .menu-item:hover {
     box-shadow: inset 0 0 0 100vmax #7777;
-}
-.menu-bg {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: -1;
 }
