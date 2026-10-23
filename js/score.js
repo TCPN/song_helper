@@ -45,7 +45,7 @@ export function render_score(transpose){
   const song_item_in_list = document.querySelector(`#song_list tbody [data-target="${song.id}"]`);
   song_item_in_list.scrollIntoView({ block: 'nearest' });
 
-  var params = build_render_params({ transpose });
+  var params = build_render_params({ transpose, layout: current_layout() });
   params.clickListener = function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);};
   var tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
   ABCJS.renderMidi('player-control', song.abc, build_midi_params({ transpose }));
