@@ -1,6 +1,6 @@
 const { test, expect } = require('../app');
 
-// 「檢視」選單的「排版…」面板：行間距均等化（#42）、行距（#41）、譜面寬度（#38）、歌詞字級（#39）、和弦字級（#40）
+// 工具列「排版」選單的面板：行間距均等化（#42）、行距（#41）、譜面寬度（#38）、歌詞字級（#39）、和弦字級（#40）
 test.describe('排版設定', () => {
   // 每行的音符都一樣（五線譜底線的位置相同），只有第 2 行有三段歌詞，比其他行需要更多空間
   const bar = 'CDEF|GFED|CDEF|GFED|\n';
@@ -41,20 +41,36 @@ test.describe('排版設定', () => {
     actual.forEach((h, i) => expect(h).toBeCloseTo(expected[i], 1));
   };
 
+  // 工具列不夠寬時「排版」收在 ⋮ 選單裡，從 ⋮ 打開
   async function open_panel(app) {
-    await app.page.locator('#view_button').click();
-    await app.page.locator('#view-menu [data-open-layout]').click();
+    if (await app.page.locator('#layout_button').isVisible()) {
+      await app.page.locator('#layout_button').click();
+    } else {
+      await app.page.locator('#more_button').click();
+      await app.page.locator('#more-menu [data-open-menu="#layout_button"]').click();
+    }
     await expect(panel(app)).not.toHaveClass(/hide/);
   }
 
-  test('「檢視」選單最下面有「排版…」，點了選單收起、出現面板，預設均等化、行距 0', async ({ app }) => {
+  test('工具列「檢視」右邊有「排版」選單，點了出現面板，預設均等化、行距 0', async ({ app }) => {
     await app.goto('#song_id=1');
+    // 「排版」不在「檢視」選單裡，是工具列上和「檢視」同級的按鈕，排在「檢視」右邊
     await app.page.locator('#view_button').click();
-    await expect(app.page.locator('#view-menu .menu-item').last()).toHaveText('排版…');
-    await app.page.locator('#view-menu [data-open-layout]').click();
-    await expect(app.page.locator('#view-menu')).toHaveClass(/hide/);
+    await expect(app.page.locator('#view-menu .menu-item')).not.toContainText(['排版']);
+    await app.page.locator('#view_button').click();
+    const view = await app.page.locator('#view_button').boundingBox();
+    const button = await app.page.locator('#layout_button').boundingBox();
+    expect(button.x).toBeGreaterThan(view.x + view.width);
+    expect(Math.abs(button.y - view.y)).toBeLessThan(2);
+    await expect(app.page.locator('#layout_button')).toHaveText('排版');
+    await expect(app.page.locator('#layout_button')).toHaveAttribute('aria-expanded', 'false');
+    await app.page.locator('#layout_button').click();
     await expect(panel(app)).not.toHaveClass(/hide/);
-    await expect(app.page.locator('#view_button')).toHaveAttribute('aria-expanded', 'true');
+    await expect(app.page.locator('#layout_button')).toHaveAttribute('aria-expanded', 'true');
+    // 面板在按鈕正下方、左邊對齊按鈕
+    const box = await panel(app).boundingBox();
+    expect(box.y).toBeGreaterThan(button.y + button.height);
+    expect(Math.abs(box.x - button.x)).toBeLessThan(2);
     await expect(app.page.locator('#layout-panel .layout-label')).toHaveText(['行間距均等化', '行距', '譜面寬度', '歌詞字級', '和弦字級']);
     await expect(toggle(app)).toHaveAttribute('aria-checked', 'true');
     await expect(toggle(app)).toHaveText('開');
@@ -168,26 +184,34 @@ test.describe('排版設定', () => {
     await expect(panel(app)).not.toHaveClass(/hide/);
     await app.page.locator('#score_page').click({ position: { x: 20, y: 400 } });
     await expect(panel(app)).toHaveClass(/hide/);
-    await expect(app.page.locator('#view_button')).toHaveAttribute('aria-expanded', 'false');
+    await expect(app.page.locator('#layout_button')).toHaveAttribute('aria-expanded', 'false');
     await expect(app.popup()).toHaveClass(/open/);
   });
 
-  test('面板開著時點「檢視」：面板收起、選單打開，按鈕是展開的', async ({ app }) => {
+  test('再點一次「排版」收起面板', async ({ app }) => {
+    await app.goto('#song_id=1');
+    await open_panel(app);
+    await app.page.locator('#layout_button').click();
+    await expect(panel(app)).toHaveClass(/hide/);
+    await expect(app.page.locator('#layout_button')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('面板開著時點「檢視」：面板收起、「檢視」選單打開', async ({ app }) => {
     await app.goto('#song_id=1');
     await open_panel(app);
     await app.page.locator('#view_button').click();
     await expect(panel(app)).toHaveClass(/hide/);
+    await expect(app.page.locator('#layout_button')).toHaveAttribute('aria-expanded', 'false');
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
     await expect(app.page.locator('#view_button')).toHaveAttribute('aria-expanded', 'true');
   });
 
-  test('可以只用鍵盤操作：Enter 打開、焦點在面板裡、Esc 收起後焦點回到「檢視」', async ({ app }) => {
+  test('可以只用鍵盤操作：Enter 打開、Tab 進面板、Esc 收起後焦點回到「排版」', async ({ app }) => {
     await app.goto('#song_id=1');
-    await app.page.locator('#view_button').focus();
-    await app.page.keyboard.press('Enter');
-    await app.page.locator('#view-menu [data-open-layout]').focus();
+    await app.page.locator('#layout_button').focus();
     await app.page.keyboard.press('Enter');
     await expect(panel(app)).not.toHaveClass(/hide/);
+    await app.page.keyboard.press('Tab');
     await expect(toggle(app)).toBeFocused();
     await app.page.keyboard.press(' ');
     await expect(toggle(app)).toHaveAttribute('aria-checked', 'false');
@@ -198,7 +222,7 @@ test.describe('排版設定', () => {
     await expect(gap_value(app)).toHaveText('5');
     await app.page.keyboard.press('Escape');
     await expect(panel(app)).toHaveClass(/hide/);
-    await expect(app.page.locator('#view_button')).toBeFocused();
+    await expect(app.page.locator('#layout_button')).toBeFocused();
   });
 
   test('關閉譜面時面板收起，下一首打開時是收起的', async ({ app }) => {
@@ -396,6 +420,26 @@ test.describe('排版設定', () => {
     // 不能按時按了也不變（aria-disabled 的按鈕 Playwright 不會點，直接送 click 事件）
     await plus.dispatchEvent('click');
     await expect(value(app, 'staff_width')).toHaveText('1500');
+  });
+
+  test('工具列不夠寬時「排版」收進 ⋮，從 ⋮ 打開的面板不超出畫面，可以用鍵盤操作', async ({ app }) => {
+    await app.page.setViewportSize({ width: 280, height: 600 });
+    await app.goto('#song_id=1');
+    await expect(app.page.locator('#score_popup_top_bar')).toHaveClass(/compact/);
+    await expect(app.page.locator('#layout_button')).toBeHidden();
+    await app.page.locator('#more_button').focus();
+    await app.page.keyboard.press('Enter');
+    await app.page.locator('#more-menu [data-open-menu="#layout_button"]').focus();
+    await app.page.keyboard.press('Enter');
+    await expect(app.page.locator('#more-menu')).toHaveClass(/hide/);
+    await expect(panel(app)).not.toHaveClass(/hide/);
+    await expect(toggle(app)).toBeFocused();
+    const box = await panel(app).boundingBox();
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(280);
+    await app.page.keyboard.press('Escape');
+    await expect(panel(app)).toHaveClass(/hide/);
+    await expect(app.page.locator('#more_button')).toBeFocused();
   });
 
   test('手機寬度（375px）：面板不超出畫面，控制項都在同一列', async ({ app }) => {

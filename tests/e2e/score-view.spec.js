@@ -7,8 +7,14 @@ test.describe('譜面的顯示方式', () => {
     .evaluate((w) => ({ width: w.clientWidth, height: w.clientHeight }));
   const fit_item = (app, mode) => app.page.locator(`#view-menu [data-fit="${mode}"]`);
 
+  // 工具列不夠寬時「檢視」收在 ⋮ 選單裡，從 ⋮ 打開
   async function open_view_menu(app) {
-    await app.page.locator('#view_button').click();
+    if (await app.page.locator('#view_button').isVisible()) {
+      await app.page.locator('#view_button').click();
+    } else {
+      await app.page.locator('#more_button').click();
+      await app.page.locator('#more-menu [data-open-menu="#view_button"]').click();
+    }
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
   }
 
@@ -106,16 +112,55 @@ test.describe('譜面的顯示方式', () => {
     await expect(app.page.locator('#view_button')).toBeFocused();
   });
 
-  test('工具列不夠寬時「檢視」仍留在工具列上', async ({ app }) => {
+  test('工具列不夠寬時「檢視」收進 ⋮，從 ⋮ 打開的選單在 ⋮ 旁邊、不超出畫面', async ({ app }) => {
     await app.page.setViewportSize({ width: 280, height: 600 });
     await app.goto('#song_id=1');
     await expect(app.page.locator('#score_popup_top_bar')).toHaveClass(/compact/);
-    await expect(app.page.locator('#view_button')).toBeVisible();
-    await open_view_menu(app);
-    // 選單不超出畫面
-    const box = await app.page.locator('#view-menu').boundingBox();
+    await expect(app.page.locator('#view_button')).toBeHidden();
+    await app.page.locator('#more_button').click();
+    await app.page.locator('#more-menu [data-open-menu="#view_button"]').click();
+    await expect(app.page.locator('#more-menu')).toHaveClass(/hide/);
+    await expect(app.page.locator('#more_button')).toHaveAttribute('aria-expanded', 'false');
+    const menu = app.page.locator('#view-menu');
+    await expect(menu).not.toHaveClass(/hide/);
+    const box = await menu.boundingBox();
+    const more = await app.page.locator('#more_button').boundingBox();
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(280);
+    // 右邊對齊在 ⋮ 左邊一點點（中間只隔著分隔線），上緣在 ⋮ 下方
+    expect(Math.abs(box.x + box.width - more.x)).toBeLessThan(25);
+    expect(box.y).toBeGreaterThan(more.y + more.height);
+    // 選了項目選單不收起，點外面才收起
+    await app.page.locator('#view-menu [data-fit="page"]').click();
+    await expect(menu).not.toHaveClass(/hide/);
+    await app.page.mouse.click(10, 500);
+    await expect(menu).toHaveClass(/hide/);
+  });
+
+  test('工具列不夠寬時可以只用鍵盤從 ⋮ 打開「檢視」，焦點在選單裡，Esc 收起後焦點回到 ⋮', async ({ app }) => {
+    await app.page.setViewportSize({ width: 280, height: 600 });
+    await app.goto('#song_id=1');
+    await app.page.locator('#more_button').focus();
+    await app.page.keyboard.press('Enter');
+    await app.page.locator('#more-menu [data-open-menu="#view_button"]').focus();
+    await app.page.keyboard.press('Enter');
+    await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
+    await expect(fit_item(app, 'page')).toBeFocused();
+    await app.page.keyboard.press('Enter');
+    await expect(fit_item(app, 'page')).toHaveClass(/selected/);
+    await app.page.keyboard.press('Escape');
+    await expect(app.page.locator('#view-menu')).toHaveClass(/hide/);
+    await expect(app.page.locator('#more_button')).toBeFocused();
+  });
+
+  test('從 ⋮ 打開「檢視」後視窗變寬：選單收起，之後不會自己冒出來', async ({ app }) => {
+    await app.page.setViewportSize({ width: 280, height: 600 });
+    await app.goto('#song_id=1');
+    await open_view_menu(app);
+    await app.page.setViewportSize({ width: 1280, height: 720 });
+    await expect(app.page.locator('#score_popup_top_bar')).not.toHaveClass(/compact/);
+    await expect(app.page.locator('#view-menu')).toHaveClass(/hide/);
+    await expect(app.page.locator('#view_button')).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('工具列的選單預設左邊對齊按鈕；右邊放不下時改成右邊對齊', async ({ app }) => {
@@ -138,8 +183,8 @@ test.describe('譜面的顯示方式', () => {
     expect(menu.width).toBeGreaterThan(group.width);
   });
 
-  test('手機寬度（375px）：「編輯」選單右邊放不下，改成右邊對齊按鈕，寬度不被擠窄', async ({ app }) => {
-    await app.page.setViewportSize({ width: 375, height: 667 });
+  test('手機寬度（430px）：「編輯」選單右邊放不下，改成右邊對齊按鈕，寬度不被擠窄', async ({ app }) => {
+    await app.page.setViewportSize({ width: 430, height: 932 });
     await app.goto('#song_id=1');
     await app.page.locator('#edit_button').click();
     const menu_locator = app.page.locator('#editor-menu');

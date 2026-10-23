@@ -1,5 +1,5 @@
 // abcjs 渲染參數（純函式，不碰 DOM）
-// 參數只由移調與「排版…」的設定決定，與是哪一首歌無關；排版設定所有歌共用
+// 參數只由移調與「排版」的設定決定，與是哪一首歌無關；排版設定所有歌共用
 import { DEFAULT_LAYOUT } from './layout-settings.js';
 
 // ABCJS.renderAbc 的參數；clickListener 等函式由呼叫端加上。

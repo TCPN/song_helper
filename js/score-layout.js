@@ -60,7 +60,7 @@ export function fix_score_line_widths(selector){
     svg.viewBox.baseVal.width = width;
 }
 
-// 量測每行譜，再依 line_heights 設定高度；layout 是「排版…」的設定（均等化、行距）。
+// 量測每行譜，再依 line_heights 設定高度；layout 是「排版」的設定（均等化、行距）。
 // 只改 viewBox 高度、量的是元素本身的 bbox，所以改設定時對同一份譜再呼叫一次就好，不用重新渲染
 export function fix_score_line_heights(selector, layout){
   var score_paper = document.querySelector(selector);

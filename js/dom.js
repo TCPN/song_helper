@@ -53,12 +53,18 @@ export function click_on_enter(target) {
   });
 }
 
-// 下拉選單預設左邊對齊按鈕；右邊超出畫面時才改成右邊對齊（加 align-right class）
+// 下拉選單預設左邊對齊按鈕；右邊超出畫面時才改成右邊對齊（加 align-right class）；
+// 這樣左邊還是超出畫面（很窄的螢幕上較寬的選單）就往右移到貼齊畫面左邊
 export function place_menu(menu) {
   menu = getDom(menu);
   menu.classList.remove('align-right');
-  if(menu.getBoundingClientRect().right > document.documentElement.clientWidth)
+  menu.style.right = '';
+  if(menu.getBoundingClientRect().right > document.documentElement.clientWidth){
     menu.classList.add('align-right');
+    var left = menu.getBoundingClientRect().left;
+    if(left < 0)
+      menu.style.right = left + 'px';
+  }
 }
 
 // 開關按鈕的下拉選單（選單用 hide class 收起），並更新按鈕的 aria-expanded
@@ -72,7 +78,14 @@ export function toggle_menu(button, menu) {
   button.setAttribute('aria-expanded', expanded);
   // 用鍵盤選了項目後選單收起，焦點還給按鈕，不要掉在隱藏的項目上
   if(!expanded && menu.contains(document.activeElement))
-    button.focus();
+    visible_button(button).focus();
+}
+
+// 按鈕被收起來時（工具列不夠寬，「檢視」「排版」改從「⋮」打開），改用 data-compact-button 指定的按鈕
+function visible_button(button) {
+  if(button.offsetParent == null && button.dataset.compactButton)
+    return document.querySelector(button.dataset.compactButton);
+  return button;
 }
 
 // 不用遮罩的下拉選單（選單不放在按鈕裡面）：點按鈕開關；開著時其他按鈕照樣能按，

@@ -223,12 +223,14 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await app.page.setViewportSize({ width: 200, height: 667 });
   });
 
-  test('很窄時：列印、播放、編輯收進 ⋮，工具列排成一行不折行', async ({ app }) => {
+  test('很窄時：列印、播放、編輯、檢視、排版收進 ⋮，工具列排成一行不折行', async ({ app }) => {
     await app.goto('#song_id=2');
     const bar = app.page.locator('#score_popup_top_bar');
     await expect(bar).toHaveClass(/compact/);
     await expect(moreButton(app).locator('svg')).toBeVisible();
     await expect(app.page.locator('#edit_button')).toBeHidden();
+    await expect(app.page.locator('#view_button')).toBeHidden();
+    await expect(app.page.locator('#layout_button')).toBeHidden();
     await expect(bar.locator('.print-button.wide-only')).toBeHidden();
     // 每個項目都只有一行高
     const heights = await bar.evaluate((b) => Array.from(b.children)
@@ -239,7 +241,7 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await expect(menu(app)).toHaveClass(/hide/);
     await moreButton(app).click();
     await expect(menu(app)).not.toHaveClass(/hide/);
-    await expect(menu(app).locator('.menu-item')).toHaveText(['列印', '播放', '和弦編輯器', '進階編輯器']);
+    await expect(menu(app).locator('.menu-item')).toHaveText(['列印', '播放', '和弦編輯器', '進階編輯器', '檢視…', '排版…']);
   });
 
   test('⋮ 可以用鍵盤打開，Tab 到選單項目按 Enter 執行', async ({ app }) => {
@@ -257,7 +259,7 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await expect(moreButton(app)).toBeFocused();
   });
 
-  test('選單沒有遮罩：開著時其他按鈕照樣能按（例如調性、檢視），選單同時收起', async ({ app }) => {
+  test('選單沒有遮罩：開著時其他按鈕照樣能按（例如調性），選單同時收起；選「檢視…」時 ⋮ 收起、「檢視」選單打開', async ({ app }) => {
     await app.goto('#song_id=1');
     await moreButton(app).click();
     await expect(menu(app)).not.toHaveClass(/hide/);
@@ -268,9 +270,14 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
 
     await moreButton(app).click();
     await expect(menu(app)).not.toHaveClass(/hide/);
-    await app.page.locator('#view_button').click();
+    await menu(app).getByRole('menuitem', { name: '檢視…' }).click();
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
     await expect(menu(app)).toHaveClass(/hide/);
+    // 檢視選單開著時再點 ⋮：檢視選單收起、⋮ 打開
+    await moreButton(app).click();
+    await expect(app.page.locator('#view-menu')).toHaveClass(/hide/);
+    await expect(menu(app)).not.toHaveClass(/hide/);
+    await expect(moreButton(app)).toHaveAttribute('aria-expanded', 'true');
   });
 
   test('⋮ 選單按 Esc 收起，焦點回到 ⋮', async ({ app }) => {

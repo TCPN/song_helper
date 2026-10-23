@@ -210,7 +210,7 @@ table#song_list .song_score a.note_score {
 	vertical-align: middle;
 }
 
-#transpose_button, #view_button, #edit_button, #more_button, #close_score_button {
+#transpose_button, #view_button, #layout_button, #edit_button, #more_button, #close_score_button {
 	cursor: pointer;
 }
 
@@ -380,9 +380,9 @@ table#song_list .song_score a.note_score {
 	--fit-width: calc(100cqh / var(--content-ratio, 1.3333));
 }
 
-/* 「檢視」「編輯」「⋮」選單在按鈕正下方，左邊對齊按鈕往右展開；
+/* 「檢視」「排版」「編輯」「⋮」選單在按鈕正下方，左邊對齊按鈕往右展開；
    右邊放不下時 JS 加上 align-right，改成右邊對齊按鈕往左展開（見 dom.js 的 place_menu） */
-#view_group, #edit_group, #more_group {
+#view_group, #layout_group, #edit_group, #more_group {
 	position: relative;
 }
 
@@ -403,7 +403,17 @@ table#song_list .song_score a.note_score {
 	padding-left: 2em;
 }
 
-#view-menu .menu-separator, #layout-panel .menu-separator {
+/* 工具列不夠寬時「檢視」「排版」按鈕收起來，群組不佔寬度，選單就出現在「⋮」旁邊；
+   放一個零寬的字撐出一行的高度，選單才會和「⋮」選單一樣高 */
+#score_popup_top_bar.compact #view_group, #score_popup_top_bar.compact #layout_group {
+	margin: 0;
+}
+
+#score_popup_top_bar.compact #view_group::before, #score_popup_top_bar.compact #layout_group::before {
+	content: '\200b';
+}
+
+#view-menu .menu-separator, #layout-panel .menu-separator, #more-menu .menu-separator {
 	border-top: 1px solid #666;
 	margin: 0.25em 0;
 }
@@ -414,7 +424,7 @@ table#song_list .song_score a.note_score {
 	left: 0.75em;
 }
 
-/* 「排版…」面板：和「檢視」選單同一個位置；一個設定一列，左邊是名稱，右邊是開關或 −／數值／＋ */
+/* 「排版」面板：在「排版」按鈕正下方；一個設定一列，左邊是名稱，右邊是開關或 −／數值／＋ */
 #layout-panel {
 	top: calc(100% + 0.5em);
 	left: 0;

@@ -95,10 +95,11 @@
 			<div id="player-set" class="hide">
 				<div id="player-control"></div>
 			</div>
-			<span class="separator">|</span>
-			<!-- 「檢視」：譜面的顯示方式與譜紙（js/score-view.js）；工具列不夠寬時也留在工具列上 -->
+			<span class="separator wide-only">|</span>
+			<!-- 「檢視」：譜面的顯示方式與譜紙（js/score-view.js）。工具列不夠寬時按鈕收進「⋮」選單，
+			     選單留在這裡（群組寬度變 0，緊鄰「⋮」），從「⋮」打開；data-compact-button 是那時焦點要還給的按鈕 -->
 			<span id="view_group">
-				<div id="view_button" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">檢視</div>
+				<div id="view_button" class="wide-only" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="view-menu" data-compact-button="#more_button">檢視</div>
 				<div id="view-menu" class="hide menu" role="menu">
 					<span class="menu-item" data-fit="page" role="menuitemradio" tabindex="0">整頁可見</span>
 					<span class="menu-item" data-fit="height" role="menuitemradio" tabindex="0">符合高度</span>
@@ -106,10 +107,12 @@
 					<span class="menu-separator" role="separator"></span>
 					<span class="menu-item" data-paper="a4" role="menuitemradio" tabindex="0">A4</span>
 					<span class="menu-item" data-paper="content" role="menuitemradio" tabindex="0">不分頁</span>
-					<span class="menu-separator" role="separator"></span>
-					<span class="menu-item" data-open-layout role="menuitem" tabindex="0" aria-haspopup="dialog">排版…</span>
 				</div>
-				<!-- 「排版…」面板（js/layout-panel.js）：所有歌共用的排版設定，一個設定一列 -->
+			</span>
+			<span class="separator wide-only">|</span>
+			<!-- 「排版」：所有歌共用的排版設定，一個設定一列（js/layout-panel.js）；工具列不夠寬時和「檢視」一樣從「⋮」打開 -->
+			<span id="layout_group">
+				<div id="layout_button" class="wide-only" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="layout-panel" data-compact-button="#more_button">排版</div>
 				<div id="layout-panel" class="hide menu" role="dialog" aria-label="排版">
 					<div class="layout-row">
 						<span class="layout-label" id="layout_equalize_label">行間距均等化</span>
@@ -153,7 +156,7 @@
 				</div>
 			</span>
 			<span class="separator compact-only">|</span>
-			<!-- 工具列不夠寬時，列印、播放、編輯收在這個選單裡 -->
+			<!-- 工具列不夠寬時，列印、播放、編輯、檢視、排版收在這個選單裡 -->
 			<span id="more_group" class="compact-only">
 				<div id="more_button" title="更多" aria-label="更多" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
 					<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -165,6 +168,9 @@
 					<span class="play-button menu-item" role="menuitem" tabindex="0">播放</span>
 					<span class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</span>
 					<span class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</span>
+					<span class="menu-separator" role="separator"></span>
+					<span class="menu-item" data-open-menu="#view_button" role="menuitem" tabindex="0" aria-haspopup="true">檢視…</span>
+					<span class="menu-item" data-open-menu="#layout_button" role="menuitem" tabindex="0" aria-haspopup="dialog">排版…</span>
 				</div>
 			</span>
 			<span class="separator">|</span>
