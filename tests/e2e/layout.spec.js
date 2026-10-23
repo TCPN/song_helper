@@ -442,6 +442,19 @@ test.describe('排版設定', () => {
     await expect(app.page.locator('#more_button')).toBeFocused();
   });
 
+  test('工具列不夠寬時，排版面板開著再從 ⋮ 打開「檢視」：只剩「檢視」選單開著', async ({ app }) => {
+    await app.page.setViewportSize({ width: 280, height: 600 });
+    await app.goto('#song_id=1');
+    await open_panel(app);
+    // 點 ⋮ 就是點了面板外面，面板先收起
+    await app.page.locator('#more_button').click();
+    await expect(panel(app)).toHaveClass(/hide/);
+    await app.page.locator('#more-menu [data-open-menu="#view_button"]').click();
+    await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
+    await expect(panel(app)).toHaveClass(/hide/);
+    await expect(app.page.locator('#more-menu')).toHaveClass(/hide/);
+  });
+
   test('手機寬度（375px）：面板不超出畫面，控制項都在同一列', async ({ app }) => {
     await app.page.setViewportSize({ width: 375, height: 667 });
     await app.goto('#song_id=1');
