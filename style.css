@@ -442,8 +442,14 @@ table#song_list .song_score a.note_score {
 	padding: 0.25em 0.6em;
 }
 
+/* 到了上下限（或這首歌最小的譜面寬度）時，「−」／「＋」不能按 */
+#layout-panel .step-button[aria-disabled="true"] {
+	opacity: 0.35;
+	cursor: default;
+}
+
 #layout-panel .layout-value {
-	min-width: 2.5ch;
+	min-width: 4ch;
 	font-family: ui-monospace, Menlo, Consolas, monospace;
 	text-align: center;
 }

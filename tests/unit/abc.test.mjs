@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { score_kind, tempo_text, key_display_name } from '../../js/abc.js';
+import { score_kind, tempo_text, key_display_name, with_stretchlast } from '../../js/abc.js';
 
 const HEAD = 'X:1\nT:t\nM:4/4\nL:1/4\nK:C\n';
 
@@ -60,4 +60,12 @@ test('key_display_name：全部為空時顯示 C', () => {
 
 test('key_display_name：拿不到調號時為空字串', () => {
   assert.equal(key_display_name(undefined), '');
+});
+
+test('with_stretchlast：在第一個 K: 行前面加 %%stretchlast，沒有 K: 行時不變', () => {
+  assert.equal(with_stretchlast('X:1\nT:t\nK:C\nCDEF|\n'), 'X:1\nT:t\n%%stretchlast\nK:C\nCDEF|\n');
+  assert.equal(with_stretchlast('X:1\r\nK:G\r\nGABc|\r\nK:D\r\n'), 'X:1\r\n%%stretchlast\nK:G\r\nGABc|\r\nK:D\r\n');
+  assert.equal(with_stretchlast('X:1\nCDEF|'), 'X:1\nCDEF|');
+  assert.equal(with_stretchlast(''), '');
+  assert.equal(with_stretchlast(undefined), undefined);
 });

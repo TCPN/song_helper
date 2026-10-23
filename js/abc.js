@@ -37,3 +37,11 @@ export function key_display_name(key){
     return "";
   }
 }
+
+// 渲染用：在第一個 K: 行前面加上 %%stretchlast。abcjs 用 oneSvgPerLine 時每行都當成「最後一行」，
+// 不到排版寬度 66% 的行就不拉滿；加了之後每行都拉滿。沒有 K: 行時原樣傳回
+export function with_stretchlast(abc){
+  if(!abc)
+    return abc;
+  return abc.replace(/^K:/m, '%%stretchlast\nK:');
+}

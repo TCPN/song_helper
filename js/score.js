@@ -1,13 +1,13 @@
 // 譜面彈窗：用 abcjs 渲染譜面、移調、換歌、關閉
 import { state } from './state.js';
-import { key_display_name } from './abc.js';
+import { key_display_name, with_stretchlast } from './abc.js';
 import { parse_hash, update_hash } from './route.js';
 import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdown } from './dom.js';
-import { svg_elem_add_box, fix_score_line_heights } from './score-layout.js';
+import { svg_elem_add_box, score_line_widths, fix_score_line_widths, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
 import { update_content_ratio } from './score-view.js';
-import { build_render_params, build_midi_params } from './render-params.js';
-import { current_layout } from './layout-panel.js';
+import { build_render_params, build_midi_params, widened_staffwidth } from './render-params.js';
+import { current_layout, show_layout } from './layout-panel.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
 var clickListener = console.log;
@@ -35,20 +35,51 @@ export function render_score(transpose){
   var score_container = document.querySelector('#score_popup_container');
   score_container.classList.add('open');
   // open at the first so the abcjs can measure the elements' boxes and do good arrangement
-  // reset the score_paper
-  var score_paper = document.querySelector('#score_paper');
-  score_paper.className = '';
-  score_paper.style = '';
   document.querySelector('#current_song_id').textContent = song.id;
 
   //scroll to the song
   const song_item_in_list = document.querySelector(`#song_list tbody [data-target="${song.id}"]`);
   song_item_in_list.scrollIntoView({ block: 'nearest' });
 
-  var params = build_render_params({ transpose });
-  params.clickListener = function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);};
-  var tuneObjectArray = ABCJS.renderAbc('score_paper', song.abc, params);
+  var display_tone = draw_score(song, transpose);
   ABCJS.renderMidi('player-control', song.abc, build_midi_params({ transpose }));
+  document.querySelector('#current_visual_tone').textContent = display_tone;
+  // 移調 icon 旁邊顯示目前的半音數（0 時不顯示）
+  document.querySelector('#transpose_badge').textContent = transpose_badge(transpose);
+  // 曲號、調性、移調的字數會影響工具列寬度
+  update_toolbar_layout();
+  document.title = `${song.name} (${display_tone})`
+  state.displayingSong = song;
+}
+
+// 只重畫譜面（「排版…」改了譜面寬度、字級時）：不重建播放器、不捲動歌單、工具列不變
+export function redraw_score(){
+  if(state.displayingSong)
+    draw_score(state.displayingSong, current_transpose());
+}
+
+// 用 abcjs 把譜畫到 #score_paper，再修正版面；傳回顯示用的調性名稱
+function draw_score(song, transpose){
+  // reset the score_paper
+  var score_paper = document.querySelector('#score_paper');
+  score_paper.className = '';
+  score_paper.style = '';
+  var params = build_render_params({ transpose, layout: current_layout() });
+  params.clickListener = function(abcElem, tuneNumber, classes) {clickListener(abcElem, tuneNumber, classes);};
+  var abc = with_stretchlast(song.abc);
+  var tuneObjectArray = ABCJS.renderAbc('score_paper', abc, params);
+  // 有行塞不進譜面寬度時，用最寬那行的寬度重新渲染，每行才會一樣大；這就是這首歌最小的譜面寬度。
+  // 重新渲染後那行可能還是寬一點點，最後把每行 viewBox 的寬度對齊
+  var widened = widened_staffwidth(score_line_widths('#score_paper'), params.staffwidth);
+  if(widened){
+    params.staffwidth = widened;
+    tuneObjectArray = ABCJS.renderAbc('score_paper', abc, params);
+    fix_score_line_widths('#score_paper');
+  }
+  // 「排版…」面板顯示實際用的寬度
+  state.staffwidthUsed = params.staffwidth;
+  state.staffwidthAtMin = !!widened;
+  show_layout();
 
   // add bounding box of the part marks
   var part_texts = document.querySelectorAll('.abcjs-part');
@@ -60,7 +91,6 @@ export function render_score(transpose){
   // 不分頁時譜紙的高寬比依譜的內容
   update_content_ratio();
 
-  var display_tone = "";
   if(params.oneSvgPerLine) {
     try{
       var tone_signature = tuneObjectArray[0].lines[0].staff[0].key;
@@ -71,14 +101,7 @@ export function render_score(transpose){
       var tone_signature = tuneObjectArray[0].engraver.engraver.startlimitelem.abcelem;
     }catch(e){}
   }
-  display_tone = key_display_name(tone_signature);
-  document.querySelector('#current_visual_tone').textContent = display_tone;
-  // 移調 icon 旁邊顯示目前的半音數（0 時不顯示）
-  document.querySelector('#transpose_badge').textContent = transpose_badge(transpose);
-  // 曲號、調性、移調的字數會影響工具列寬度
-  update_toolbar_layout();
-  document.title = `${song.name} (${display_tone})`
-  state.displayingSong = song;
+  return key_display_name(tone_signature);
 }
 
 function transpose_badge(transpose){
