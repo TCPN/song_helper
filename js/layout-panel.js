@@ -5,8 +5,8 @@
 import { parse_layout, normalize_layout, step_layout, at_limit, needs_rerender, format_layout_value, DEFAULT_LAYOUT } from './layout-settings.js';
 import { fix_score_line_heights } from './score-layout.js';
 import { update_content_ratio } from './score-view.js';
-import { paginate_score } from './score-pages.js';
-import { click_on_enter, setup_dropdown } from './dom.js';
+import { paginate_score, enter_break_mode } from './score-pages.js';
+import { click_on_enter, setup_dropdown, toggle_menu } from './dom.js';
 import { state } from './state.js';
 
 const LAYOUT_KEY = 'score_layout';
@@ -118,6 +118,13 @@ export function setup_layout_panel({ rerender: rerender_score } = {}) {
     });
     click_on_enter(button);
   }
+  // 「設定分頁…」：收起面板，進入設定分頁（score-pages.js）
+  var page_break_mode = panel.querySelector('#page_break_mode');
+  page_break_mode.addEventListener('click', ()=>{
+    toggle_menu('#layout_button', panel);
+    enter_break_mode();
+  });
+  click_on_enter(page_break_mode);
   var reset = panel.querySelector('#layout_reset');
   reset.addEventListener('click', ()=>{ set_layout(DEFAULT_LAYOUT); });
   click_on_enter(reset);

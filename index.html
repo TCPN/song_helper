@@ -63,6 +63,12 @@
 			<div class="change-song next"></div>
 			<!-- 分頁時的頁碼（js/score-pages.js），只有一頁時不顯示 -->
 			<div id="page_indicator" class="hide" aria-live="polite"></div>
+			<!-- 設定分頁時的提示列（js/score-pages.js） -->
+			<div id="page_break_bar" class="hide" role="toolbar" aria-label="設定分頁">
+				<span class="page-break-hint">點兩行之間加入／取消分頁</span>
+				<span id="page_break_default" class="page-break-button" role="button" tabindex="0">還原預設</span>
+				<span id="page_break_done" class="page-break-button" role="button" tabindex="0">完成</span>
+			</div>
 		</div>
 		<div id='score_popup_top_bar'>
 			<!-- add tabindex to enable the keydown event -->
@@ -145,6 +151,8 @@
 						<output class="layout-value" data-layout-value="chord_size" aria-labelledby="layout_chord_size_label"></output>
 						<span class="step-button" data-layout-step="chord_size" data-steps="1" title="和弦字放大" aria-label="和弦字放大" role="button" tabindex="0">+</span>
 					</div>
+					<span class="menu-separator" role="separator"></span>
+					<span class="menu-item" id="page_break_mode" role="button" tabindex="0">設定分頁…</span>
 					<span class="menu-separator" role="separator"></span>
 					<span class="menu-item" id="layout_reset" role="button" tabindex="0">重設</span>
 				</div>
