@@ -255,6 +255,8 @@ test.describe('排版設定', () => {
   });
 
   test('譜面寬度：每按一下＋多 40，排版寬度變寬、每行在畫面上變矮，換行位置不變', async ({ app }) => {
+    // 不分頁：每行都看得到，才量得到畫面上的高度
+    await app.page.addInitScript(() => { localStorage.setItem('score_paper_mode', 'content'); });
     await app.goto('#song_id=3');
     const lines = (await widths(app)).length;
     expect((await widths(app))[0]).toBeCloseTo(770, 0);

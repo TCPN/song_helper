@@ -10,7 +10,7 @@ export function normalize_fit_mode(mode) {
   return FIT_MODES.includes(mode) ? mode : DEFAULT_FIT_MODE;
 }
 
-// 譜紙：分頁（值是 a4，選單上顯示「分頁」；固定比例，目前是 3:4）、不分頁（高度依譜的內容）
+// 譜紙：分頁（值是 a4，選單上顯示「分頁」；A4 直式比例，一次顯示一頁，見 score-pages.js）、不分頁（高度依譜的內容）
 export const PAPER_MODES = ['a4', 'content'];
 // 沒設定過時用 A4（加入這個功能前的譜紙）
 export const DEFAULT_PAPER_MODE = 'a4';

@@ -1,8 +1,9 @@
 // 「檢視」選單：譜面的顯示方式（整頁可見／符合高度／符合寬度）與譜紙（分頁／不分頁）。
-// 只改 CSS（#score_popup_container 的 class），不用重新渲染譜面；
+// 只改 CSS（#score_popup_container 的 class）和分頁（score-pages.js），不用重新渲染譜面；
 // 選擇記在 localStorage，下次開譜沿用（不放進網址 hash）。
 import { normalize_fit_mode, FIT_MODES, normalize_paper_mode, PAPER_MODES } from './score-fit.js';
 import { click_on_enter, setup_dropdown } from './dom.js';
+import { paginate_score } from './score-pages.js';
 
 const FIT_MODE_KEY = 'score_fit_mode';
 const PAPER_MODE_KEY = 'score_paper_mode';
@@ -33,6 +34,8 @@ function apply_view() {
     container.classList.toggle('paper-' + mode, mode == view.paper_mode);
   check_menu_items('fit', view.fit_mode);
   check_menu_items('paper', view.paper_mode);
+  // 先重新分頁（不分頁時每行都要顯示），再量不分頁的高寬比
+  paginate_score();
   update_content_ratio();
 }
 
