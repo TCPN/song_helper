@@ -37,13 +37,17 @@ function current_song() {
   return state.displayingSong && state.displayingSong.id;
 }
 
-// 無痕模式等情況 localStorage 可能無法使用：讀不到當作沒設定、存不了就算了（這次開著的時候還是有效）
-var memory_store = null;
+// 第一次用到時從 localStorage 讀進來，之後以記憶體裡的為準：無痕模式等情況 localStorage 讀不到時當作沒設定，
+// 存不了（例如只擋寫入、額度滿了）就算了，這次開著的時候還是有效
+var break_store = null;
 function load_store() {
-  try { return parse_break_store(localStorage.getItem(BREAKS_KEY)); } catch(e) { return memory_store || {}; }
+  if(!break_store){
+    try { break_store = parse_break_store(localStorage.getItem(BREAKS_KEY)); } catch(e) { break_store = {}; }
+  }
+  return break_store;
 }
 function save_store(store) {
-  memory_store = store;
+  break_store = store;
   try { localStorage.setItem(BREAKS_KEY, JSON.stringify(store)); } catch(e) {}
 }
 

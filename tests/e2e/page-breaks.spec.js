@@ -174,6 +174,19 @@ test.describe('手動分頁', () => {
     await expect(indicator(app)).toBeHidden();
   });
 
+  test('localStorage 存不進去時，這次開著的時候設定還是有效', async ({ app }) => {
+    await app.page.addInitScript(() => {
+      Storage.prototype.setItem = function () { throw new Error('QuotaExceededError'); };
+    });
+    await app.goto('#song_id=2');
+    await enter_mode(app);
+    await tap_between(app, 2);
+    expect(await manual_breaks(app)).toEqual([2]);
+    await app.page.locator('#page_break_done').click();
+    await expect(indicator(app)).toHaveText('1 / 2');
+    expect(app.errors).toEqual([]);
+  });
+
   test('每首歌各自設定', async ({ app }) => {
     await app.goto('#song_id=2');
     await enter_mode(app);
