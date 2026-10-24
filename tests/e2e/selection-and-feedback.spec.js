@@ -32,12 +32,12 @@ test.describe('列表的選取（高亮）', () => {
   });
 });
 
-// 列表尾端有一行「沒有找到我想要的歌？快來許願」，「快來許願」連到 Google 表單（#59，取代原本的浮動意見回饋提示）。
+// 列表尾端有一行「沒有找到想要的歌？快來許願」，「快來許願」連到 Google 表單（#59，取代原本的浮動意見回饋提示）。
 test.describe('列表尾端的許願連結', () => {
   test('顯示在列表最後，連結指向 Google 表單', async ({ app }) => {
     await app.goto();
     await expect(app.wishRow()).toBeVisible();
-    await expect(app.wishRow()).toHaveText('沒有找到我想要的歌？快來許願');
+    await expect(app.wishRow()).toHaveText('沒有找到想要的歌？快來許願');
     const link = app.wishRow().locator('a');
     await expect(link).toHaveText('快來許願');
     await expect(link).toHaveAttribute('href', /^https:\/\/docs\.google\.com\/forms\//);
