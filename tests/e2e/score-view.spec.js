@@ -12,7 +12,7 @@ test.describe('譜面的顯示方式', () => {
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
   }
 
-  test('預設是符合寬度，譜紙寬度是畫面的九成，高寬比是 A4 的 √2', async ({ app }) => {
+  test('預設是符合寬度，譜紙貼齊畫面左右邊緣，高寬比是 A4 的 √2', async ({ app }) => {
     await app.goto('#song_id=1');
     await open_view_menu(app);
     await expect(fit_item(app, 'width')).toHaveClass(/selected/);
@@ -22,7 +22,7 @@ test.describe('譜面的顯示方式', () => {
 
     const box = await page_box(app);
     const win = await window_size(app);
-    expect(box.width).toBeCloseTo(win.width * 0.9, 0);
+    expect(box.width).toBeCloseTo(win.width, 0);
     expect(box.height).toBeCloseTo(box.width * Math.SQRT2, 0);
   });
 
@@ -344,7 +344,7 @@ test.describe('譜紙：分頁／不分頁', () => {
     await choose(app, 'fit', 'page');
     await choose(app, 'paper', 'content');
     const size = await sizes(app);
-    expect(size.width).toBeCloseTo(size.win_width * 0.9, 0);
+    expect(size.width).toBeCloseTo(size.win_width, 0);
     expect(size.height).toBeLessThan(size.win_height);
   });
 

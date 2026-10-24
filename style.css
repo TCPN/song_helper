@@ -371,8 +371,8 @@ table#song_list a#wish_link {
 }
 
 #score_page {
-	/* 符合寬度時左右留一點暗色背景（點了關閉譜面）；窄螢幕直接占滿 */
-	--full-width: 90cqw;
+	/* 符合寬度時譜紙貼齊畫面左右邊緣 */
+	--full-width: 100cqw;
 	--fit-width: var(--full-width);
 	flex: none;
 	/* 用 auto margin 置中：譜紙比畫面大時（例如直式螢幕上的符合高度）才不會被切掉左邊和上面 */
@@ -380,12 +380,6 @@ table#song_list a#wish_link {
 	width: var(--fit-width);
 	aspect-ratio: 1 / 1.41421356;
 	background: #fff;
-}
-
-@media screen and (max-width: 420px){
-	#score_page {
-		--full-width: 100cqw;
-	}
 }
 
 /* 「整頁可見／符合高度」以一頁為準 */

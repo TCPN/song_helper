@@ -176,6 +176,8 @@ test.describe('分頁顯示', () => {
   });
 
   test('點譜紙旁邊的暗色背景照樣關閉譜面；重新打開從第一頁開始', async ({ app }) => {
+    // 符合寬度時譜紙貼齊左右邊緣，旁邊沒有背景；整頁可見時才有
+    await app.page.addInitScript(() => { localStorage.setItem('score_fit_mode', 'page'); });
     await app.goto('#song_id=1');
     await tap(app, 'right');
     await expect(indicator(app)).toHaveText(/^2 \//);
