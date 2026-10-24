@@ -371,7 +371,7 @@ table#song_list a#wish_link {
 }
 
 #score_page {
-	/* 符合寬度時左右留空間給上一首／下一首的箭頭；窄螢幕直接占滿 */
+	/* 符合寬度時左右留一點暗色背景（點了關閉譜面）；窄螢幕直接占滿 */
 	--full-width: 90cqw;
 	--fit-width: var(--full-width);
 	flex: none;
@@ -414,19 +414,60 @@ table#song_list a#wish_link {
 	}
 }
 
-/* 分頁時的頁碼，在畫面下方中間；不擋點擊 */
-#page_indicator {
+/* 分頁時的頁碼和左右的上一頁／下一頁箭頭，在畫面下方中間；頁碼不擋點擊，箭頭可以點 */
+#page_nav {
 	position: absolute;
 	bottom: 0.75em;
 	left: 50%;
 	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: 0.3em;
+	font-size: 0.85em;
+	pointer-events: none;
+	user-select: none;
+}
+
+#page_indicator {
 	padding: 0.15em 0.75em;
 	border-radius: 1em;
 	background: #000a;
 	color: #fff;
-	font-size: 0.85em;
-	pointer-events: none;
-	user-select: none;
+	white-space: nowrap;
+}
+
+/* 圓角三角形：填色加上同色、圓角接合的外框，顏色和頁碼的底色一樣（#000a）；
+   整個 svg 一起半透明，填色和外框重疊的地方才不會比較深 */
+.page-arrow {
+	display: flex;
+	padding: 0.2em;
+	cursor: pointer;
+	pointer-events: auto;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.page-arrow svg {
+	width: 1.35em;
+	height: 1.5em;
+	opacity: 0.667;
+	fill: #000;
+	stroke: #000;
+	stroke-width: 3;
+	stroke-linejoin: round;
+	overflow: visible;
+}
+
+.page-arrow:hover svg {
+	opacity: 0.85;
+}
+
+/* 第一頁的上一頁、最後一頁的下一頁 */
+.page-arrow[aria-disabled="true"] {
+	cursor: default;
+}
+
+.page-arrow[aria-disabled="true"] svg {
+	opacity: 0.2;
 }
 
 /*
@@ -692,7 +733,7 @@ table#song_list a#wish_link {
 		break-after: page;
 	}
 
-	#page_indicator, #page_break_bar {
+	#page_nav, #page_break_bar {
 		display: none !important;
 	}
 
@@ -824,36 +865,6 @@ table#song_list a#wish_link {
 
 .show {
 	display: initial;
-}
-
-.change-song {
-    position: absolute;
-    top: 20%;
-    bottom: 20%;
-    width: 5vw;
-    left: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    cursor: pointer;
-}
-.change-song.prev {
-    left: 0;
-    right: auto;
-}
-.change-song.next {
-    left: auto;
-    right: 0;
-}
-.change-song:hover {
-    background: #0003;
-}
-.change-song.prev:hover::after {
-    content: "<";
-}
-.change-song.next:hover::after {
-    content: ">";
 }
 
 .no-select {

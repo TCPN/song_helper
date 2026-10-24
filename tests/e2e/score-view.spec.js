@@ -226,7 +226,7 @@ test.describe('譜面的顯示方式', () => {
     await expect(app.popup()).toHaveClass(/open/);
 
     const box = await page_box(app);
-    // 譜紙左邊的空白處（避開上一首的箭頭）
+    // 譜紙左邊的空白處
     await app.page.mouse.click(box.x - 20, box.y + 50);
     await expect(app.popup()).not.toHaveClass(/open/);
     expect(await app.hashParams()).toEqual({});
@@ -365,7 +365,7 @@ test.describe('譜紙：分頁／不分頁', () => {
     await choose(app, 'paper', 'content');
     await app.page.keyboard.press('Escape');
 
-    await app.page.locator('.change-song.prev').click();
+    await app.switchSong(1);
     await expect(app.page.locator('#current_song_id')).toHaveText('1');
     let size = await sizes(app);
     expect(size.height).toBeCloseTo(size.win_height, 0);

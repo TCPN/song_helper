@@ -62,10 +62,12 @@
 					</div>
 				</div>
 			</div>
-			<div class="change-song prev"></div>
-			<div class="change-song next"></div>
-			<!-- 分頁時的頁碼（js/score-pages.js），只有一頁時不顯示 -->
-			<div id="page_indicator" class="hide" aria-live="polite"></div>
+			<!-- 分頁時的頁碼和左右的上一頁／下一頁箭頭（js/score-pages.js），只有一頁時不顯示 -->
+			<div id="page_nav" class="hide">
+				<span id="page_prev" class="page-arrow" role="button" tabindex="0" title="上一頁" aria-label="上一頁"><svg viewBox="0 0 16 18" aria-hidden="true"><path d="M13 3 L3 9 L13 15 Z"/></svg></span>
+				<div id="page_indicator" aria-live="polite"></div>
+				<span id="page_next" class="page-arrow" role="button" tabindex="0" title="下一頁" aria-label="下一頁"><svg viewBox="0 0 16 18" aria-hidden="true"><path d="M3 3 L13 9 L3 15 Z"/></svg></span>
+			</div>
 			<!-- 設定分頁時的提示列（js/score-pages.js） -->
 			<div id="page_break_bar" class="hide" role="toolbar" aria-label="設定分頁">
 				<span class="page-break-hint">點兩行之間加入／取消分頁</span>

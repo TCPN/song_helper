@@ -1,7 +1,7 @@
 // 譜面彈窗：用 abcjs 渲染譜面、移調、換歌、關閉
 import { state } from './state.js';
 import { key_display_name, with_stretchlast } from './abc.js';
-import { parse_hash, update_hash } from './route.js';
+import { update_hash } from './route.js';
 import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdown } from './dom.js';
 import { svg_elem_add_box, score_line_widths, fix_score_line_widths, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
@@ -14,15 +14,8 @@ import { current_layout, show_layout } from './layout-panel.js';
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
 var clickListener = console.log;
 
-// song_id 為 'next'／'prev' 時相對於目前網址的歌；歌存在才改網址，傳回是否存在
+// 歌存在才改網址，傳回是否存在
 export function open_score(song_id){
-  if(song_id == 'next' || song_id == 'prev'){
-    var sid = parseInt(parse_hash().song_id);
-    if(song_id == 'prev')
-      song_id = sid - 1;
-    else
-      song_id = sid + 1;
-  }
   if(state.songs.find((s)=>(s.id == song_id))){
     update_hash('song_id', song_id);
     return true;
@@ -160,7 +153,7 @@ function value_modify(event) {
   target.dispatchEvent(new Event('change'));
 }
 
-// 註冊譜面彈窗（背景、換歌、上方工具列）的事件
+// 註冊譜面彈窗（背景、上方工具列）的事件
 export function setup_score_controls() {
   // 點譜紙以外的暗色背景就關閉；#score_popup_window 是蓋滿背景、可捲動的那一層，
   // 點在它的捲軸上（offsetX／offsetY 超出內容區）不算
@@ -170,8 +163,6 @@ export function setup_score_controls() {
       || (win.id == 'score_popup_window' && event.offsetX < win.clientWidth && event.offsetY < win.clientHeight))
       close_score();
   });
-  document.querySelector('.change-song.prev').addEventListener('click', ()=>{ open_score('prev'); });
-  document.querySelector('.change-song.next').addEventListener('click', ()=>{ open_score('next'); });
   document.querySelector('#transpose').addEventListener('change', function(){ set_transpose(this.value); });
   // 點調性按鈕開關移調選單
   setup_dropdown('#transpose_button', '#transpose-menu');
