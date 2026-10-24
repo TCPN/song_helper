@@ -176,7 +176,12 @@ test.describe('手動分頁', () => {
 
   test('localStorage 存不進去時，這次開著的時候設定還是有效', async ({ app }) => {
     await app.page.addInitScript(() => {
-      Storage.prototype.setItem = function () { throw new Error('QuotaExceededError'); };
+      // 只擋分頁設定（歌曲資料的快取另外處理）
+      const setItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key == 'score_page_breaks') throw new Error('QuotaExceededError');
+        return setItem.call(this, key, value);
+      };
     });
     await app.goto('#song_id=2');
     await enter_mode(app);
