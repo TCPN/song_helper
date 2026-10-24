@@ -55,7 +55,7 @@ test.describe('網址 hash 的格式與行為', () => {
 
   test('瀏覽器的上一頁／下一頁可在歌曲之間切換', async ({ app }) => {
     await app.goto('#song_id=1');
-    await app.page.locator('.change-song.next').click();
+    await app.switchSong(2);
     await expect(app.currentSongId()).toHaveText('2');
 
     await app.page.goBack();

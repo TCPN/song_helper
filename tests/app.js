@@ -146,6 +146,13 @@ const test = base.test.extend({
         await app.openTranspose();
         await page.locator(`#transpose-menu .step-button[data-add="${delta > 0 ? '+1' : '-1'}"]`).click();
       },
+      // 譜面開著時用曲號鍵盤換到另一首（輸入曲號後按 ✓）
+      async switchSong(songId) {
+        await app.currentSongId().click();
+        for (const digit of String(songId))
+          await page.locator(`#song_id_popup .button[data-value="${digit}"]`).click();
+        await page.locator('#song_id_popup .button[data-value="ent"]').click();
+      },
       async openScore(songId) {
         await app.scoreLink(songId).click();
         await base.expect(app.popup()).toHaveClass(/open/);

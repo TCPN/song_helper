@@ -10,11 +10,11 @@ test.describe('列表的選取（高亮）', () => {
     await expect(app.selectedRows().first()).toHaveAttribute('data-target', '2');
   });
 
-  test('上一首／下一首切換時，選取跟著移動', async ({ app }) => {
+  test('譜面開著時換歌，選取跟著移動', async ({ app }) => {
     await app.goto('#song_id=1');
     await expect(app.selectedRows().first()).toHaveAttribute('data-target', '1');
 
-    await app.page.locator('.change-song.next').click();
+    await app.switchSong(2);
     await expect(app.selectedRows()).toHaveCount(1);
     await expect(app.selectedRows().first()).toHaveAttribute('data-target', '2');
   });

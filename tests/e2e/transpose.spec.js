@@ -58,10 +58,10 @@ test.describe('移調', () => {
     expect(after).not.toBe(before);
   });
 
-  // 現況：移調值存在網址裡，所以用上一首／下一首換歌時會沿用。
+  // 現況：移調值存在網址裡，所以在譜面上換歌時會沿用。
   test('換歌時沿用目前的移調值（現況）', async ({ app }) => {
     await app.goto('#song_id=1&transpose=2');
-    await app.page.locator('.change-song.next').click();
+    await app.switchSong(2);
     await expect(app.currentSongId()).toHaveText('2');
     await expect(app.transposeValue()).toHaveText('2');
     await expect(app.currentTone()).toHaveText('A');
@@ -86,7 +86,8 @@ test.describe('移調', () => {
     await menu.click({ position: { x: 2, y: 2 } });
     await expect(menu).not.toHaveClass(/hide/);
 
-    await app.page.mouse.click(10, 300);
+    // 點譜紙（以前點的是左邊的上一首按鈕，#60 拿掉了）
+    await app.page.locator('#score_page').click({ position: { x: 20, y: 300 } });
     await expect(menu).toHaveClass(/hide/);
     await expect(app.page.locator('#transpose_button')).toHaveAttribute('aria-expanded', 'false');
     await expect(app.popup()).toHaveClass(/open/);
