@@ -354,7 +354,7 @@ table#song_list a#wish_link {
 /*
  * 譜面的顯示方式（js/score-view.js）：
  * #score_popup_window 蓋滿暗色背景、負責捲動，並當 container query 的容器，
- * 譜紙 #score_page 依顯示方式用 cqw／cqh 算寬度；
+ * 譜紙 #score_page 依顯示方式用 %／cqh 算寬度（符合寬度用 %，見下面 --full-width）；
  * 分頁時譜紙是 A4 直式（寬:高 = 1:√2），一次顯示一頁（js/score-pages.js），只有一行就比一頁高時往下延伸；
  * 不分頁時高度依譜的內容。
  * 尺寸不直接設在 #score_paper：abcjs 渲染時會在它上面加 inline style（width: 100% 等）。
@@ -371,8 +371,9 @@ table#song_list a#wish_link {
 }
 
 #score_page {
-	/* 符合寬度時譜紙貼齊畫面左右邊緣 */
-	--full-width: 100cqw;
+	/* 符合寬度時譜紙貼齊畫面左右邊緣。用 100% 而不是 100cqw：100% 是扣掉垂直捲軸後的寬度，
+	   100cqw 包含捲軸，有垂直捲軸時譜紙會比可用的寬度寬，多出橫向捲軸 */
+	--full-width: 100%;
 	--fit-width: var(--full-width);
 	flex: none;
 	/* 用 auto margin 置中：譜紙比畫面大時（例如直式螢幕上的符合高度）才不會被切掉左邊和上面 */
