@@ -6,7 +6,8 @@ import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdow
 import { svg_elem_add_box, score_line_widths, fix_score_line_widths, fix_score_line_heights } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
 import { update_content_ratio } from './score-view.js';
-import { paginate_score, reset_pages } from './score-pages.js';
+import { paginate_score, reset_pages, set_score_lines } from './score-pages.js';
+import { line_start_bars } from './page-breaks.js';
 import { build_render_params, build_midi_params, widened_staffwidth } from './render-params.js';
 import { current_layout, show_layout } from './layout-panel.js';
 
@@ -77,6 +78,8 @@ function draw_score(song, transpose){
     tuneObjectArray = ABCJS.renderAbc('score_paper', abc, params);
     fix_score_line_widths('#score_paper');
   }
+  // 每行開頭的小節線數與 %%newpage，手動分頁用
+  set_score_lines(line_start_bars(tuneObjectArray[0] && tuneObjectArray[0].lines));
   // 「排版」面板顯示實際用的寬度
   state.staffwidthUsed = params.staffwidth;
   state.staffwidthAtMin = !!widened;

@@ -408,6 +408,93 @@ table#song_list .song_score a.note_score {
 }
 
 /*
+ * 分頁的位置（js/score-pages.js）：第二頁以後每頁的第一行有 page-start（手動分頁的再加 manual-break）。
+ * 不分頁時在那裡畫一條灰色的間隔，看起來像兩張紙；設定分頁時（setting-breaks）整首都顯示，
+ * 每個換頁的地方都畫出間隔並標示是手動的「分頁」還是放不下的「自動換頁」，其他兩行之間畫虛線，提示可以點的地方。
+ * 間隔用 ::before 撐出高度，量行高分頁時已經拿掉 page-start，不影響分頁；列印時不畫。
+ */
+@media screen {
+	#score_paper .abcjs-container {
+		position: relative;
+	}
+
+	.paper-content #score_paper .abcjs-container.page-start::before,
+	.setting-breaks #score_paper .abcjs-container.page-start::before {
+		content: '';
+		display: block;
+		height: 1.25rem;
+		background: #8a8a8a;
+		color: #fff;
+		font-size: 0.75rem;
+		line-height: 1.25rem;
+		text-align: center;
+	}
+
+	.setting-breaks #score_paper .abcjs-container.page-start::before {
+		content: '自動換頁';
+		background: #b0b0b0;
+	}
+
+	.setting-breaks #score_paper .abcjs-container.page-start.manual-break::before {
+		content: '分頁';
+		background: #c0392b;
+	}
+
+	.setting-breaks #score_paper .abcjs-container:not(:first-child):not(.page-start)::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		border-top: 1px dashed #e0a39c;
+		pointer-events: none;
+	}
+
+	.setting-breaks #score_page {
+		cursor: pointer;
+	}
+}
+
+/* 設定分頁時的提示列，在畫面上方中間（下方會被意見回饋提示擋住） */
+#page_break_bar {
+	position: absolute;
+	top: 0.75em;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding: 0.35em 0.5em 0.35em 0.9em;
+	border-radius: 1.5em;
+	background: #000c;
+	color: #fff;
+	font-size: 0.9em;
+	white-space: nowrap;
+	user-select: none;
+}
+
+#page_break_bar.hide {
+	display: none;
+}
+
+.page-break-button {
+	padding: 0.2em 0.8em;
+	border-radius: 1em;
+	background: #fff3;
+	cursor: pointer;
+}
+
+.page-break-button[aria-disabled="true"] {
+	opacity: 0.4;
+	cursor: default;
+}
+
+#page_break_done {
+	background: #fff;
+	color: #000;
+}
+
+/*
  * 不分頁：譜紙高度就是譜的高度（abcjs 在最上面和最下面都會留白邊），上下捲動。
  * 「整頁可見／符合高度」用 js 量到的高寬比 --content-ratio 算寬度。
  */
@@ -583,7 +670,7 @@ table#song_list .song_score a.note_score {
 		break-after: page;
 	}
 
-	#page_indicator {
+	#page_indicator, #page_break_bar {
 		display: none !important;
 	}
 
