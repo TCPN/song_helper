@@ -1,4 +1,4 @@
-// 歌曲資訊彈窗與意見回饋提示
+// 歌曲資訊彈窗
 import { state } from './state.js';
 import { tempo_text } from './abc.js';
 import { getDom, openDom, closeDom } from './dom.js';
@@ -40,29 +40,11 @@ export function show_song_info(song_id){
   openDom(elem);
 }
 
-// 「找不到想找的歌嗎？」提示：顯示 timeout 秒；期間再點會重新計時
-export function open_feedback_popup(timeout=5) {
-  openDom('#feedback_popup');
-  var elem = document.querySelector('#feedback_popup');
-  elem.dataset.timeoutCount = (parseInt(elem.dataset.timeoutCount) || 0) + 1;
-  setTimeout(function () {
-    elem.dataset.timeoutCount = (parseInt(elem.dataset.timeoutCount) - 1) || 0;
-    if(!(parseInt(elem.dataset.timeoutCount)) > 0) {
-      closeDom('#feedback_popup');
-    }
-  }, timeout * 1000);
-}
-
-// 註冊資訊彈窗與意見回饋提示的事件
+// 註冊資訊彈窗的事件
 export function setup_popups() {
   document.querySelector('#info-popup-container .popup-bg').addEventListener('click', function(event){
     if(event.target == this)
       closeDom('#info-popup-container');
   });
   document.querySelector('#info-popup-window .popup-window-close').addEventListener('click', ()=>{ closeDom('#info-popup-container'); });
-  document.querySelector('#feedback_popup_content').addEventListener('click', function(event){
-    closeDom(this.parentElement);
-    event.stopPropagation();
-  });
-  window.addEventListener('click', function (){ open_feedback_popup(5); });
 }

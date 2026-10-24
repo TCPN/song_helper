@@ -32,47 +32,52 @@ test.describe('列表的選取（高亮）', () => {
   });
 });
 
-// 點擊頁面任何地方，都會顯示約 5 秒的「找不到想找的歌嗎？」意見回饋提示。
-test.describe('意見回饋提示', () => {
-  const clickBlankArea = (app) => app.page.locator('body').click({ position: { x: 5, y: 5 } });
-
-  test('一開始不顯示', async ({ app }) => {
+// 列表尾端有一行「沒有找到想要的歌？快來許願」，「快來許願」連到 Google 表單（#59，取代原本的浮動意見回饋提示）。
+test.describe('列表尾端的許願連結', () => {
+  test('顯示在列表最後，連結指向 Google 表單', async ({ app }) => {
     await app.goto();
-    await expect(app.feedbackPopup()).not.toHaveClass(/open/);
+    await expect(app.wishRow()).toBeVisible();
+    await expect(app.wishRow()).toHaveText('沒有找到想要的歌？快來許願');
+    const link = app.wishRow().locator('a');
+    await expect(link).toHaveText('快來許願');
+    await expect(link).toHaveAttribute('href', /^https:\/\/docs\.google\.com\/forms\//);
+
+    // 在最後一首歌的下面
+    const lastRow = await app.rows().last().boundingBox();
+    const wish = await app.wishRow().boundingBox();
+    expect(wish.y).toBeGreaterThanOrEqual(lastRow.y + lastRow.height - 1);
   });
 
-  test('點擊頁面後顯示，內容有指向 Google 表單的連結', async ({ app }) => {
+  test('灰色斜體小字，沒有底色', async ({ app }) => {
     await app.goto();
-    await clickBlankArea(app);
-    await expect(app.feedbackPopup()).toHaveClass(/open/);
-    await expect(app.feedbackPopup()).toContainText('找不到想找的歌嗎？');
-    await expect(app.feedbackPopup().locator('a')).toHaveAttribute('href', /^https:\/\/docs\.google\.com\/forms\//);
+    const style = await app.wishRow().locator('td').evaluate((td) => {
+      const cs = getComputedStyle(td);
+      const row = getComputedStyle(td.parentElement);
+      // 和歌名那一格比（編號那格本來就是小字）
+      const bodyCell = getComputedStyle(document.querySelector('#song_list tbody td.song_name'));
+      return {
+        fontStyle: cs.fontStyle,
+        color: cs.color,
+        fontSize: parseFloat(cs.fontSize),
+        bodyFontSize: parseFloat(bodyCell.fontSize),
+        rowBackground: row.backgroundColor,
+      };
+    });
+    expect(style.fontStyle).toBe('italic');
+    expect(style.color).toBe('rgb(136, 136, 136)');
+    expect(style.fontSize).toBeLessThan(style.bodyFontSize);
+    expect(style.rowBackground).toBe('rgba(0, 0, 0, 0)');
   });
 
-  test('約 5 秒後自動消失', async ({ app }) => {
-    await app.page.clock.install();
+  test('搜尋時仍然顯示', async ({ app }) => {
     await app.goto();
-    await clickBlankArea(app);
-    await expect(app.feedbackPopup()).toHaveClass(/open/);
-
-    await app.page.clock.fastForward(4500);
-    await expect(app.feedbackPopup()).toHaveClass(/open/);
-    await app.page.clock.fastForward(1000);
-    await expect(app.feedbackPopup()).not.toHaveClass(/open/);
+    await app.page.locator('#song_search').fill('zzzz找不到的字');
+    await expect(app.wishRow()).toBeVisible();
   });
 
-  test('點提示本身會立刻關閉，不會又被重新打開', async ({ app }) => {
+  test('點擊頁面不再跳出浮動的意見回饋提示', async ({ app }) => {
     await app.goto();
-    await clickBlankArea(app);
-    await expect(app.feedbackPopup()).toHaveClass(/open/);
-
-    await app.page.locator('#feedback_popup_content').click({ position: { x: 5, y: 5 } });
-    await expect(app.feedbackPopup()).not.toHaveClass(/open/);
-  });
-
-  test('在開譜面之後點擊也會顯示', async ({ app }) => {
-    await app.goto('#song_id=1');
-    await app.page.locator('#score_popup_top_bar').click({ position: { x: 2, y: 2 } });
-    await expect(app.feedbackPopup()).toHaveClass(/open/);
+    await app.page.locator('body').click({ position: { x: 5, y: 5 } });
+    await expect(app.page.locator('#feedback_popup')).toHaveCount(0);
   });
 });

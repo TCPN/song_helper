@@ -151,6 +151,28 @@ table#song_list .song_score a.note_score {
 	text-align: center;
 }
 
+/* 列表尾端的許願連結：灰色斜體小字，沒有底色 */
+table#song_list tr#wish_row,
+table#song_list tr#wish_row:hover {
+	background: none;
+}
+
+table#song_list #wish_row td {
+	padding-top: 0.5em;
+	text-align: center;
+	font-size: 0.8em;
+	font-style: italic;
+	color: #888;
+}
+
+table#song_list a#wish_link {
+	display: inline;
+	height: auto;
+	width: auto;
+	color: inherit;
+	text-decoration: underline;
+}
+
 
 #score_popup_container {
 	display: none;
@@ -455,7 +477,7 @@ table#song_list .song_score a.note_score {
 	}
 }
 
-/* 設定分頁時的提示列，在畫面上方中間（下方會被意見回饋提示擋住） */
+/* 設定分頁時的提示列，在畫面上方中間 */
 #page_break_bar {
 	position: absolute;
 	top: 0.75em;
@@ -631,7 +653,7 @@ table#song_list .song_score a.note_score {
 }
 
 @media print {
-	body > *, #score_popup_top_bar, body #feedback_popup {
+	body > *, #score_popup_top_bar {
 		display: none;
 	}
 
@@ -753,30 +775,6 @@ table#song_list .song_score a.note_score {
 #song_id_popup .popup-window .button[data-value="clr"]::after { content: "C"; }
 #song_id_popup .popup-window .button[data-value="esc"]::after { content: "✗"; }
 #song_id_popup .popup-window .button[data-value="ent"]::after { content: "✓"; }
-
-#feedback_popup {
-  position: fixed;
-  bottom: -2.5em;
-  width: 100vw;
-  display: flex;
-  transition: bottom 0.5s;
-}
-
-#feedback_popup.open {
-  bottom: 0;
-}
-
-#feedback_popup_content, #feedback_popup_content a{
-  background: #eee;
-
-}
-
-#feedback_popup_content {
-  margin: auto;
-  padding: 0.5em 1em;
-  border-radius: 1em;
-  box-shadow: 0 2px 5px #777;
-}
 
 #player-set {
 	position: fixed;

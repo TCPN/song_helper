@@ -123,7 +123,7 @@ const test = base.test.extend({
       scoreLink: (songId) => page.locator(`#song_list tbody tr[data-target="${songId}"] td.song_score a`),
       selectedRows: () => page.locator('#song_list tbody tr.selected'),
       infoPopup: () => page.locator('#info-popup-container'),
-      feedbackPopup: () => page.locator('#feedback_popup'),
+      wishRow: () => page.locator('#song_list tfoot #wish_row'),
 
       // 預先在 localStorage 放入快取資料，模擬「回訪」。要在 goto 之前呼叫。
       async seedCache(cachedSongs = SONGS) {
