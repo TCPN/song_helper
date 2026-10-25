@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { key_display_name, with_stretchlast } from './abc.js';
 import { update_hash } from './route.js';
 import { save_scroll, restore_scroll, toggleClass, click_on_enter, setup_dropdown } from './dom.js';
-import { svg_elem_add_box, score_line_widths, fix_score_line_widths, fix_score_line_heights } from './score-layout.js';
+import { score_line_widths, fix_score_line_widths, fix_score_line_heights, fix_part_marks, remove_duplicate_endings } from './score-layout.js';
 import { update_toolbar_layout } from './toolbar.js';
 import { update_content_ratio } from './score-view.js';
 import { paginate_score, reset_pages, set_score_lines } from './score-pages.js';
@@ -78,11 +78,9 @@ function draw_score(song, transpose){
   state.staffwidthAtMin = !!widened;
   show_layout();
 
-  // add bounding box of the part marks
-  var part_texts = document.querySelectorAll('.abcjs-part');
-  for(let p of part_texts){
-    svg_elem_add_box(p);
-  }
+  // 段落記號不超出譜的右邊界並加框；和弦聲部多畫的反覆框拿掉
+  fix_part_marks('#score_paper');
+  remove_duplicate_endings('#score_paper');
   // fix the line heights and line styles
   fix_score_line_heights('#score_paper', current_layout());
   // 分頁（行高定了才分），之後不分頁時譜紙的高寬比依譜的內容

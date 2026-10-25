@@ -52,7 +52,7 @@
 | `js/main.js` | 進入點：載入資料、註冊事件（`index.html` 以 `<script type="module">` 載入） |
 | `js/data.js`, `js/cache.js` | 資料載入（先用 localStorage 快取渲染，再用試算表最新資料更新）與快取 |
 | `js/list.js` | 歌曲列表、選取、搜尋 |
-| `js/score.js`, `js/score-layout.js` | 譜面渲染、移調、換歌、關閉；渲染後的版面修正 |
+| `js/score.js`, `js/score-layout.js` | 譜面渲染、移調、換歌、關閉；渲染後的版面修正（行高、段落記號不超出右邊界、去掉和弦聲部多畫的反覆框） |
 | `js/song-id-input.js` | 譜面上方的歌號小鍵盤與鍵盤操作 |
 | `js/popups.js` | 歌曲資訊彈窗 |
 | `js/route.js` | 網址 hash 的讀寫與執行 |
@@ -62,11 +62,11 @@
 | `js/editor-links.js` | 「編輯」與「⋮」選單的開關、編輯器連結 |
 | `js/toolbar.js` | 螢幕寬度小於 450px（或工具列放不下）時切換成精簡版面（「⋮」選單） |
 | `js/state.js`, `js/dom.js` | 共用狀態、DOM 小工具 |
-| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js` | 純函式（不碰 DOM，有單元測試） |
+| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js`, `js/score-marks.js` | 純函式（不碰 DOM，有單元測試） |
 | `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
-| `abcjs_midi_5.8.0-min-mod.js` | 實際使用的 abcjs（修改版；譜面寬度大於 740 時放寬音符間距上限，搜尋 `song_helper:`）。其餘 `abcjs_midi_*.js` 為舊版，目前沒有被引用 |
+| `abcjs_midi_5.8.0-min-mod.js` | 實際使用的 abcjs（修改版；譜面寬度大於 740 時放寬音符間距上限、oneSvgPerLine 時跨行的連結線／圓滑線／反覆框接到下一行、行首的 `[P:]` 放在該行開頭，以及 MIDI 伴奏的幾處調整。每處修改都用 `song_helper: 說明` 和 `song_helper end` 兩個註解框起來，檔案開頭有清單與和原版比對的方法）。其餘 `abcjs_midi_*.js` 為舊版，目前沒有被引用 |
 
 資料來源是 Google 試算表：`js/data.js` 直接 `fetch` 試算表的 gviz 查詢（`js/song-data.js` 的 `SHEET_QUERY_URL`），
 不需要載入 Google 的 JavaScript。試算表必須維持「知道連結的人都能檢視」。

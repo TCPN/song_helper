@@ -1,6 +1,14 @@
 /*! abcjs_midi v5.8.0 Copyright © 2009-2019 Paul Rosen and Gregory Dyke (http://abcjs.net) */
 /*! midi.js Copyright © Michael Deal (http://mudcu.be) */
 /*! For license information please see abcjs_midi_5.8.0-min.js.LICENSE */
+/* song_helper: 這是 abcjs 5.8.0 的 abcjs_midi_5.8.0-min.js 排版成多行後的修改版。我們改過的地方都用
+ *   開頭的註解「song_helper: 說明」和結尾的「song_helper end」框起來，搜尋 song_helper 就能找到全部：
+ *   - 譜面：排版寬度大於 740 時放寬音符間距上限；oneSvgPerLine 時跨行的連結線、圓滑線、反覆框接到下一行（#63）；
+ *     行首的 [P:] 放在該行開頭（#71）；聲部的 stem=solo
+ *   - MIDI 伴奏：斜線和弦低音的升降號、低音音名表、m9 和弦、第二個低音改用根音
+ *   原版：https://raw.githubusercontent.com/paulrosen/abcjs/v5.8.0/bin/abcjs_midi_5.8.0-min.js
+ *   因為排版不同，要和原版比對時，先把兩份檔案都拆成 JS token（例如用 acorn 的 tokenizer）再 diff，
+ *   這樣註解和空白不會算進去；差異應該都落在 song_helper 註解框起來的範圍裡。 */
 !function(e) {
     var t = {};
     function i(n) {
@@ -1865,8 +1873,10 @@
                         var u = r;
                         if ("%" === i.charAt(r))
                             break;
+                        /* song_helper: 行首的 [P:] 在這一行還沒開始時讀到，記下來，讓它放在這一行開頭而不是上一行結尾（#71） */
+                        p.lineNotStarted = s;
                         var d = m.letter_to_inline_header(i, r);
-                        if (0 < d[0])
+                        if (p.lineNotStarted = !1, /* song_helper end */ 0 < d[0])
                             r += d[0],
                             "V" === d[1] && (s = !0);
                         else {
@@ -4224,7 +4234,7 @@
                             break;
                         case "stem":
                         case "stems":
-                            void 0 !== (w = e.getVoiceToken(n, l, h)).warn ? t("Expected value for stems in voice: " + w.warn, n, l) : "up" === w.token || "down" === w.token || "solo" === w.token ? i.voices[d].stem = w.token : t("Expected up or down for voice stem", n, l),
+                            void 0 !== (w = e.getVoiceToken(n, l, h)).warn ? t("Expected value for stems in voice: " + w.warn, n, l) : "up" === w.token || "down" === w.token /* song_helper: V: 的 stem=solo（見 engraver 的 "stem"） */ || "solo" === w.token /* song_helper end */ ? i.voices[d].stem = w.token : t("Expected up or down for voice stem", n, l),
                             l += w.len;
                             break;
                         case "up":
@@ -5330,6 +5340,18 @@
             flatbeams: e.formatting.flatbeams
         }),
         this.engraver.setStemHeight(this.renderer.spacing.stemHeight),
+        /* song_helper: 接上一行的跨行元素（見 oneSvgPerLine 的分行渲染）。連結線只接到這一行第一個音裡同音高的音；多聲部 V: 的譜 abcjs 解析時會漏標 endTie，這裡補上（#63） */
+        e.crossLineElems && function(t, i) {
+            t.slursbyvoice = i.slursbyvoice, t.endingsbyvoice = i.endingsbyvoice, t.scaleByVoice = i.scaleByVoice, t.tiesbyvoice = {};
+            for (var n in i.tiesbyvoice) {
+                var r = n.match(/^s(\d+)v(\d+)$/), a = r && e.lines[0] && e.lines[0].staff && e.lines[0].staff[r[1]], s = a && a.voices[r[2]] || [], o = s.find(function(e) { return "note" === e.el_type }), c = o && o.pitches || [];
+                t.tiesbyvoice[n] = i.tiesbyvoice[n].filter(function(e) {
+                    var t = e.anchor1 && c.find(function(t) { return (void 0 !== t.verticalPos ? t.verticalPos : t.pitch) === e.anchor1.pitch });
+                    return t && (t.endTie = !0), !!t
+                })
+            }
+        }(this.engraver, e.crossLineElems),
+        /* song_helper end */
         e.formatting.staffwidth ? this.width = 1.33 * e.formatting.staffwidth : this.width = this.renderer.isPrint ? this.staffwidthPrint : this.staffwidthScreen;
         var i, n, r = e.formatting.scale ? e.formatting.scale : this.scale;
         "resize" === this.responsive && (r = void 0),
@@ -5374,7 +5396,7 @@
             c = u,
             l = f.spacingUnits,
             h = f.minSpace,
-            u = r && o / s < .66 && !a ? null : Math.abs(s - o) < 2 ? null : 0 < l ? (/* song_helper: 排版寬度大於預設 740 時，間距上限跟著放寬，讓行能拉滿 */ (50 * Math.max(1, this.width / 740)) < (c = (s - (o - l * c)) / l) * h && (c = 50 * Math.max(1, this.width / 740) / h),
+            u = r && o / s < .66 && !a ? null : Math.abs(s - o) < 2 ? null : 0 < l ? (/* song_helper: 排版寬度大於預設 740 時，間距上限（原本固定 50）跟著放寬，讓行能拉滿 */ (50 * Math.max(1, this.width / 740)) < (c = (s - (o - l * c)) / l) * h && (c = 50 * Math.max(1, this.width / 740) / h) /* song_helper end */,
             c) : null,
             n && console.log("setXSpace", d, e.w, u, e.minspace),
             null === u)
@@ -5791,10 +5813,11 @@
                             a++,
                             s = s.substring(1));
                             var c = s.split("/");
-                            // modified
+                            /* song_helper: MIDI 伴奏：斜線和弦的低音（如 F/E♭、F/Eb）可以有升降號。原本是用整個低音名稱 z[c[1]] 查表，這裡改成用字母 z[c[1][0]] 查表，再加上升降號 acc */
                             var acc = {"#":1,"♯":1,"b":-1,"♭":-1}[c[1] && c[1][1]] || 0;
+                            /* song_helper end */
                             return r = R(i, c[0]),
-                            2 === c.length && z[c[1][0]] && (a = i = z[c[1][0]] + n + acc),
+                            2 === c.length && /* song_helper: 用低音的字母查表，再加上升降號；原本是 z[c[1]] && (a = i = z[c[1]] + n) */ z[c[1][0]] && (a = i = z[c[1][0]] + n + acc) /* song_helper end */,
                             {
                                 boom: i,
                                 boom2: a,
@@ -5968,22 +5991,32 @@
         }
         var z = {
             A: -27,
+            /* song_helper: 低音音名表加上有升降號的音名（A#、Bb 等）；原本只有 A～G。斜線和弦現在只用字母查表（見下面的 acc），所以這些鍵目前用不到 */
             "A#": -26,
             "Bb": -26,
+            /* song_helper end */
             B: -25,
             C: -24,
+            /* song_helper: 同上 */
             "C#": -23,
             "Db": -23,
+            /* song_helper end */
             D: -22,
+            /* song_helper: 同上 */
             "D#": -21,
             "Eb": -21,
+            /* song_helper end */
             E: -20,
             F: -19,
+            /* song_helper: 同上 */
             "F#": -18,
             "Gb": -18,
+            /* song_helper end */
             G: -17,
+            /* song_helper: 同上 */
             "G#": -16,
             "Ab": -16
+            /* song_helper end */
         }
           , F = {
             dim: [0, 3, 6],
@@ -6013,7 +6046,9 @@
             m6: [0, 3, 7, 9],
             "-6": [0, 3, 7, 9],
             m7: [0, 3, 7, 10],
+            /* song_helper: MIDI 伴奏加上 m9 和弦 */
             m9: [0, 3, 7, 10, 14],
+            /* song_helper end */
             "-7": [0, 3, 7, 10],
             "-(b6)": [0, 3, 7, 8],
             "-b6": [0, 3, 7, 8],
@@ -6136,11 +6171,15 @@
             "2/2": ["boom", "chick"],
             "2/4": ["boom", "chick"],
             "3/4": ["boom", "chick", "chick"],
+            /* song_helper: MIDI 伴奏的第二個低音原本是 boom2（根音低五度），改成和第一個一樣用 boom（根音） */
             "4/4": ["boom", "chick", "boom", "chick"],
+            /* song_helper end */
             "5/4": ["boom", "chick", "chick", "boom2", "chick"],
+            /* song_helper: 同上，boom2 改成 boom */
             "6/8": ["boom", "", "chick", "boom", "", "chick"],
             "9/8": ["boom", "", "chick", "boom", "", "chick", "boom", "", "chick"],
             "12/8": ["boom", "", "chick", "boom", "", "chick", "boom", "", "chick", "boom", "", "chick"]
+            /* song_helper end */
         };
         function G() {
             var e = k.num
@@ -7160,7 +7199,7 @@
                     p.foundKey && s.hasBeginMusic() && s.appendStartingElement("key", h, u, a.fixKey(i.clef, i.key)),
                     [l - o + 1 + c];
                 case "[P:":
-                    return s.lines.length <= s.lineNum ? i.partForNextLine = {
+                    return s.lines.length <= s.lineNum /* song_helper: 行首的 [P:]（#71） */ || i.lineNotStarted /* song_helper end */ ? i.partForNextLine = {
                         title: n.substring(o + 3, l),
                         startChar: h,
                         endChar: u
@@ -9094,7 +9133,9 @@
                 n(e);
             else {
                 if (!this.containsNotes(this.lines[this.lineNum].staff[this.staffNum].voices[this.voiceNum]))
-                    return;
+                    return /* song_helper: 這個聲部的行已經開始（V: 換聲部時）也要放上行首的 [P:]（#71）；原本只有 return */ void (e.part && this.appendElement("part", e.part.startChar, e.part.endChar, {
+                        title: e.part.title
+                    })) /* song_helper end */;
                 this.lineNum++,
                 this.startNewLine(e)
             }
@@ -9440,6 +9481,9 @@
             d.paddingbottom = -20) : g === s.length - 1 ? (d.paddingtop = 10,
             d.paddingbottom = m) : (d.paddingtop = 10,
             d.paddingbottom = -20),
+            /* song_helper: oneSvgPerLine 每行各自排版，把上一行沒結束的連結線、圓滑線、反覆框交給下一行接著畫（#63） */
+            0 < g && s[g - 1].engraver && (s[g].crossLineElems = s[g - 1].engraver.engraver),
+            /* song_helper end */
             l(v, s[g], d, n)
         }
     }
@@ -9786,6 +9830,7 @@
                 n.duplicate && 0 < s.length && (s[0].invisible = !0);
                 break;
             case "stem":
+                /* song_helper: 聲部的 stem=solo：這個聲部照單一聲部排版（符桿、連結線方向不因多聲部固定朝上／下），其他值時還原；原本只有 this.stemdir = a.direction */
                 if(a.direction === "solo"){
                     this.stemdir = undefined;
                     n._voicetotal = n.voicetotal;
@@ -9797,6 +9842,7 @@
                     n.voicetotal = n._voicetotal;
                     n.voicenumber = n._voicenumber;
                 }
+                /* song_helper end */
                 break;
             case "part":
                 var u = new r(a,0,0,"part",this.tuneNumber)

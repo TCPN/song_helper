@@ -1,5 +1,6 @@
-// abcjs 渲染後的版面修正：段落記號加框、設定每行譜的高度
+// abcjs 渲染後的版面修正：段落記號加框、反覆框去重、設定每行譜的高度
 import { line_heights } from './line-heights.js';
+import { duplicate_endings, fit_inside } from './score-marks.js';
 
 export function svg_elem_add_box(elem) {
   var bbox = elem.getBBox();
@@ -7,6 +8,56 @@ export function svg_elem_add_box(elem) {
   elem.insertAdjacentElement('afterend', new_elem);
   new_elem.outerHTML = `<rect x="${bbox.x - 1}" y="${bbox.y}" width="${bbox.width + 2}" height="${bbox.height}" stroke="#000000" stroke-width="0.5" fill="none"></rect>`;
   return new_elem;
+}
+
+// 段落記號（.abcjs-part）不超出譜的左右邊界（#69），再加框；框比字左右各寬 1
+export function fix_part_marks(selector){
+  for(const svg of line_svgs(document.querySelector(selector))){
+    // 找不到譜線時只加框、不移
+    var staff = svg.querySelector('.abcjs-top-line');
+    var staff_box = staff && staff.getBBox();
+    for(const part of svg.querySelectorAll('.abcjs-part')){
+      var box = part.getBBox();
+      var dx = staff_box ? fit_inside({ left: box.x - 1, right: box.x + box.width + 1 },
+        { left: staff_box.x, right: staff_box.x + staff_box.width }) : 0;
+      // abcjs 的 <text> 和裡面的 <tspan> 都有 x
+      if(dx)
+        for(const elem of [part, ...part.querySelectorAll('tspan')])
+          if(elem.hasAttribute('x'))
+            elem.setAttribute('x', Number(elem.getAttribute('x')) + dx);
+      svg_elem_add_box(part);
+    }
+  }
+}
+
+// abcjs 畫一個反覆框依序是：開頭的直線與字（有開頭時）、結尾的直線（有結尾時）、最後是上面的橫線。
+// 依聲部把 .abcjs-ending 分成一個個框，移除和前面聲部重複的框（#64）
+export function remove_duplicate_endings(selector){
+  for(const svg of line_svgs(document.querySelector(selector))){
+    var endings = [];
+    var pending = {};
+    for(const elem of svg.querySelectorAll('.abcjs-ending')){
+      var voice = Number((elem.getAttribute('class').match(/abcjs-v(\d+)/) || [0, 0])[1]);
+      // 同一個聲部還沒等到橫線就又出現字，表示前一個框不完整：丟掉不處理（只去重完整的框）
+      if(elem.tagName == 'text' && pending[voice] && pending[voice].label)
+        delete pending[voice];
+      var ending = pending[voice] || (pending[voice] = { voice, label: '', elems: [] });
+      ending.elems.push(elem);
+      if(elem.tagName == 'text')
+        ending.label = elem.textContent;
+      else{
+        var box = elem.getBBox();
+        if(box.height == 0 && box.width > 0){
+          ending.x1 = box.x;
+          ending.x2 = box.x + box.width;
+          endings.push(ending);
+          delete pending[voice];
+        }
+      }
+    }
+    for(const i of duplicate_endings(endings))
+      endings[i].elems.forEach((elem)=>elem.remove());
+  }
 }
 
 function find_svg_needed_height(svg){
