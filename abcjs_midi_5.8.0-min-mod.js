@@ -5330,6 +5330,16 @@
             flatbeams: e.formatting.flatbeams
         }),
         this.engraver.setStemHeight(this.renderer.spacing.stemHeight),
+        /* song_helper: 接上一行的跨行元素（見 oneSvgPerLine 的分行渲染）。連結線只接到這一行第一個音裡同音高的音；多聲部 V: 的譜 abcjs 解析時會漏標 endTie，這裡補上 */ e.crossLineElems && function(t, i) {
+            t.slursbyvoice = i.slursbyvoice, t.endingsbyvoice = i.endingsbyvoice, t.scaleByVoice = i.scaleByVoice, t.tiesbyvoice = {};
+            for (var n in i.tiesbyvoice) {
+                var r = n.match(/^s(\d+)v(\d+)$/), a = r && e.lines[0] && e.lines[0].staff && e.lines[0].staff[r[1]], s = a && a.voices[r[2]] || [], o = s.find(function(e) { return "note" === e.el_type }), c = o && o.pitches || [];
+                t.tiesbyvoice[n] = i.tiesbyvoice[n].filter(function(e) {
+                    var t = e.anchor1 && c.find(function(t) { return (void 0 !== t.verticalPos ? t.verticalPos : t.pitch) === e.anchor1.pitch });
+                    return t && (t.endTie = !0), !!t
+                })
+            }
+        }(this.engraver, e.crossLineElems),
         e.formatting.staffwidth ? this.width = 1.33 * e.formatting.staffwidth : this.width = this.renderer.isPrint ? this.staffwidthPrint : this.staffwidthScreen;
         var i, n, r = e.formatting.scale ? e.formatting.scale : this.scale;
         "resize" === this.responsive && (r = void 0),
@@ -9440,6 +9450,7 @@
             d.paddingbottom = -20) : g === s.length - 1 ? (d.paddingtop = 10,
             d.paddingbottom = m) : (d.paddingtop = 10,
             d.paddingbottom = -20),
+            /* song_helper: oneSvgPerLine 每行各自排版，把上一行沒結束的連結線、圓滑線、反覆框交給下一行接著畫 */ 0 < g && s[g - 1].engraver && (s[g].crossLineElems = s[g - 1].engraver.engraver),
             l(v, s[g], d, n)
         }
     }
