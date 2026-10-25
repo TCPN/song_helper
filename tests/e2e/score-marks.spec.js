@@ -3,7 +3,7 @@ const { test, expect } = require('../app');
 // 渲染後修正的記號：跨行的連結線（#63）、和弦聲部多畫的反覆框（#64）、靠行尾的段落記號（#69）
 const TIE = {
   id: 1, name: '跨行連結線', tone: 'C', timesig: '4/4', melody: '',
-  abc: 'X:1\nT:Tie\nM:4/4\nL:1/4\nK:C\nC D E F-|\nF G (A B|\nc) d e f|]\n',
+  abc: 'X:1\nT:Tie\nM:4/4\nL:1/4\nK:C\nC D E F-|\nF G (A B|\nc) d e [Ac]-|\n[Ac] z z z|]\n',
 };
 // 和弦是另一個聲部（%%score 合在同一個譜表），兩個聲部都有 [1、[2
 const ENDINGS = {
@@ -33,13 +33,19 @@ test.describe('譜面記號', () => {
 
   test('跨行的連結線、圓滑線在下一行開頭也畫出接續的一段（#63）', async ({ app }) => {
     await app.goto('#song_id=1');
-    // 第 2 行：開頭接續的連結線、行尾往下一行的圓滑線；第 3 行：開頭接續的圓滑線
+    // 第 2 行：開頭接續的連結線、行尾往下一行的圓滑線
     const line2 = await boxes(app, 1, '.abcjs-slur');
     const line3 = await boxes(app, 2, '.abcjs-slur');
     const first_note = (await boxes(app, 1, '.abcjs-note'))[0];
     expect(line2).toHaveLength(2);
     expect(line2[0].x).toBeLessThan(first_note.x);
-    expect(line3).toHaveLength(1);
+    // 第 3 行：開頭接續的圓滑線、行尾和弦的兩條連結線；第 4 行：開頭接續的兩條連結線
+    expect(line3).toHaveLength(3);
+    const line4 = await boxes(app, 3, '.abcjs-slur');
+    const chord = (await boxes(app, 3, '.abcjs-note'))[0];
+    expect(line4).toHaveLength(2);
+    for (const tie of line4)
+      expect(tie.x).toBeLessThan(chord.x);
   });
 
   test('和弦聲部的反覆框不重複畫（#64）', async ({ app }) => {
