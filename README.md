@@ -66,7 +66,7 @@
 | `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
-| `abcjs_midi_5.8.0-min-mod.js` | 實際使用的 abcjs（修改版；譜面寬度大於 740 時放寬音符間距上限、oneSvgPerLine 時跨行的連結線／圓滑線／反覆框接到下一行、行首的 `[P:]` 放在該行開頭，搜尋 `song_helper:`）。其餘 `abcjs_midi_*.js` 為舊版，目前沒有被引用 |
+| `abcjs_midi_5.8.0-min-mod.js` | 實際使用的 abcjs（修改版；譜面寬度大於 740 時放寬音符間距上限、oneSvgPerLine 時跨行的連結線／圓滑線／反覆框接到下一行、行首的 `[P:]` 放在該行開頭，以及 MIDI 伴奏的幾處調整。每處修改都用 `song_helper: 說明` 和 `song_helper end` 兩個註解框起來，檔案開頭有清單與和原版比對的方法）。其餘 `abcjs_midi_*.js` 為舊版，目前沒有被引用 |
 
 資料來源是 Google 試算表：`js/data.js` 直接 `fetch` 試算表的 gviz 查詢（`js/song-data.js` 的 `SHEET_QUERY_URL`），
 不需要載入 Google 的 JavaScript。試算表必須維持「知道連結的人都能檢視」。
