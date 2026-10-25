@@ -50,6 +50,8 @@ test.describe('譜面記號', () => {
     const [frame] = await boxes(app, 0, '.abcjs-part + rect');
     expect(part.text).toBe('Chorus Refrain');
     expect(frame.x + frame.width).toBeLessThanOrEqual(staff.x + staff.width + 0.5);
+    // 文字和框一起移，字還在框裡
     expect(frame.x).toBeLessThanOrEqual(part.x);
+    expect(part.x + part.width).toBeLessThanOrEqual(frame.x + frame.width);
   });
 });

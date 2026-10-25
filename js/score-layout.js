@@ -13,14 +13,13 @@ export function svg_elem_add_box(elem) {
 // 段落記號（.abcjs-part）不超出譜的左右邊界（#69），再加框；框比字左右各寬 1
 export function fix_part_marks(selector){
   for(const svg of line_svgs(document.querySelector(selector))){
+    // 找不到譜線時只加框、不移
     var staff = svg.querySelector('.abcjs-top-line');
-    if(!staff)
-      continue;
-    var staff_box = staff.getBBox();
+    var staff_box = staff && staff.getBBox();
     for(const part of svg.querySelectorAll('.abcjs-part')){
       var box = part.getBBox();
-      var dx = fit_inside({ left: box.x - 1, right: box.x + box.width + 1 },
-        { left: staff_box.x, right: staff_box.x + staff_box.width });
+      var dx = staff_box ? fit_inside({ left: box.x - 1, right: box.x + box.width + 1 },
+        { left: staff_box.x, right: staff_box.x + staff_box.width }) : 0;
       // abcjs 的 <text> 和裡面的 <tspan> 都有 x
       if(dx)
         for(const elem of [part, ...part.querySelectorAll('tspan')])
