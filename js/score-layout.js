@@ -38,6 +38,9 @@ export function remove_duplicate_endings(selector){
     var pending = {};
     for(const elem of svg.querySelectorAll('.abcjs-ending')){
       var voice = Number((elem.getAttribute('class').match(/abcjs-v(\d+)/) || [0, 0])[1]);
+      // 同一個聲部還沒等到橫線就又出現字，表示前一個框不完整：丟掉不處理（只去重完整的框）
+      if(elem.tagName == 'text' && pending[voice] && pending[voice].label)
+        delete pending[voice];
       var ending = pending[voice] || (pending[voice] = { voice, label: '', elems: [] });
       ending.elems.push(elem);
       if(elem.tagName == 'text')

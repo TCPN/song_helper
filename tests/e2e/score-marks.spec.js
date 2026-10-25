@@ -11,6 +11,11 @@ const ENDINGS = {
   abc: 'X:2\nT:Endings\nM:4/4\nL:1/4\n%%score (1 2)\nK:C\nV:1\n|: C D E F-|F G A B-|\nV:2\n|: "C"x4|"G"x4|\n'
     + 'V:1\n[1 B B c d :|[2 d c B A|]\nV:2\n[1 "A"x4 :|[2 "D"x4|]\n',
 };
+// 只有一個聲部的反覆框：[1 以 :| 結束、[2 以 |] 結束，都不能被拿掉
+const SINGLE_ENDINGS = {
+  id: 4, name: '單聲部反覆框', tone: 'C', timesig: '4/4', melody: '',
+  abc: 'X:4\nT:Single\nM:4/4\nL:1/4\nK:C\n|: "C"C D E F|\n[1 "G"G A B c :|[2 "C"c B A G|]\n',
+};
 const PART = {
   id: 3, name: '段落記號', tone: 'C', timesig: '4/4', melody: '',
   abc: 'X:3\nT:Part\nM:4/4\nL:1/8\nK:C\nCDEF GABc|cBAG FED[P:Chorus Refrain]C|\nC8|]\n',
@@ -24,7 +29,7 @@ const boxes = (app, line, selector) => app.page.locator('#score_paper svg').nth(
   }), selector);
 
 test.describe('譜面記號', () => {
-  test.use({ songs: [[TIE, ENDINGS, PART], { option: true }] });
+  test.use({ songs: [[TIE, ENDINGS, PART, SINGLE_ENDINGS], { option: true }] });
 
   test('跨行的連結線、圓滑線在下一行開頭也畫出接續的一段（#63）', async ({ app }) => {
     await app.goto('#song_id=1');
@@ -41,6 +46,14 @@ test.describe('譜面記號', () => {
     await app.goto('#song_id=2');
     const texts = (await boxes(app, 1, '.abcjs-ending')).filter((b) => b.text).map((b) => b.text);
     expect(texts).toEqual(['1', '2']);
+  });
+
+  test('只有一個聲部的反覆框照常畫（[1 到 :|、[2 到 |]）', async ({ app }) => {
+    await app.goto('#song_id=4');
+    const endings = await boxes(app, 1, '.abcjs-ending');
+    expect(endings.filter((b) => b.text).map((b) => b.text)).toEqual(['1', '2']);
+    // 兩個框各有開頭、結尾的直線與上面的橫線
+    expect(endings.filter((b) => !b.text)).toHaveLength(6);
   });
 
   test('靠近行尾的段落記號不超出譜的右邊界（#69）', async ({ app }) => {
