@@ -1865,8 +1865,9 @@
                         var u = r;
                         if ("%" === i.charAt(r))
                             break;
+                        /* song_helper: 行首的 [P:] 在這一行還沒開始時讀到，標記一下，讓它放在這一行開頭而不是上一行結尾 */ p.lineNotStarted = s;
                         var d = m.letter_to_inline_header(i, r);
-                        if (0 < d[0])
+                        if (p.lineNotStarted = !1, 0 < d[0])
                             r += d[0],
                             "V" === d[1] && (s = !0);
                         else {
@@ -7170,7 +7171,7 @@
                     p.foundKey && s.hasBeginMusic() && s.appendStartingElement("key", h, u, a.fixKey(i.clef, i.key)),
                     [l - o + 1 + c];
                 case "[P:":
-                    return s.lines.length <= s.lineNum ? i.partForNextLine = {
+                    return s.lines.length <= s.lineNum || i.lineNotStarted ? i.partForNextLine = {
                         title: n.substring(o + 3, l),
                         startChar: h,
                         endChar: u
@@ -9104,7 +9105,9 @@
                 n(e);
             else {
                 if (!this.containsNotes(this.lines[this.lineNum].staff[this.staffNum].voices[this.voiceNum]))
-                    return;
+                    return void (/* song_helper: 這個聲部的行已經開始（V: 換聲部時）也要放上行首的 [P:] */ e.part && this.appendElement("part", e.part.startChar, e.part.endChar, {
+                        title: e.part.title
+                    }));
                 this.lineNum++,
                 this.startNewLine(e)
             }
