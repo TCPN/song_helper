@@ -1,4 +1,5 @@
-// 分頁顯示：譜紙是「分頁」時一次顯示一頁，點畫面下半部換下一頁、上半部回上一頁（鍵盤用 ←／→、PageUp／PageDown）；「不分頁」時整首上下捲動。
+// 分頁顯示：譜紙是「分頁」時一次顯示一頁，點譜紙右半部換下一頁、左半部回上一頁，也可以點頁碼左右的箭頭
+// （鍵盤用 ←／→、PageUp／PageDown）；「不分頁」時整首上下捲動。
 // 每行譜（.abcjs-container）都還在 #score_paper 裡，不在目前這頁的加上 off-page class 藏起來（列印時全部印出），
 // 每頁最後一行加上 page-end class，列印時從那裡換頁；第二頁以後每頁第一行加上 page-start
 // （手動分頁的再加 manual-break），不分頁時在那裡畫出兩張紙之間的間隔。
@@ -103,7 +104,7 @@ export function paginate_score() {
   show_break_bar();
 }
 
-// 只顯示第 n 頁（不分頁或設定分頁時全部顯示），更新頁碼
+// 只顯示第 n 頁（不分頁或設定分頁時全部顯示），更新頁碼；第一頁、最後一頁時那一邊的箭頭變淡
 function show_page(n) {
   pages.current = n;
   var lines = line_containers();
@@ -113,10 +114,11 @@ function show_page(n) {
       for(const line of page)
         lines[line].classList.toggle('off-page', i != n);
     });
-  var indicator = document.querySelector('#page_indicator');
   var show_indicator = one_page && pages.list.length > 1;
-  indicator.classList.toggle('hide', !show_indicator);
-  indicator.textContent = show_indicator ? `${n + 1} / ${pages.list.length}` : '';
+  document.querySelector('#page_nav').classList.toggle('hide', !show_indicator);
+  document.querySelector('#page_indicator').textContent = show_indicator ? `${n + 1} / ${pages.list.length}` : '';
+  document.querySelector('#page_prev').setAttribute('aria-disabled', n <= 0);
+  document.querySelector('#page_next').setAttribute('aria-disabled', n >= pages.list.length - 1);
 }
 
 // 換到前後一頁，捲回這頁的最上面；已經是第一頁／最後一頁時不動
@@ -228,6 +230,13 @@ function page_keydown(event) {
   turn_page(step);
 }
 
+// 譜紙在畫面上看得到的部分的左右中線（譜紙比畫面寬、左右捲動時以看得到的部分為準）
+function visible_page_center() {
+  var view = document.querySelector('#score_popup_window').getBoundingClientRect();
+  var page = document.querySelector('#score_page').getBoundingClientRect();
+  return (Math.max(view.left, page.left) + Math.min(view.right, page.right)) / 2;
+}
+
 // 點譜紙換頁（設定分頁時是加入或取消分頁）；有選單開著時這一下只是收起選單（dom.js 的 setup_dropdown），不換頁
 export function setup_score_pages() {
   // keydown 的 Esc 要比選單（setup_dropdown）先判斷有沒有選單開著，所以用 capture
@@ -241,9 +250,17 @@ export function setup_score_pages() {
     }
     if(!is_paged() || pages.list.length < 2)
       return;
-    var view = document.querySelector('#score_popup_window').getBoundingClientRect();
-    turn_page(event.clientY >= view.top + view.height / 2 ? 1 : -1);
+    turn_page(event.clientX >= visible_page_center() ? 1 : -1);
   });
+  // 頁碼左右的箭頭；點了不會穿過去關閉譜面（#score_popup_bg 只在點到它自己時關閉）
+  for(const [selector, step] of [['#page_prev', -1], ['#page_next', 1]]){
+    document.querySelector(selector).addEventListener('click', ()=>{
+      if(document.querySelector('#score_popup_top_bar .menu:not(.hide)'))
+        return;
+      turn_page(step);
+    });
+    click_on_enter(selector);
+  }
   for(const [selector, action] of [['#page_break_done', exit_break_mode], ['#page_break_default', restore_default]]){
     document.querySelector(selector).addEventListener('click', action);
     click_on_enter(selector);

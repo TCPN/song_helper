@@ -387,7 +387,7 @@ test.describe('排版設定', () => {
   test('改譜面寬度或字級（重新渲染）時，畫面最上面的那一行留在原本的位置', async ({ app }) => {
     await app.goto('#song_id=3');
     const win = app.page.locator('#score_popup_window');
-    await win.evaluate((w) => { w.scrollTop = 800; });
+    await win.evaluate((w) => { w.scrollTop = 1200; });
     const top_line = () => app.page.evaluate(() => {
       const top = document.querySelector('#score_popup_window').getBoundingClientRect().top;
       const lines = Array.from(document.querySelectorAll('#score_paper .abcjs-container'));

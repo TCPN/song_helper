@@ -66,39 +66,10 @@ test.describe('開啟與關閉譜面', () => {
   });
 });
 
-test.describe('上一首／下一首', () => {
-  test('下一首、上一首依編號切換，並更新網址', async ({ app }) => {
-    await app.goto('#song_id=1');
-    await app.page.locator('.change-song.next').click();
-    await expect(app.currentSongId()).toHaveText('2');
-    expect(await app.hashParams()).toEqual({ song_id: '2' });
-
-    await app.page.locator('.change-song.prev').click();
-    await expect(app.currentSongId()).toHaveText('1');
-    expect(await app.hashParams()).toEqual({ song_id: '1' });
-  });
-
-  test('第一首按上一首、最後一首按下一首：維持原本的歌', async ({ app }) => {
-    await app.goto('#song_id=1');
-    await app.page.locator('.change-song.prev').click();
-    await expect(app.currentSongId()).toHaveText('1');
-    await expect(app.popup()).toHaveClass(/open/);
-
-    await app.goto('#song_id=4');
-    await app.page.locator('.change-song.next').click();
-    await expect(app.currentSongId()).toHaveText('4');
-    await expect(app.popup()).toHaveClass(/open/);
-  });
-
-  // 現況：下一首剛好是「沒有譜的歌」時，不會跳過，而是提示後關閉譜面。
-  // 若之後想改成自動跳到下一首有譜的歌，修改這個測試即可。
-  test('下一首是沒有譜的歌：跳出提示並關閉譜面（現況）', async ({ app }) => {
-    await app.goto('#song_id=2');
-    await app.page.locator('.change-song.next').click();
-    await expect.poll(() => app.dialogs).toEqual(['No score for song 3']);
-    await expect(app.popup()).not.toHaveClass(/open/);
-    expect(await app.hashParams()).toEqual({});
-  });
+// #60：分頁改成點左右半部換頁後，拿掉譜面左右的上一首／下一首按鈕，換歌用曲號鍵盤（keypad.spec.js）
+test('譜面左右沒有上一首／下一首按鈕', async ({ app }) => {
+  await app.goto('#song_id=1');
+  await expect(app.page.locator('.change-song')).toHaveCount(0);
 });
 
 test.describe('工具列（夠寬時）', () => {
