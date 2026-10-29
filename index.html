@@ -116,29 +116,31 @@
 			<span class="separator wide-only">|</span>
 			<label class="print-button wide-only toolbar-item">列印</label>
 			<label class="play-button wide-only toolbar-item">播放</label>
-			<!-- 歌譜／歌詞檢視切換（js/lyrics-view.js），文字是要切換過去的那一個 -->
-			<label class="view-mode-button wide-only toolbar-item" role="button" tabindex="0">檢視歌詞</label>
 			<div id="player-set" class="hide">
 				<div id="player-control"></div>
 			</div>
-			<!-- 「檢視」：譜面的顯示方式與譜紙（js/score-view.js）。工具列不夠寬時文字換成 icon（文件和指向上下邊的箭頭） -->
+			<!-- 「檢視」：最前面是歌譜／歌詞檢視（js/lyrics-view.js），再來是譜面的顯示方式與譜紙（js/score-view.js，
+			     歌詞檢視時不顯示）。工具列不夠寬時文字換成 icon（文件和指向上下邊的箭頭） -->
 			<span id="view_group" class="toolbar-item">
 				<div id="view_button" title="檢視" aria-label="檢視" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="view-menu"><span class="wide-only" aria-hidden="true">檢視</span><svg class="icon compact-only" viewBox="0 0 24 24" aria-hidden="true">
 						<rect x="4.5" y="1.5" width="15" height="21" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
 						<path d="M12 4 15 8H9ZM12 20 15 16H9Z"/>
 					</svg></div>
 				<div id="view-menu" class="hide menu" role="menu">
-					<span class="menu-item" data-fit="page" role="menuitemradio" tabindex="0">整頁可見</span>
-					<span class="menu-item" data-fit="height" role="menuitemradio" tabindex="0">符合高度</span>
-					<span class="menu-item" data-fit="width" role="menuitemradio" tabindex="0">符合寬度</span>
-					<span class="menu-separator" role="separator"></span>
-					<span class="menu-item" data-paper="a4" role="menuitemradio" tabindex="0">分頁</span>
-					<span class="menu-item" data-paper="content" role="menuitemradio" tabindex="0">不分頁</span>
+					<span class="menu-item" data-view-mode="score" role="menuitemradio" tabindex="0">檢視歌譜</span>
+					<span class="menu-item" data-view-mode="lyrics" role="menuitemradio" tabindex="0">檢視歌詞</span>
+					<span class="menu-separator score-only" role="separator"></span>
+					<span class="menu-item score-only" data-fit="page" role="menuitemradio" tabindex="0">整頁可見</span>
+					<span class="menu-item score-only" data-fit="height" role="menuitemradio" tabindex="0">符合高度</span>
+					<span class="menu-item score-only" data-fit="width" role="menuitemradio" tabindex="0">符合寬度</span>
+					<span class="menu-separator score-only" role="separator"></span>
+					<span class="menu-item score-only" data-paper="a4" role="menuitemradio" tabindex="0">分頁</span>
+					<span class="menu-item score-only" data-paper="content" role="menuitemradio" tabindex="0">不分頁</span>
 				</div>
 			</span>
 			<!-- 「排版」：所有歌共用的排版設定，一個設定一列（js/layout-panel.js）。工具列不夠寬時按鈕收進「⋮」選單，
 			     面板留在這裡（群組寬度變 0，緊鄰「⋮」），從「⋮」打開；data-compact-button 是那時焦點要還給的按鈕 -->
-			<span id="layout_group" class="toolbar-item">
+			<span id="layout_group" class="toolbar-item score-only">
 				<div id="layout_button" class="wide-only" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="layout-panel" data-compact-button="#more_button">排版</div>
 				<div id="layout-panel" class="hide menu" role="dialog" aria-label="排版">
 					<div class="layout-row">
@@ -183,7 +185,7 @@
 					<label class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</label>
 				</div>
 			</span>
-			<!-- 工具列不夠寬時，列印、播放、檢視歌詞、編輯、排版收在這個選單裡 -->
+			<!-- 工具列不夠寬時，列印、播放、編輯、排版收在這個選單裡 -->
 			<span id="more_group" class="compact-only">
 				<div id="more_button" title="更多" aria-label="更多" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
 					<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -193,11 +195,10 @@
 				<div id="more-menu" class="hide menu" role="menu">
 					<span class="print-button menu-item" role="menuitem" tabindex="0">列印</span>
 					<span class="play-button menu-item" role="menuitem" tabindex="0">播放</span>
-					<span class="view-mode-button menu-item" role="menuitem" tabindex="0">檢視歌詞</span>
 					<span class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</span>
 					<span class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</span>
-					<span class="menu-separator" role="separator"></span>
-					<span class="menu-item" data-open-menu="#layout_button" role="menuitem" tabindex="0" aria-haspopup="dialog">排版…</span>
+					<span class="menu-separator score-only" role="separator"></span>
+					<span class="menu-item score-only" data-open-menu="#layout_button" role="menuitem" tabindex="0" aria-haspopup="dialog">排版…</span>
 				</div>
 			</span>
 			<span class="separator wide-only">|</span>

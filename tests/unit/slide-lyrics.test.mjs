@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parse_slide_cell, w_line_text, w_slots, music_line_marks, sections_from_abc, song_slide_lyrics, lyrics_messages, lines_text } from '../../js/slide-lyrics.js';
+import { parse_slide_cell, w_line_text, w_slots, music_line_marks, sections_from_abc, song_slide_lyrics, lyrics_messages, lines_text, has_slide_lyrics } from '../../js/slide-lyrics.js';
 
 const section = (name, paragraphs, source = null) => ({ name, source, paragraphs });
 
@@ -193,4 +193,15 @@ test('lines_text：只放勾選的行；同一段落換行，換段落或換段�
   assert.equal(lines_text(sections, () => false), '');
   // 傳回字串時用它代替整行（只選到一部分）
   assert.equal(lines_text(sections, (s, p, l) => (s == 0 && p == 0 && l == 2 ? '三' : s == 0 && p == 1 ? '四' : false)), '三\n\n四');
+});
+
+test('has_slide_lyrics：有譜，而且「投影片」欄有字或譜上有 w:／W: 才算有歌詞', () => {
+  const abc = 'X:1\nK:C\nCDEF|\n';
+  assert.equal(has_slide_lyrics({ abc }), false);
+  assert.equal(has_slide_lyrics({ abc: abc + 'w:一 二 三 四\n' }), true);
+  assert.equal(has_slide_lyrics({ abc: abc + 'W:譜後歌詞\n' }), true);
+  assert.equal(has_slide_lyrics({ abc, slides: '一句' }), true);
+  assert.equal(has_slide_lyrics({ abc, slides: '  \n' }), false);
+  assert.equal(has_slide_lyrics({ abc: '', slides: '一句' }), false);
+  assert.equal(has_slide_lyrics(null), false);
 });

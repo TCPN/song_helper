@@ -1,5 +1,5 @@
 // 歌詞檢視：一首歌的另一種檢視方式（網址 mode=lyrics）。列出各段歌詞（前面標段名），
-// 用一般的文字選取選歌詞，複製時整理成純文字（不含段名，換段落或換段時空一行）；工具列的「檢視歌詞」／「檢視歌譜」切換
+// 用一般的文字選取選歌詞，複製時整理成純文字（不含段名，換段落或換段時空一行）；「檢視」選單的「檢視歌譜」／「檢視歌詞」切換
 import { state } from './state.js';
 import { song_slide_lyrics, lyrics_messages, lines_text, UNNAMED } from './slide-lyrics.js';
 import { update_hash } from './route.js';
@@ -22,8 +22,10 @@ export function set_view_mode(mode) {
   var lyrics = is_lyrics_mode();
   document.querySelector(CONTAINER).classList.toggle('lyrics-mode', lyrics);
   document.querySelector('#lyrics_view').classList.toggle('hide', !lyrics);
-  for (const button of document.querySelectorAll('.view-mode-button'))
-    button.textContent = lyrics ? '檢視歌譜' : '檢視歌詞';
+  for (const item of document.querySelectorAll('#view-menu [data-view-mode]')) {
+    item.classList.toggle('selected', item.dataset.viewMode == state.viewMode);
+    item.setAttribute('aria-checked', item.dataset.viewMode == state.viewMode);
+  }
   refresh_lyrics();
 }
 
@@ -186,12 +188,12 @@ async function copy_selected() {
   }
 }
 
-// 註冊工具列的切換按鈕與歌詞檢視的事件
+// 註冊「檢視」選單的切換項目與歌詞檢視的事件
 export function setup_lyrics_view() {
-  for (const button of document.querySelectorAll('.view-mode-button')) {
+  for (const item of document.querySelectorAll('#view-menu [data-view-mode]')) {
     // 網址改了之後由 route.js 的 exec_hash 切換
-    button.addEventListener('click', ()=>{ update_hash('mode', is_lyrics_mode() ? undefined : 'lyrics'); });
-    click_on_enter(button);
+    item.addEventListener('click', ()=>{ update_hash('mode', item.dataset.viewMode == 'lyrics' ? 'lyrics' : undefined); });
+    click_on_enter(item);
   }
   var sections = document.querySelector('#lyrics_sections');
   // 按段名時不要先把選取的文字取消掉（才判斷得出是不是已經選了整段）

@@ -30,7 +30,13 @@ test.describe('歌詞檢視', () => {
   const names = (app) => app.page.locator('#lyrics_sections .lyrics-name');
   const lines = (app) => app.page.locator('#lyrics_sections .lyrics-line');
   const messages = (app) => app.page.locator('#lyrics_messages li');
-  const toggle = (app) => app.page.locator('#score_popup_top_bar > .view-mode-button');
+  const view_menu = (app) => app.page.locator('#view-menu');
+  const mode_item = (app, mode) => app.page.locator(`#view-menu [data-view-mode="${mode}"]`);
+  async function choose_mode(app, mode) {
+    if (await view_menu(app).evaluate((m) => m.classList.contains('hide')))
+      await app.page.locator('#view_button').click();
+    await mode_item(app, mode).click();
+  }
   // 用一般的文字選取：從第 from 行的第 from_offset 個字到第 to 行的第 to_offset 個字（省略時到行尾）
   async function select_text(app, from, from_offset, to, to_offset) {
     await app.page.evaluate(([from, from_offset, to, to_offset]) => {
@@ -54,21 +60,39 @@ test.describe('歌詞檢視', () => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   });
 
-  test('工具列「檢視歌詞」切換到歌詞檢視，網址加上 mode=lyrics，按鈕變成「檢視歌譜」', async ({ app }) => {
+  test('「檢視」選單最前面是「檢視歌譜」／「檢視歌詞」，切到歌詞檢視時網址加上 mode=lyrics', async ({ app }) => {
     await app.goto('#song_id=10');
-    await expect(toggle(app)).toHaveText('檢視歌詞');
+    await expect(app.page.locator('#score_popup_top_bar .view-mode-button')).toHaveCount(0);
+    await app.page.locator('#view_button').click();
+    await expect(view_menu(app).locator('.menu-item').first()).toHaveText('檢視歌譜');
+    await expect(view_menu(app).locator('.menu-item').nth(1)).toHaveText('檢視歌詞');
+    await expect(mode_item(app, 'score')).toHaveAttribute('aria-checked', 'true');
     await expect(view(app)).toBeHidden();
-    await toggle(app).click();
+    await choose_mode(app, 'lyrics');
     await expect(view(app)).toBeVisible();
     await expect(app.page.locator('#score_page')).toBeHidden();
-    await expect(toggle(app)).toHaveText('檢視歌譜');
+    await expect(mode_item(app, 'lyrics')).toHaveAttribute('aria-checked', 'true');
+    await expect(mode_item(app, 'score')).toHaveAttribute('aria-checked', 'false');
     expect(await app.hashParams()).toEqual({ song_id: '10', mode: 'lyrics' });
 
-    await toggle(app).click();
+    await choose_mode(app, 'score');
     await expect(view(app)).toBeHidden();
     await expect(app.page.locator('#score_page')).toBeVisible();
-    await expect(toggle(app)).toHaveText('檢視歌詞');
+    await expect(mode_item(app, 'score')).toHaveAttribute('aria-checked', 'true');
     expect(await app.hashParams()).toEqual({ song_id: '10' });
+  });
+
+  test('歌詞檢視時「檢視」選單只有檢視歌譜和檢視歌詞，也沒有「排版」', async ({ app }) => {
+    await app.goto('#song_id=10&mode=lyrics');
+    await app.page.locator('#view_button').click();
+    await expect(view_menu(app).locator('.menu-item:visible')).toHaveText(['檢視歌譜', '檢視歌詞']);
+    await expect(view_menu(app).locator('.menu-separator:visible')).toHaveCount(0);
+    await expect(app.page.locator('#layout_button')).toBeHidden();
+    await choose_mode(app, 'score');
+    await expect(app.page.locator('#layout_button')).toBeVisible();
+    if (await view_menu(app).evaluate((m) => m.classList.contains('hide')))
+      await app.page.locator('#view_button').click();
+    await expect(view_menu(app).locator('.menu-item:visible')).toHaveText(['檢視歌譜', '檢視歌詞', '整頁可見', '符合高度', '符合寬度', '分頁', '不分頁']);
   });
 
   test('網址 mode=lyrics 直接打開歌詞檢視；其他值是歌譜', async ({ app }) => {
@@ -230,19 +254,26 @@ test.describe('歌詞檢視', () => {
       return parseFloat(st.marginBottom) / parseFloat(st.fontSize);
     }));
     expect(margins).toEqual([0.5, 0]);
+    const em = (locator, side) => locator.evaluate((e, side) => parseFloat(getComputedStyle(e)[side]) / parseFloat(getComputedStyle(e).fontSize), side);
+    expect(await em(app.page.locator('#lyrics_title'), 'marginBottom')).toBeCloseTo(0.8);
+    expect(await em(app.page.locator('#lyrics_messages'), 'marginTop')).toBeCloseTo(2);
     expect(await lines(app).first().evaluate((l) => parseFloat(getComputedStyle(l).wordSpacing) / parseFloat(getComputedStyle(l).fontSize))).toBeCloseTo(0.5);
     // 換歌時歌名跟著換
     await app.goto('#song_id=12&mode=lyrics');
     await expect(app.page.locator('#lyrics_title')).toHaveText('有投影片欄的歌');
   });
 
-  test('列印時只印歌名和歌詞：不印全選／複製等按鈕和訊息', async ({ app }) => {
+  test('列印時只印歌名和歌詞：不印全選／複製等按鈕和訊息；寬度填滿紙張、靠左', async ({ app }) => {
     await app.goto('#song_id=11&mode=lyrics');
     await app.page.emulateMedia({ media: 'print' });
     await expect(app.page.locator('#lyrics_title')).toBeVisible();
     await expect(lines(app).first()).toBeVisible();
     await expect(app.page.locator('.lyrics-actions')).toBeHidden();
     await expect(app.page.locator('#lyrics_messages')).toBeHidden();
+    const box = await view(app).boundingBox();
+    const page_width = await app.page.evaluate(() => document.documentElement.clientWidth);
+    expect(box.x).toBeCloseTo(0, 0);
+    expect(box.width).toBeCloseTo(page_width, 0);
     await app.page.emulateMedia({ media: 'screen' });
     await expect(app.page.locator('.lyrics-actions')).toBeVisible();
   });
@@ -278,18 +309,59 @@ test.describe('歌詞檢視', () => {
     await expect(app.page.locator('#page_nav')).toBeHidden();
   });
 
-  test('工具列不夠寬時從「⋮」選單切換，歌詞檢視不超出畫面', async ({ app }) => {
+  test('工具列不夠寬時也從「檢視」icon 的選單切換，歌詞檢視不超出畫面；「⋮」選單沒有「排版…」', async ({ app }) => {
     await app.page.setViewportSize({ width: 375, height: 700 });
     await app.goto('#song_id=11');
-    await app.page.locator('#more_button').click();
-    await expect(app.page.locator('#more-menu .view-mode-button')).toHaveText('檢視歌詞');
-    await app.page.locator('#more-menu .view-mode-button').click();
+    await choose_mode(app, 'lyrics');
     await expect(view(app)).toBeVisible();
     await expect(names(app)).toHaveText(['Verse1', 'Verse2']);
     const box = await view(app).boundingBox();
     expect(box.x).toBeGreaterThanOrEqual(16 - 1);
     expect(box.x + box.width).toBeLessThanOrEqual(375 - 16 + 1);
     await app.page.locator('#more_button').click();
-    await expect(app.page.locator('#more-menu .view-mode-button')).toHaveText('檢視歌譜');
+    await expect(app.page.locator('#more-menu .menu-item:visible')).toHaveText(['列印', '播放', '和弦編輯器', '進階編輯器']);
+  });
+
+  test('歌曲列表：譜的按鈕右邊有歌詞按鈕（T），直接開歌詞檢視；沒有歌詞或沒有譜的歌沒有', async ({ app }) => {
+    await app.goto();
+    const link = (id) => app.page.locator(`#song_list tbody tr[data-target="${id}"] td.song_lyrics a`);
+    await expect(link(10)).toHaveAttribute('href', '#song_id=10&mode=lyrics');
+    await expect(link(12)).toBeVisible();
+    // 1：譜上有 w:；2：有譜沒有歌詞；3：沒有譜
+    await expect(link(1)).toHaveAttribute('href', '#song_id=1&mode=lyrics');
+    await expect(link(2)).toBeHidden();
+    await expect(link(3)).toBeHidden();
+    // 和譜的按鈕一樣大小，緊鄰在右邊；T 是有襯線字型
+    const score = await app.scoreLink(10).boundingBox();
+    const lyrics = await link(10).boundingBox();
+    expect([lyrics.width, lyrics.height]).toEqual([score.width, score.height]);
+    expect(lyrics.x).toBeGreaterThan(score.x + score.width);
+    expect(lyrics.y).toBeCloseTo(score.y, 0);
+    expect(await link(10).evaluate((a) => getComputedStyle(a, '::before').content)).toBe('"T"');
+    expect(await link(10).evaluate((a) => getComputedStyle(a).fontFamily)).toMatch(/serif/);
+    // 搜尋 T 不會因為歌詞按鈕而找到每一首
+    await app.page.locator('#song_search').fill('T');
+    await expect(app.page.locator('#song_list tbody tr:visible')).toHaveCount(0);
+    await app.page.locator('#song_search').fill('');
+    await link(11).click();
+    await expect(view(app)).toBeVisible();
+    await expect(app.page.locator('#lyrics_title')).toHaveText('沒分段的歌');
+    await expect(app.infoPopup()).not.toHaveClass(/open/);
+  });
+
+  test('資訊彈窗：「歌譜: 開啟」下面是「歌詞: 開啟」，開歌詞檢視；沒有歌詞時是「無」', async ({ app }) => {
+    const info_rows = (app) => app.page.locator('#info-popup-window table tr');
+    await app.goto();
+    await app.page.locator('#song_list tbody tr[data-target="12"] td.song_name').click();
+    await expect(info_rows(app).nth(5).locator('td')).toHaveText(['歌譜:', '開啟']);
+    await expect(info_rows(app).nth(6).locator('td')).toHaveText(['歌詞:', '開啟']);
+    await info_rows(app).nth(6).locator('a').click();
+    await expect(app.infoPopup()).not.toHaveClass(/open/);
+    await expect(view(app)).toBeVisible();
+    expect(await app.hashParams()).toEqual({ song_id: '12', mode: 'lyrics' });
+
+    await app.goto();
+    await app.page.locator('#song_list tbody tr[data-target="2"] td.song_name').click();
+    await expect(info_rows(app).nth(6).locator('td')).toHaveText(['歌詞:', '無']);
   });
 });

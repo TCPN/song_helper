@@ -124,6 +124,27 @@ table#song_list .song_score a.note_score {
 	background-image: url(./score_note.png);
 }
 
+/* 譜右邊的歌詞按鈕（開歌詞檢視）：和譜的按鈕一樣大小、白底、陰影，裡面是有襯線的大寫 T */
+table#song_list .song_lyrics {
+	padding-left: 0;
+}
+
+table#song_list .song_lyrics a {
+	background-color: #fff;
+	box-shadow: 1px 1px #ccc;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 14px;
+	line-height: 16px;
+	text-align: center;
+	text-decoration: none;
+	user-select: none;
+}
+
+/* T 用 CSS 畫，不放進文字（搜尋比對的是整列的文字） */
+table#song_list .song_lyrics a::before {
+	content: "T";
+}
+
 #song_list thead th {
 	position: sticky;
 	top: 0;
@@ -737,10 +758,12 @@ table#song_list a#wish_link {
 		display: none !important;
 	}
 
+	/* 填滿整張紙寬，歌名和歌詞從紙的左邊開始（螢幕上的寬度和置中寫在後面，所以要 !important） */
 	#lyrics_view {
-		width: 100%;
-		margin: 0;
-		padding: 0;
+		width: 100% !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		border-radius: 0;
 	}
 
 	#score_popup_bg {
@@ -959,7 +982,8 @@ button.popup-window-close:hover {
 	pointer-events: none;
 }
 
-.lyrics-mode #page_nav, .lyrics-mode #page_break_bar {
+/* 「檢視」選單的顯示方式與譜紙、「排版」只在歌譜檢視時有 */
+.lyrics-mode #page_nav, .lyrics-mode #page_break_bar, .lyrics-mode .score-only {
 	display: none;
 }
 
@@ -1027,8 +1051,8 @@ button.popup-window-close:hover {
 /* 訊息一則一行，小字、不粗體、不能選取；前面是 icon（js/lyrics-view.js 的 message_icon） */
 .lyrics-messages {
 	list-style: none;
-	/* 放在歌詞後面，和歌詞之間空大約一行；左邊和歌詞的字對齊（.lyrics-line 的 0.4em padding，訊息的字是 0.8em） */
-	margin: 1em 0 0;
+	/* 放在歌詞後面，和歌詞之間空 2em（訊息的字級）；左邊和歌詞的字對齊（.lyrics-line 的 0.4em padding，訊息的字是 0.8em） */
+	margin: 2em 0 0;
 	padding: 0 0 0 calc(0.4em / 0.8);
 	font-size: 0.8em;
 	font-weight: normal;
@@ -1052,7 +1076,7 @@ button.popup-window-close:hover {
 /* 歌名：放在歌詞前面，左邊和歌詞的字對齊（字是 1.2em，所以 0.4em 除以 1.2） */
 .lyrics-title {
 	font-size: 1.2em;
-	margin: 0.8em 0 0.2em;
+	margin: 0.8em 0 0.8em;
 	padding: 0 0 0 calc(0.4em / 1.2);
 }
 

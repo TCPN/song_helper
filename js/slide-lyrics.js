@@ -275,7 +275,15 @@ export function song_slide_lyrics(song) {
   return { from: 'abc', order: null, sections: sections_from_abc(abc), ...score, cell_has_headers: null };
 }
 
-// 歌詞上方的訊息，一則一行：{ type, text }。type 'info'：歌詞從哪裡來（「投影片」欄不寫）；'warning'：缺少段落標記
+// 這首歌能不能開歌詞檢視：要有譜（歌詞檢視開在譜面彈窗裡），而且「投影片」欄有字或譜上有 w:／W: 歌詞
+// （歌曲列表的歌詞按鈕、資訊彈窗的「歌詞:」用）
+export function has_slide_lyrics(song) {
+  if (!song || !song.abc)
+    return false;
+  return !!(song.slides != null && String(song.slides).trim()) || /^[wW]:/m.test(song.abc);
+}
+
+// 歌詞後面的訊息，一則一行：{ type, text }。type 'info'：歌詞從哪裡來（「投影片」欄不寫）；'warning'：缺少段落標記
 export function lyrics_messages(lyrics) {
   var messages = [];
   if (lyrics.from == 'abc')

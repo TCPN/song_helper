@@ -94,6 +94,9 @@ test.describe('譜面的顯示方式', () => {
     await app.page.locator('#view_button').focus();
     await app.page.keyboard.press('Enter');
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
+    // 最前面是「檢視歌譜」「檢視歌詞」
+    await app.page.keyboard.press('Tab');
+    await app.page.keyboard.press('Tab');
     await app.page.keyboard.press('Tab');
     await expect(fit_item(app, 'page')).toBeFocused();
     await app.page.keyboard.press('Enter');
@@ -136,6 +139,9 @@ test.describe('譜面的顯示方式', () => {
     await app.page.locator('#view_button').focus();
     await app.page.keyboard.press('Enter');
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
+    // 最前面是「檢視歌譜」「檢視歌詞」
+    await app.page.keyboard.press('Tab');
+    await app.page.keyboard.press('Tab');
     await app.page.keyboard.press('Tab');
     await expect(fit_item(app, 'page')).toBeFocused();
     await app.page.keyboard.press('Enter');
@@ -175,8 +181,8 @@ test.describe('譜面的顯示方式', () => {
     expect(menu.width).toBeGreaterThan(group.width);
   });
 
-  test('寬度 530px（剛好是完整工具列）：「編輯」選單右邊放不下，改成右邊對齊按鈕，寬度不被擠窄', async ({ app }) => {
-    await app.page.setViewportSize({ width: 530, height: 932 });
+  test('寬度 460px（剛好是完整工具列）：「編輯」選單右邊放不下，改成右邊對齊按鈕，寬度不被擠窄', async ({ app }) => {
+    await app.page.setViewportSize({ width: 460, height: 932 });
     await app.goto('#song_id=1');
     await app.page.locator('#edit_button').click();
     const menu_locator = app.page.locator('#editor-menu');
