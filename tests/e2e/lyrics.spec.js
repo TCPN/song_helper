@@ -135,7 +135,11 @@ test.describe('歌詞檢視', () => {
     await app.page.locator('#lyrics_copy').click();
     await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 2 行');
     expect(await clipboard(app)).toBe('甲乙丙丁\n\n五六七八');
-    expect(await selection(app)).toMatch(/^甲乙丙丁\s+五六七八$/);
+    // 選取還在（selection.toString() 會不會含段名依瀏覽器版本而異，所以看選到哪幾行）
+    expect(await app.page.evaluate(() => {
+      const lines = document.querySelectorAll('#lyrics_sections .lyrics-line');
+      return [...lines].map((l) => getSelection().containsNode(l, true));
+    })).toEqual([false, true, true, false]);
     await expect(app.page.locator('#lyrics_copy')).toHaveAttribute('aria-disabled', 'false');
   });
 
