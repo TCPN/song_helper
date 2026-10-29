@@ -53,17 +53,28 @@ test('run_checks：no-parts 只列出有歌詞但沒有 P: 的歌，只放編號
   }]);
 });
 
-test('check-songs --snapshot --json：讀快照輸出結果', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'check-songs-'));
-  const snapshot = join(dir, 'songs.json');
+const SCRIPT = fileURLToPath(new URL('../../scripts/check-songs.mjs', import.meta.url));
+
+function write_snapshot(){
+  const snapshot = join(mkdtempSync(join(tmpdir(), 'check-songs-')), 'songs.json');
   writeFileSync(snapshot, JSON.stringify({ updated: '2026-01-01T00:00:00Z', songs: SONGS }));
-  const script = fileURLToPath(new URL('../../scripts/check-songs.mjs', import.meta.url));
-  const out = JSON.parse(execFileSync(process.execPath, [script, '--snapshot', snapshot, '--json'], { encoding: 'utf8' }));
+  return snapshot;
+}
+
+test('check-songs --snapshot --json：讀快照輸出結果', () => {
+  const out = JSON.parse(execFileSync(process.execPath, [SCRIPT, '--snapshot', write_snapshot(), '--json'], { encoding: 'utf8' }));
   assert.equal(out.total, 4);
   assert.deepEqual(out.checks.map((check) => [check.id, check.songs.map((song) => song.id)]), [['no-parts', [2]]]);
 });
 
-test('check-songs --only：不認得的檢查名稱會失敗', () => {
-  const script = fileURLToPath(new URL('../../scripts/check-songs.mjs', import.meta.url));
-  assert.throws(() => execFileSync(process.execPath, [script, '--only', 'nope', '--snapshot', 'x.json'], { stdio: 'pipe' }));
+test('check-songs --only：指定的檢查照常執行', () => {
+  const out = JSON.parse(execFileSync(process.execPath, [SCRIPT, '--snapshot', write_snapshot(), '--only', 'no-parts', '--json'], { encoding: 'utf8' }));
+  assert.deepEqual(out.checks.map((check) => check.id), ['no-parts']);
+});
+
+test('check-songs --only：不認得的檢查名稱會失敗並列出可用的名稱', () => {
+  assert.throws(
+    () => execFileSync(process.execPath, [SCRIPT, '--snapshot', write_snapshot(), '--only', 'nope'], { stdio: 'pipe', encoding: 'utf8' }),
+    (error) => error.stderr.includes('沒有這個檢查：nope') && error.stderr.includes('no-parts'),
+  );
 });
