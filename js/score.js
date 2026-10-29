@@ -10,6 +10,7 @@ import { paginate_score, reset_pages, set_score_lines } from './score-pages.js';
 import { line_start_bars } from './page-breaks.js';
 import { build_render_params, build_midi_params, widened_staffwidth } from './render-params.js';
 import { current_layout, show_layout } from './layout-panel.js';
+import { close_lyrics_popup } from './lyrics-popup.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
 var clickListener = console.log;
@@ -123,6 +124,7 @@ export function close_score(){
     document.querySelector(menu).classList.add('hide');
     document.querySelector(button).setAttribute('aria-expanded', false);
   }
+  close_lyrics_popup();
   state.displayingSong = null;
   reset_pages();
   clearSettings();

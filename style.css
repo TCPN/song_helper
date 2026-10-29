@@ -940,3 +940,149 @@ button.popup-window-close:hover {
 .menu-item:hover {
     box-shadow: inset 0 0 0 100vmax #7777;
 }
+
+/* 投影片歌詞彈窗（js/lyrics-popup.js） */
+#lyrics-popup-container {
+	display: none;
+}
+
+#lyrics-popup-container.open {
+	display: block;
+}
+
+#lyrics-popup-container .popup-bg {
+	z-index: 10;
+	background: #0007;
+	display: grid;
+	align-items: center;
+	justify-items: center;
+}
+
+#lyrics-popup-window {
+	box-sizing: border-box;
+	width: min(32em, calc(100vw - 32px));
+	max-height: 90vh;
+	background: #eee;
+	color: #000;
+	border-radius: 0.5em;
+	display: grid;
+	grid-template-rows: min-content min-content 1fr min-content;
+	box-shadow: 0px 4px 8px #0007;
+}
+
+#lyrics-popup-window .popup-window-title {
+	padding: 0.5em 2.6em 0.5em 1em;
+	font-weight: bold;
+	min-height: 1.4em;
+}
+
+.lyrics-note {
+	padding: 0.5em 1em 0;
+	font-size: 0.85em;
+	color: #555;
+}
+
+.lyrics-note:empty {
+	display: none;
+}
+
+#lyrics_sections {
+	overflow-y: auto;
+	min-height: 0;
+	padding: 0.5em 1em;
+}
+
+.lyrics-section {
+	display: grid;
+	grid-template-columns: min-content 1fr;
+	column-gap: 0.5em;
+	align-items: baseline;
+	padding: 0.4em 0;
+	border-bottom: 1px solid #0001;
+	cursor: pointer;
+}
+
+.lyrics-name {
+	font-weight: bold;
+	color: #345;
+}
+
+.lyrics-text {
+	grid-column: 2;
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+}
+
+.lyrics-text p {
+	margin: 0 0 0.6em;
+}
+
+.lyrics-text p:last-child {
+	margin-bottom: 0;
+}
+
+.lyrics-section:has(input:not(:checked)) .lyrics-text {
+	color: #999;
+}
+
+.lyrics-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding: 0.6em 1em;
+	border-top: 1px solid #0002;
+}
+
+.lyrics-status {
+	flex: 1;
+	font-size: 0.85em;
+	color: #363;
+	text-align: right;
+}
+
+.lyrics-button {
+	padding: 0.3em 0.8em;
+	border-radius: 0.3em;
+	background: #0001;
+	cursor: pointer;
+	user-select: none;
+}
+
+.lyrics-button:hover {
+	background: #0002;
+}
+
+.lyrics-button.primary {
+	background: #357;
+	color: #fff;
+}
+
+.lyrics-button.primary:hover {
+	background: #246;
+}
+
+.lyrics-button.disabled {
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+/* 關閉按鈕用 icon（style 裡的 close.png 不存在） */
+#lyrics-popup-window .popup-window-close {
+	background: none;
+	top: 0.15em;
+	color: #333;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+}
+
+#lyrics-popup-window .popup-window-close:hover {
+	background-color: #0002;
+}
+
+#lyrics-popup-window .popup-window-close svg {
+	width: 1.1em;
+	height: 1.1em;
+}

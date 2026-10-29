@@ -39,7 +39,14 @@
   均等化、行距只改行高不重新渲染；譜面寬度、字級會重新渲染（之後再套用均等化與行距）。兩種都讓畫面最上面的那一行留在原位
 - 譜面工具列：調性就是移調按鈕（有移調時右上角浮出半音數），點了才出現 −／半音數／＋；關閉是 X icon
 - 曲號鍵盤快速跳轉換歌（譜面左右的上一首／下一首按鈕已拿掉，#60）
-- 「編輯」選單：和弦編輯器、進階編輯器（在新分頁開啟）
+- 「編輯」選單：和弦編輯器、進階編輯器（在新分頁開啟）、投影片歌詞…
+- 投影片歌詞（#67）：列出這首歌的各段歌詞，前面標段名，勾選段落後按「複製」複製成純文字（段內一行一句，段落之間與段與段之間空一行，不含段名）。
+  - 歌詞來自試算表的「投影片」欄（`js/slide-lyrics.js`）：`[段名]` 或 `[段名 = A1]` 開新的一段（`= A1` 是對到譜上的段，之後比對用），
+    第一個段名之前的文字算一段沒有名字的段；換行 = 換行、空一行 = 段內分段（投影片換頁）。
+    方便在試算表單行輸入，也接受 `/` = 空一格、`//` = 換行、`///` = 空一行。`順序: V1 C V2 C` 行目前只讀起來，還沒有用到。
+  - 「投影片」欄空白時從譜上的 `w:` 產生：第幾行 `w:` 就是第幾節，譜上一行 = 歌詞一行。有 `P:` 段落標記時段名是段落＋第幾節（`A1`、`A2`、`B1`…；
+    行首的 `[P:B]` 從這行換段，行中間的從下一行開始）；沒有 `P:` 時整首一段（`V1`、`V2`…），彈窗裡會提醒。`W:`（譜後歌詞）放在最後一段 `W`。
+    音節接回來時中文直接相連、英文隔一個空格，`-` 接回同一個字，`_` `*` `|` 拿掉，`~` 是空格。
 - 螢幕寬度小於 450px（或工具列放不下）時，列印、播放、編輯、排版收進「⋮」選單（「排版…」打開的面板出現在「⋮」旁邊），「檢視」換成 icon
 - 歌曲列表最後有「沒有找到想要的歌？快來許願」，「快來許願」連到許願用的 Google 表單
 - 狀態都記在網址 hash，例如 `#song_id=12&transpose=2`，方便分享與存書籤
@@ -60,9 +67,10 @@
 | `js/score-pages.js` | 分頁顯示：量每行高度、分頁、一次顯示一頁、點擊換頁、頁碼與箭頭；手動分頁的設定模式 |
 | `js/layout-panel.js` | 工具列「排版」選單的面板（行間距均等化、行距、譜面寬度、歌詞與和弦字級、設定分頁） |
 | `js/editor-links.js` | 「編輯」與「⋮」選單的開關、編輯器連結 |
+| `js/lyrics-popup.js` | 「投影片歌詞…」彈窗：列出各段、勾選、複製 |
 | `js/toolbar.js` | 螢幕寬度小於 450px（或工具列放不下）時切換成精簡版面（「⋮」選單） |
 | `js/state.js`, `js/dom.js` | 共用狀態、DOM 小工具 |
-| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js`, `js/score-marks.js` | 純函式（不碰 DOM，有單元測試） |
+| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js`, `js/score-marks.js`, `js/slide-lyrics.js` | 純函式（不碰 DOM，有單元測試） |
 | `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
@@ -70,7 +78,7 @@
 
 資料來源是 Google 試算表：`js/data.js` 直接 `fetch` 試算表的 gviz 查詢（`js/song-data.js` 的 `SHEET_QUERY_URL`），
 不需要載入 Google 的 JavaScript。試算表必須維持「知道連結的人都能檢視」。
-欄位以固定索引對應：0 編號、1 歌名、2 調號、3 拍號、4 首句旋律、10 abc。
+欄位以固定索引對應：0 編號、1 歌名、2 調號、3 拍號、4 首句旋律、8 投影片（`song.slides`）、10 abc。
 快取存在 localStorage 的 `song_data`（歌曲陣列的 JSON）與 `song_data_timestamp`。
 
 ### songs.json 快照（選用）

@@ -104,21 +104,21 @@ test.describe('編輯選單', () => {
   const editLabel = (app) => app.page.locator('#edit_button');
   const menu = (app) => app.page.locator('#editor-menu');
 
-  test('點「編輯」展開選單：和弦編輯器、進階編輯器', async ({ app }) => {
+  test('點「編輯」展開選單：和弦編輯器、進階編輯器、投影片歌詞', async ({ app }) => {
     await app.goto('#song_id=2');
     await expect(menu(app)).toHaveClass(/hide/);
     await expect(editLabel(app)).toHaveAttribute('aria-expanded', 'false');
     await editLabel(app).click();
     await expect(menu(app)).not.toHaveClass(/hide/);
     await expect(editLabel(app)).toHaveAttribute('aria-expanded', 'true');
-    await expect(menu(app).locator('.menu-item')).toHaveText(['和弦編輯器', '進階編輯器']);
+    await expect(menu(app).locator('.menu-item')).toHaveText(['和弦編輯器', '進階編輯器', '投影片歌詞…']);
     // 鍵盤也能開關
     await editLabel(app).focus();
     await app.page.keyboard.press('Enter');
     await expect(menu(app)).toHaveClass(/hide/);
     await app.page.keyboard.press(' ');
     await expect(menu(app)).not.toHaveClass(/hide/);
-    await expect(menu(app).locator('.menu-item')).toHaveText(['和弦編輯器', '進階編輯器']);
+    await expect(menu(app).locator('.menu-item')).toHaveText(['和弦編輯器', '進階編輯器', '投影片歌詞…']);
   });
 
   test('選單展開時點其他地方會收起，不開編輯器', async ({ app }) => {
@@ -212,7 +212,7 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await expect(menu(app)).toHaveClass(/hide/);
     await moreButton(app).click();
     await expect(menu(app)).not.toHaveClass(/hide/);
-    await expect(menu(app).locator('.menu-item')).toHaveText(['列印', '播放', '和弦編輯器', '進階編輯器', '排版…']);
+    await expect(menu(app).locator('.menu-item')).toHaveText(['列印', '播放', '和弦編輯器', '進階編輯器', '投影片歌詞…', '排版…']);
   });
 
   test('很窄時：編號和調性貼左邊，「檢視」、⋮、關閉貼右邊，兩邊都留邊距', async ({ app }) => {

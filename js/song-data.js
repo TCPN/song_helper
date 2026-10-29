@@ -29,6 +29,8 @@ export function getSongArray(data) {
       "tone": data.getValue(i, 2),
       "timesig": data.getValue(i, 3),
       "melody": data.getValue(i, 4),
+      // 投影片用的歌詞（js/slide-lyrics.js 的格式）；空白時從 abc 的 w: 產生
+      "slides": data.getValue(i, 8),
       "abc": data.getValue(i, 10),
     }
     songArray.push(song);

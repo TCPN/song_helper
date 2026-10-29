@@ -168,6 +168,8 @@
 				<div id="editor-menu" class="hide menu" role="menu">
 					<label class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</label>
 					<label class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</label>
+					<span class="menu-separator" role="separator"></span>
+					<label class="lyrics-item menu-item" role="menuitem" tabindex="0">投影片歌詞…</label>
 				</div>
 			</span>
 			<!-- 工具列不夠寬時，列印、播放、編輯、排版收在這個選單裡 -->
@@ -182,6 +184,7 @@
 					<span class="play-button menu-item" role="menuitem" tabindex="0">播放</span>
 					<span class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</span>
 					<span class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</span>
+					<span class="lyrics-item menu-item" role="menuitem" tabindex="0">投影片歌詞…</span>
 					<span class="menu-separator" role="separator"></span>
 					<span class="menu-item" data-open-menu="#layout_button" role="menuitem" tabindex="0" aria-haspopup="dialog">排版…</span>
 				</div>
@@ -204,5 +207,26 @@
         </div>
     </div>
 </div>
+	<!-- 投影片歌詞：各段的歌詞，勾選後複製成純文字（js/lyrics-popup.js） -->
+	<div id="lyrics-popup-container">
+		<div class="popup-bg">
+			<div id="lyrics-popup-window" role="dialog" aria-modal="true" aria-labelledby="lyrics_title">
+				<div class="popup-window-title">
+					<span id="lyrics_title">投影片歌詞</span>
+					<button class="popup-window-close" title="關閉" aria-label="收起歌詞"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M6 6 18 18M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+					</svg></button>
+				</div>
+				<div id="lyrics_note" class="lyrics-note"></div>
+				<div id="lyrics_sections" class="popup-window-content"></div>
+				<div class="lyrics-actions">
+					<span id="lyrics_select_all" class="lyrics-button" role="button" tabindex="0">全選</span>
+					<span id="lyrics_select_none" class="lyrics-button" role="button" tabindex="0">全不選</span>
+					<span id="lyrics_status" class="lyrics-status" aria-live="polite"></span>
+					<span id="lyrics_copy" class="lyrics-button primary" role="button" tabindex="0">複製</span>
+				</div>
+			</div>
+		</div>
+	</div>
 </body>
 </html>

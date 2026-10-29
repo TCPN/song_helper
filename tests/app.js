@@ -16,7 +16,7 @@ const SHEET_QUERY_PATH = /^\/spreadsheets\/d\/[^/]+\/gviz\/tq$/;
 
 // 對應試算表欄位順序：0 編號, 1 歌名, 2 調號, 3 拍號, 4 首句旋律, 5 出處, 6 分類, 7 譜, 8 投影片, 9 ppt, 10 abc
 function songToCells(song) {
-  return [song.id, song.name, song.tone, song.timesig, song.melody, null, null, null, null, null, song.abc]
+  return [song.id, song.name, song.tone, song.timesig, song.melody, null, null, null, song.slides, null, song.abc]
     .map((v) => (v === null || v === undefined ? null : { v }));
 }
 
