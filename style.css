@@ -1016,9 +1016,9 @@ button.popup-window-close:hover {
 /* 訊息一則一行，小字、不粗體、不能選取；前面是 icon（js/lyrics-view.js 的 message_icon） */
 .lyrics-messages {
 	list-style: none;
-	/* 和下面的歌詞之間空大約一行 */
+	/* 和下面的歌詞之間空大約一行；左邊和歌詞的字對齊（.lyrics-line 的 0.4em padding，訊息的字是 0.8em） */
 	margin: 0.6em 0 1em;
-	padding: 0;
+	padding: 0 0 0 calc(0.4em / 0.8);
 	font-size: 0.8em;
 	font-weight: normal;
 	color: #666;

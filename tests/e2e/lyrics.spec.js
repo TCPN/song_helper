@@ -204,6 +204,16 @@ test.describe('歌詞檢視', () => {
     // 主歌：第一句 第二句／第三句 ‖ 第四句（段內分段）
     const tops = await lines(app).evaluateAll((ls) => ls.map((l) => l.getBoundingClientRect().top));
     expect(tops[2] - tops[1]).toBeCloseTo(tops[1] - tops[0], 0);
+    // 訊息的左邊緣也和歌詞的字對齊
+    await app.goto('#song_id=13&mode=lyrics');
+    await expect(app.page.locator('#lyrics_messages li')).toHaveCount(2);
+    const message_left = await app.page.locator('#lyrics_messages li').first().evaluate((li) => li.getBoundingClientRect().left);
+    const line_text_left = await lines(app).first().evaluate((l) => {
+      const r = document.createRange();
+      r.selectNodeContents(l);
+      return r.getBoundingClientRect().left;
+    });
+    expect(message_left).toBeCloseTo(line_text_left, 0);
   });
 
   test('沒有歌詞的歌：沒有段，訊息說沒有歌詞', async ({ app }) => {
