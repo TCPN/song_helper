@@ -109,6 +109,12 @@ test.describe('投影片歌詞', () => {
     await app.page.keyboard.press('Escape');
     await expect(popup(app)).not.toHaveClass(/open/);
 
+    // 焦點不在彈窗裡時 Esc 也能關閉
+    await open_lyrics(app);
+    await app.page.evaluate(() => document.activeElement.blur());
+    await app.page.keyboard.press('Escape');
+    await expect(popup(app)).not.toHaveClass(/open/);
+
     await open_lyrics(app);
     await app.page.locator('#lyrics-popup-window .popup-window-close').click();
     await expect(popup(app)).not.toHaveClass(/open/);

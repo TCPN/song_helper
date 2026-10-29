@@ -124,13 +124,13 @@ export function setup_lyrics_popup() {
       close_lyrics_popup();
   });
   container.querySelector('.popup-window-close').addEventListener('click', close_lyrics_popup);
-  container.addEventListener('keydown', (event)=>{
+  // 焦點不一定在彈窗裡（例如點了彈窗裡的文字），所以在 document 上聽 Esc；capture 階段先收到，不讓 Esc 再傳到譜面（例如收起其他選單）
+  document.addEventListener('keydown', (event)=>{
     if (event.key == 'Escape' && isOpenDom(CONTAINER)) {
-      // 不讓 Esc 再傳到譜面（例如收起其他選單）
       event.stopPropagation();
       close_lyrics_popup();
     }
-  });
+  }, true);
   document.querySelector('#lyrics_sections').addEventListener('change', ()=>{
     set_status('');
     update_copy_button();
