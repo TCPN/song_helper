@@ -32,7 +32,7 @@ export function refresh_lyrics() {
   var song = state.displayingSong;
   if (!is_lyrics_mode() || !song)
     return;
-  var key = JSON.stringify([song.id, song.slides, song.abc]);
+  var key = JSON.stringify([song.id, song.name, song.slides, song.abc]);
   if (key == shown_key)
     return;
   shown_key = key;
