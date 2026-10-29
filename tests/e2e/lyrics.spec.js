@@ -90,11 +90,17 @@ test.describe('歌詞檢視', () => {
     expect(Number(style.fontWeight)).toBeLessThan(600);
   });
 
-  test('沒有 P: 的歌：整首一段 V1、V2…，另一則 ⚠ 訊息', async ({ app }) => {
+  test('沒有 P: 的歌：整首一段 Verse1、Verse2…，另一則警告訊息', async ({ app }) => {
     await app.goto('#song_id=11&mode=lyrics');
-    await expect(names(app)).toHaveText(['V1', 'V2']);
+    await expect(names(app)).toHaveText(['Verse1', 'Verse2']);
     await expect(lines(app)).toHaveText(['一二三四', '甲乙丙丁', '五六七八', '子丑寅卯']);
-    await expect(messages(app)).toHaveText(['從歌譜中自動抽出', '⚠ 歌譜缺少段落標記（P:）']);
+    await expect(messages(app)).toHaveText(['從歌譜中自動抽出', '歌譜缺少段落標記（P:）']);
+    // 自動抽出是 info（i icon），缺少段落標記是 warning（三角形 icon）
+    await expect(messages(app).nth(0)).toHaveClass(/info/);
+    await expect(messages(app).nth(1)).toHaveClass(/warning/);
+    await expect(messages(app).locator('svg.lyrics-message-icon')).toHaveCount(2);
+    // 訊息不能選取
+    expect(await messages(app).first().evaluate((li) => getComputedStyle(li).userSelect)).toBe('none');
   });
 
   test('有填「投影片」欄的歌：照格子的段名、換行與分段，不寫來源訊息', async ({ app }) => {
@@ -106,10 +112,10 @@ test.describe('歌詞檢視', () => {
     await expect(lines(app)).toHaveText(['第一句 第二句', '第三句', '第四句', '副歌一句']);
   });
 
-  test('「投影片」欄沒有段名：⚠ 投影片欄缺少段落標記', async ({ app }) => {
+  test('「投影片」欄沒有段名：警告投影片欄缺少段落標記，沒有段名的段叫 Verse', async ({ app }) => {
     await app.goto('#song_id=13&mode=lyrics');
-    await expect(messages(app)).toHaveText(['⚠ 歌譜缺少段落標記（P:）', '⚠ 投影片欄缺少段落標記（[段名]）']);
-    await expect(names(app)).toHaveText(['無段名']);
+    await expect(messages(app)).toHaveText(['歌譜缺少段落標記（P:）', '投影片欄缺少段落標記（[段名]）']);
+    await expect(names(app)).toHaveText(['Verse']);
   });
 
   test('用一般的文字選取：按「複製」整理成純文字，換段落或換段空一行，不含段名', async ({ app }) => {
@@ -182,8 +188,16 @@ test.describe('歌詞檢視', () => {
     });
     expect(style.weight).toBeLessThan(600);
     expect(style.size).toBeLessThan(style.body);
-    const box = await names(app).first().evaluate((n) => ({ radius: getComputedStyle(n).borderTopLeftRadius, width: getComputedStyle(n).borderTopWidth }));
-    expect(box).toEqual({ radius: '4px', width: '1px' });
+    const box = await names(app).first().evaluate((n) => ({ radius: getComputedStyle(n).borderTopLeftRadius, width: getComputedStyle(n).borderTopWidth, cursor: getComputedStyle(n).cursor }));
+    expect(box).toEqual({ radius: '4px', width: '1px', cursor: 'auto' });
+    // 段名的左邊緣對齊歌詞的字
+    const name_left = (await names(app).first().boundingBox()).x;
+    const text_left = await lines(app).first().evaluate((l) => {
+      const r = document.createRange();
+      r.selectNodeContents(l);
+      return r.getBoundingClientRect().left;
+    });
+    expect(name_left).toBeCloseTo(text_left, 0);
     const border = await app.page.locator('#lyrics_sections .lyrics-section').first()
       .evaluate((s) => getComputedStyle(s).borderBottomWidth);
     expect(border).toBe('0px');
@@ -203,7 +217,7 @@ test.describe('歌詞檢視', () => {
     await app.switchSong(11);
     await expect(app.currentSongId()).toHaveText('11');
     await expect(view(app)).toBeVisible();
-    await expect(names(app)).toHaveText(['V1', 'V2']);
+    await expect(names(app)).toHaveText(['Verse1', 'Verse2']);
   });
 
   test('關閉譜面時網址的 mode 也拿掉，下一首打開是歌譜', async ({ app }) => {
@@ -230,7 +244,7 @@ test.describe('歌詞檢視', () => {
     await expect(app.page.locator('#more-menu .view-mode-button')).toHaveText('檢視歌詞');
     await app.page.locator('#more-menu .view-mode-button').click();
     await expect(view(app)).toBeVisible();
-    await expect(names(app)).toHaveText(['V1', 'V2']);
+    await expect(names(app)).toHaveText(['Verse1', 'Verse2']);
     const box = await view(app).boundingBox();
     expect(box.x).toBeGreaterThanOrEqual(16 - 1);
     expect(box.x + box.width).toBeLessThanOrEqual(375 - 16 + 1);

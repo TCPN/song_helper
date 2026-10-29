@@ -1,7 +1,7 @@
 // 歌詞檢視：一首歌的另一種檢視方式（網址 mode=lyrics）。列出各段歌詞（前面標段名），
 // 用一般的文字選取選歌詞，複製時整理成純文字（不含段名，換段落或換段時空一行）；工具列的「檢視歌詞」／「檢視歌譜」切換
 import { state } from './state.js';
-import { song_slide_lyrics, lyrics_messages, lines_text } from './slide-lyrics.js';
+import { song_slide_lyrics, lyrics_messages, lines_text, UNNAMED } from './slide-lyrics.js';
 import { update_hash } from './route.js';
 import { click_on_enter } from './dom.js';
 
@@ -38,14 +38,40 @@ export function refresh_lyrics() {
   shown_key = key;
   var lyrics = song_slide_lyrics(song);
   shown_sections = lyrics.sections;
-  document.querySelector('#lyrics_messages').replaceChildren(...lyrics_messages(lyrics).map((text) => {
+  document.querySelector('#lyrics_messages').replaceChildren(...lyrics_messages(lyrics).map(({ type, text }) => {
     var li = document.createElement('li');
-    li.textContent = text;
+    li.className = 'lyrics-message ' + type;
+    li.append(message_icon(type), text);
     return li;
   }));
   document.querySelector('#lyrics_sections').replaceChildren(...shown_sections.map(section_element));
   set_status('');
   update_checks();
+}
+
+// 訊息前面的 icon：warning 是黃色三角形裡的驚嘆號，info 是淺灰圓形裡的藍色 i
+const ICON_PATHS = {
+  warning: [['path', { d: 'M8 1.5 15 14.5H1Z', fill: '#f2c200', stroke: '#c99a00', 'stroke-width': 1, 'stroke-linejoin': 'round' }],
+    ['path', { d: 'M8 6v4', stroke: '#000', 'stroke-width': 1.6, 'stroke-linecap': 'round' }],
+    ['circle', { cx: 8, cy: 12.3, r: 0.9, fill: '#000' }]],
+  info: [['circle', { cx: 8, cy: 8, r: 7, fill: '#e3e3e3' }],
+    ['circle', { cx: 8, cy: 4.6, r: 1, fill: '#2a6fc9' }],
+    ['path', { d: 'M8 7v5', stroke: '#2a6fc9', 'stroke-width': 1.8, 'stroke-linecap': 'round' }]],
+};
+
+function message_icon(type) {
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('class', 'lyrics-message-icon');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const [tag, attrs] of ICON_PATHS[type]) {
+    var shape = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs))
+      shape.setAttribute(k, v);
+    svg.appendChild(shape);
+  }
+  return svg;
 }
 
 // 關閉譜面時：回到歌譜檢視，下次打開重新列出
@@ -64,7 +90,7 @@ function section_element(section, s) {
   head.dataset.section = s;
   head.setAttribute('role', 'button');
   head.tabIndex = 0;
-  head.textContent = section.name || '無段名';
+  head.textContent = section.name || UNNAMED;
   click_on_enter(head);
   element.appendChild(head);
   section.paragraphs.forEach((paragraph, p) => {

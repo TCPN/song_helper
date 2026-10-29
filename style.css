@@ -1013,7 +1013,7 @@ button.popup-window-close:hover {
 	pointer-events: none;
 }
 
-/* 訊息一則一行，小字、不粗體 */
+/* 訊息一則一行，小字、不粗體、不能選取；前面是 icon（js/lyrics-view.js 的 message_icon） */
 .lyrics-messages {
 	list-style: none;
 	margin: 0.6em 0 0;
@@ -1021,6 +1021,19 @@ button.popup-window-close:hover {
 	font-size: 0.8em;
 	font-weight: normal;
 	color: #666;
+	user-select: none;
+}
+
+.lyrics-message {
+	display: flex;
+	align-items: center;
+	gap: 0.35em;
+}
+
+.lyrics-message-icon {
+	flex: none;
+	width: 1.15em;
+	height: 1.15em;
 }
 
 .lyrics-messages:empty {
@@ -1031,7 +1044,8 @@ button.popup-window-close:hover {
 	padding: 0.5em 0 0;
 }
 
-/* 段名：小字、淡色、不粗體，包一個圓角邊框；點了整段全選／取消 */
+/* 段名：小字、淡色、不粗體，包一個圓角邊框；點了整段全選／取消。
+   左邊緣對齊歌詞的字（.lyrics-line 左邊有 0.4em 的 padding，段名的字比較小，所以除以 0.85） */
 .lyrics-name {
 	display: inline-block;
 	font-size: 0.85em;
@@ -1039,12 +1053,8 @@ button.popup-window-close:hover {
 	border: 1px solid #bbb;
 	border-radius: 4px;
 	padding: 0 0.4em;
-	cursor: pointer;
+	margin-left: calc(0.4em / 0.85);
 	user-select: none;
-}
-
-.lyrics-name:hover {
-	color: #357;
 }
 
 /* 段內分段（投影片換頁）不多空間，每一行一樣高 */

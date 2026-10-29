@@ -20,7 +20,7 @@ export function has_lyrics(abc){
 export const SONG_CHECKS = [
   {
     id: 'no-parts',
-    title: '有歌詞但沒有 P: 段落標記（投影片歌詞會整首當一段，分成 V1、V2…）',
+    title: '有歌詞但沒有 P: 段落標記（投影片歌詞會整首當一段，分成 Verse1、Verse2…）',
     match: (song) => has_lyrics(song.abc) && !has_part_marks(song.abc),
   },
 ];

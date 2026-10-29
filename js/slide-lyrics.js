@@ -10,7 +10,7 @@
 //      ...
 //    也接受單行的寫法：`/` = 空一格、`//` = 換行、`///` = 空一行。第一個 [段名] 之前的文字算一段沒有名字的段。
 // 2. 格子空白時從 ABC 的 w: 自動產生：第幾行 w: 就是第幾節，譜上一行 = 歌詞一行。
-//    段名：有 P: → 段落名稱＋第幾節（A1、A2、B1…）；沒有 P: → 整首一段，V1、V2…
+//    段名：有 P: → 段落名稱＋第幾節（A1、A2、B1…）；沒有 P: → 整首一段，只有一節叫 Verse，多節 Verse1、Verse2…
 //    W:（譜後的歌詞）放在最後一段「W」，空的 W: 行是段內分段。
 //
 // 段的格式：{ name, source, paragraphs: [[行, …], …] }
@@ -242,12 +242,12 @@ export function sections_from_abc(abc) {
   }
   var sections = [];
   for (const p of parts) {
-    // 沒有 P: 的歌整首一段：V1、V2…；第一個 P: 之前的歌詞也叫 V1…
-    var prefix = p.name === null ? 'V' : p.name;
-    p.verses.forEach((verse_lines, i) => {
-      var kept = (verse_lines || []).filter(Boolean);
+    // 沒有 P: 的歌整首一段：只有一節時叫 Verse，多節時 Verse1、Verse2…；第一個 P: 之前的歌詞也一樣
+    var verses = p.verses.map((verse_lines) => (verse_lines || []).filter(Boolean));
+    var single = p.name === null && verses.filter((kept) => kept.length).length == 1;
+    verses.forEach((kept, i) => {
       if (kept.length)
-        sections.push({ name: prefix + (i + 1), source: null, paragraphs: [kept] });
+        sections.push({ name: single ? UNNAMED : (p.name === null ? UNNAMED : p.name) + (i + 1), source: null, paragraphs: [kept] });
     });
   }
   var w_paragraphs = to_paragraphs(w_text);
@@ -255,6 +255,9 @@ export function sections_from_abc(abc) {
     sections.push({ name: 'W', source: null, paragraphs: w_paragraphs });
   return sections;
 }
+
+// 沒有段名的段：譜上沒有 P: 的歌詞、「投影片」欄第一個 [段名] 之前的文字
+export const UNNAMED = 'Verse';
 
 // 一首歌投影片用的歌詞：「投影片」欄有字就用它，不然從 ABC 產生
 // → { from: 'cell' | 'abc', order, sections, score_has_lyrics, score_has_parts, cell_has_headers }
@@ -272,15 +275,15 @@ export function song_slide_lyrics(song) {
   return { from: 'abc', order: null, sections: sections_from_abc(abc), ...score, cell_has_headers: null };
 }
 
-// 歌詞上方的訊息，一則一行：歌詞從哪裡來（「投影片」欄不寫）、缺少段落標記的問題（前面加 ⚠）
+// 歌詞上方的訊息，一則一行：{ type, text }。type 'info'：歌詞從哪裡來（「投影片」欄不寫）；'warning'：缺少段落標記
 export function lyrics_messages(lyrics) {
   var messages = [];
   if (lyrics.from == 'abc')
-    messages.push(lyrics.sections.length ? '從歌譜中自動抽出' : '這首歌沒有歌詞');
+    messages.push({ type: 'info', text: lyrics.sections.length ? '從歌譜中自動抽出' : '這首歌沒有歌詞' });
   if (lyrics.score_has_lyrics && !lyrics.score_has_parts)
-    messages.push('⚠ 歌譜缺少段落標記（P:）');
+    messages.push({ type: 'warning', text: '歌譜缺少段落標記（P:）' });
   if (lyrics.cell_has_headers === false)
-    messages.push('⚠ 投影片欄缺少段落標記（[段名]）');
+    messages.push({ type: 'warning', text: '投影片欄缺少段落標記（[段名]）' });
   return messages;
 }
 
