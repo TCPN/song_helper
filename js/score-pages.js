@@ -79,7 +79,8 @@ function measure_lines(lines) {
 // 重新分頁：渲染完、改了行高、切換譜紙、改了手動分頁時呼叫。
 // 同一首歌留在目前這頁第一行所在的那一頁，換歌（或重新打開）時回到第一頁、離開設定分頁
 export function paginate_score() {
-  if(!container().classList.contains('open'))
+  // 歌詞檢視時不換頁
+  if(!container().classList.contains('open') || container().classList.contains('lyrics-mode'))
     return;
   var lines = line_containers();
   var song = current_song();

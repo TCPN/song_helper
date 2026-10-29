@@ -1,8 +1,8 @@
-// 譜面上方工具列：螢幕寬度小於 450px（或放不下）時把列印、播放、編輯、排版收進「⋮」選單、「檢視」換成 icon（加上 compact class，CSS 切換顯示）
+// 譜面上方工具列：螢幕寬度小於 520px（或放不下）時把列印、播放、檢視歌詞、編輯、排版收進「⋮」選單、「檢視」換成 icon（加上 compact class，CSS 切換顯示）
 const TOP_BAR = '#score_popup_top_bar';
 
 // 螢幕寬度小於這個值就用精簡版面
-export const COMPACT_MAX_WIDTH = 450;
+export const COMPACT_MAX_WIDTH = 520;
 
 // 螢幕寬度小於 COMPACT_MAX_WIDTH 就切成精簡版面。
 // 以防萬一（例如很長的調名、字比較大）再用完整的版面量一次：顯示中的項目從最左到最右的寬度超過工具列，也切成精簡版面。

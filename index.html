@@ -61,6 +61,17 @@
 					<div id='score_paper'>
 					</div>
 				</div>
+				<!-- 歌詞檢視（網址 mode=lyrics，js/lyrics-view.js）：各段歌詞，每一行可以勾選，複製成純文字 -->
+				<div id="lyrics_view" class="hide">
+					<div class="lyrics-actions" role="toolbar" aria-label="複製歌詞">
+						<span id="lyrics_select_all" class="lyrics-button" role="button" tabindex="0">全選</span>
+						<span id="lyrics_select_none" class="lyrics-button" role="button" tabindex="0">全不選</span>
+						<span id="lyrics_status" class="lyrics-status" aria-live="polite"></span>
+						<span id="lyrics_copy" class="lyrics-button primary" role="button" tabindex="0">複製</span>
+					</div>
+					<ul id="lyrics_messages" class="lyrics-messages"></ul>
+					<div id="lyrics_sections"></div>
+				</div>
 			</div>
 			<!-- 分頁時的頁碼和左右的上一頁／下一頁箭頭（js/score-pages.js），只有一頁時不顯示 -->
 			<div id="page_nav" class="hide">
@@ -105,6 +116,8 @@
 			<span class="separator wide-only">|</span>
 			<label class="print-button wide-only toolbar-item">列印</label>
 			<label class="play-button wide-only toolbar-item">播放</label>
+			<!-- 歌譜／歌詞檢視切換（js/lyrics-view.js），文字是要切換過去的那一個 -->
+			<label class="view-mode-button wide-only toolbar-item" role="button" tabindex="0">檢視歌詞</label>
 			<div id="player-set" class="hide">
 				<div id="player-control"></div>
 			</div>
@@ -168,11 +181,9 @@
 				<div id="editor-menu" class="hide menu" role="menu">
 					<label class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</label>
 					<label class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</label>
-					<span class="menu-separator" role="separator"></span>
-					<label class="lyrics-item menu-item" role="menuitem" tabindex="0">投影片歌詞…</label>
 				</div>
 			</span>
-			<!-- 工具列不夠寬時，列印、播放、編輯、排版收在這個選單裡 -->
+			<!-- 工具列不夠寬時，列印、播放、檢視歌詞、編輯、排版收在這個選單裡 -->
 			<span id="more_group" class="compact-only">
 				<div id="more_button" title="更多" aria-label="更多" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
 					<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -182,9 +193,9 @@
 				<div id="more-menu" class="hide menu" role="menu">
 					<span class="print-button menu-item" role="menuitem" tabindex="0">列印</span>
 					<span class="play-button menu-item" role="menuitem" tabindex="0">播放</span>
+					<span class="view-mode-button menu-item" role="menuitem" tabindex="0">檢視歌詞</span>
 					<span class="chord-editor-item menu-item" role="menuitem" tabindex="0">和弦編輯器</span>
 					<span class="song-editor-item menu-item" role="menuitem" tabindex="0">進階編輯器</span>
-					<span class="lyrics-item menu-item" role="menuitem" tabindex="0">投影片歌詞…</span>
 					<span class="menu-separator" role="separator"></span>
 					<span class="menu-item" data-open-menu="#layout_button" role="menuitem" tabindex="0" aria-haspopup="dialog">排版…</span>
 				</div>
@@ -207,26 +218,5 @@
         </div>
     </div>
 </div>
-	<!-- 投影片歌詞：各段的歌詞，勾選後複製成純文字（js/lyrics-popup.js） -->
-	<div id="lyrics-popup-container">
-		<div class="popup-bg">
-			<div id="lyrics-popup-window" role="dialog" aria-modal="true" aria-labelledby="lyrics_title">
-				<div class="popup-window-title">
-					<span id="lyrics_title">投影片歌詞</span>
-					<button class="popup-window-close" title="關閉" aria-label="收起歌詞"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-						<path d="M6 6 18 18M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-					</svg></button>
-				</div>
-				<div id="lyrics_note" class="lyrics-note"></div>
-				<div id="lyrics_sections" class="popup-window-content"></div>
-				<div class="lyrics-actions">
-					<span id="lyrics_select_all" class="lyrics-button" role="button" tabindex="0">全選</span>
-					<span id="lyrics_select_none" class="lyrics-button" role="button" tabindex="0">全不選</span>
-					<span id="lyrics_status" class="lyrics-status" aria-live="polite"></span>
-					<span id="lyrics_copy" class="lyrics-button primary" role="button" tabindex="0">複製</span>
-				</div>
-			</div>
-		</div>
-	</div>
 </body>
 </html>

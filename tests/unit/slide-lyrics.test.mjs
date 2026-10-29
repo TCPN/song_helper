@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parse_slide_cell, w_line_text, sections_from_abc, song_slide_lyrics, sections_text } from '../../js/slide-lyrics.js';
+import { parse_slide_cell, w_line_text, w_slots, music_line_marks, sections_from_abc, song_slide_lyrics, lyrics_messages, lines_text } from '../../js/slide-lyrics.js';
 
 const section = (name, paragraphs, source = null) => ({ name, source, paragraphs });
 
@@ -88,13 +88,50 @@ test('sections_from_abc：有 P: 時段名是段落名稱＋第幾行 w:；同�
   ]);
 });
 
-test('sections_from_abc：行首的 [P:B] 從這行換段；行中間的 [P:C] 從下一行譜開始', () => {
-  const abc = 'X:1\nK:C\n[P:A]CDEF|\nw:一 二 三 四\n[P:B]GABc|[P:C]cBAG|\nw:甲 乙 丙 丁 戊 己 庚 辛\nC4|\nw:末\n';
+test('sections_from_abc：行首的 [P:B] 從這行換段；行中間的 [P:C] 之後的字都是 C 段', () => {
+  const abc = 'X:1\nK:C\n[P:A]CDEF|\nw:一 二 三 四\n[P:B]GABc|[P:C]cBAG|\nw:甲 乙 丙 丁 戊 己 庚 辛\nw:子 丑 寅 卯 辰 巳 午 未\nC4|\nw:末\n';
   assert.deepEqual(sections_from_abc(abc), [
     section('A1', [['一二三四']]),
-    section('B1', [['甲乙丙丁戊己庚辛']]),
-    section('C1', [['末']]),
+    section('B1', [['甲乙丙丁']]),
+    section('B2', [['子丑寅卯']]),
+    section('C1', [['戊己庚辛', '末']]),
+    section('C2', [['辰巳午未']]),
   ]);
+});
+
+test('sections_from_abc：行中間的 [P:] 依音符數切開歌詞（休止符、裝飾音、和弦記號不算音符，和音算一個）', () => {
+  const abc = 'X:1\nK:C\nP:A\n"C"C z {g}D [CE]E |[P:B] !fermata!F G|\nw:一 二 三 四 五\n';
+  assert.deepEqual(sections_from_abc(abc), [
+    section('A1', [['一二三四']]),
+    section('B1', [['五']]),
+  ]);
+});
+
+test('sections_from_abc：歌詞比 [P:] 之前的音符少時，後面那段沒有字', () => {
+  const abc = 'X:1\nK:C\nCDEF|[P:B]GABc|\nw:一 二\n';
+  assert.deepEqual(sections_from_abc(abc), [section('V1', [['一二']])]);
+});
+
+test('music_line_marks：段落標記與小節線的位置是之前的音符數', () => {
+  assert.deepEqual(music_line_marks('[P:A]CD EF|:GA [P:B]B2c2:|[1 d4|]'), {
+    marks: [{ name: 'A', at: 0 }, { name: 'B', at: 6 }],
+    bars: [4, 8, 9],
+  });
+  // % 之後是註解；"..." 裡的字母不算
+  assert.deepEqual(music_line_marks('"Am"A B|% c d'), { marks: [], bars: [2] });
+});
+
+test('w_slots：每個音符一個音節；| 跳到下一小節', () => {
+  assert.deepEqual(w_slots('a-b c'), [{ text: 'a', hyphen: true }, { text: 'b', hyphen: false }, { text: 'c', hyphen: false }]);
+  // 第一小節有 3 個音，歌詞只寫了 1 個：| 補兩個空的
+  assert.deepEqual(w_slots('一|二', [3, 5]).map((s) => s.text), ['一', '', '', '二']);
+  // 剛好在小節線上的 | 不多補
+  assert.deepEqual(w_slots('一 二 三|四', [3]).map((s) => s.text), ['一', '二', '三', '四']);
+});
+
+test('sections_from_abc：w: 用 | 對小節時，行中間的 [P:] 也對得到', () => {
+  const abc = 'X:1\nK:C\nCDE|[P:B]FGA|\nw:一|二 三 四\n';
+  assert.deepEqual(sections_from_abc(abc), [section('V1', [['一']]), section('B1', [['二三四']])]);
 });
 
 test('sections_from_abc：第一個 P: 之前的歌詞叫 V1；沒有 w: 的譜行、註解、其他欄位不影響', () => {
@@ -122,20 +159,34 @@ test('sections_from_abc：沒有譜、沒有 K:、沒有歌詞時是空陣列', 
 test('song_slide_lyrics：「投影片」欄有字就用它，空白（或只有空白字元）時從 w: 產生', () => {
   const abc = 'X:1\nK:C\nP:A\nCDEF|\nw:一 二 三 四\n';
   assert.deepEqual(song_slide_lyrics({ abc, slides: '[主歌 = A1]\n一二三四\n順序: 主歌' }), {
-    from: 'cell', order: ['主歌'], has_parts: true, sections: [section('主歌', [['一二三四']], 'A1')],
+    from: 'cell', order: ['主歌'], sections: [section('主歌', [['一二三四']], 'A1')],
+    score_has_lyrics: true, score_has_parts: true, cell_has_headers: true,
   });
   for (const slides of [null, undefined, '', ' \n '])
     assert.deepEqual(song_slide_lyrics({ abc, slides }), {
-      from: 'abc', order: null, has_parts: true, sections: [section('A1', [['一二三四']])],
+      from: 'abc', order: null, sections: [section('A1', [['一二三四']])],
+      score_has_lyrics: true, score_has_parts: true, cell_has_headers: null,
     });
-  assert.equal(song_slide_lyrics({ abc: 'X:1\nK:C\nC|\nw:一\n' }).has_parts, false);
+  assert.equal(song_slide_lyrics({ abc: 'X:1\nK:C\nC|\nw:一\n' }).score_has_parts, false);
+  assert.equal(song_slide_lyrics({ abc, slides: '一\n二' }).cell_has_headers, false);
 });
 
-test('sections_text：一行一句，段落之間和段與段之間空一行，不放段名', () => {
-  assert.equal(sections_text([
-    section('A', [['一', '二'], ['三']]),
-    section('間奏', []),
-    section('B', [['四']]),
-  ]), '一\n二\n\n三\n\n四');
-  assert.equal(sections_text([]), '');
+test('lyrics_messages：自動抽出才寫來源；缺少段落標記各一則，前面加 ⚠', () => {
+  const lyrics = (o) => song_slide_lyrics(o);
+  const parts = 'X:1\nK:C\nP:A\nC|\nw:一\n';
+  const no_parts = 'X:1\nK:C\nC|\nw:一\n';
+  assert.deepEqual(lyrics_messages(lyrics({ abc: parts })), ['從歌譜中自動抽出']);
+  assert.deepEqual(lyrics_messages(lyrics({ abc: no_parts })), ['從歌譜中自動抽出', '⚠ 歌譜缺少段落標記（P:）']);
+  assert.deepEqual(lyrics_messages(lyrics({ abc: parts, slides: '[A]\n一' })), []);
+  assert.deepEqual(lyrics_messages(lyrics({ abc: no_parts, slides: '一' })), ['⚠ 歌譜缺少段落標記（P:）', '⚠ 投影片欄缺少段落標記（[段名]）']);
+  // 沒有歌詞：譜上沒有 w: 就不提醒段落標記
+  assert.deepEqual(lyrics_messages(lyrics({ abc: 'X:1\nK:C\nC|\n' })), ['這首歌沒有歌詞']);
+});
+
+test('lines_text：只放勾選的行；同一段落換行，換段落或換段時空一行，不放段名', () => {
+  const sections = [section('A', [['一', '二', '三'], ['四']]), section('間奏', []), section('B', [['五']])];
+  assert.equal(lines_text(sections), '一\n二\n三\n\n四\n\n五');
+  const picked = new Set(['0.0.0', '0.0.2', '2.0.0']);
+  assert.equal(lines_text(sections, (s, p, l) => picked.has(`${s}.${p}.${l}`)), '一\n三\n\n五');
+  assert.equal(lines_text(sections, () => false), '');
 });

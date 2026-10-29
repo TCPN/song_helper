@@ -5,7 +5,7 @@
 ## 工作方式
 
 - 改程式前後都跑 `npm test`（`node --test` 單元測試 + Playwright E2E）。目前的測試是重構的安全網，先綠燈才能動程式。
-- 網址 hash（`#song_id=…&transpose=…`）是對外契約，格式與行為不可無故改變。
+- 網址 hash（`#song_id=…&transpose=…&mode=lyrics`）是對外契約，格式與行為不可無故改變。
 - 標示「現況」的測試記錄的是目前行為，改行為時連同測試一起改，並在 PR 說明裡講清楚。
 - `known-issues.spec.js` 裡的 `test.fail()` 是待辦清單：修好一個，就刪掉它的 `test.fail()`，讓它變成一般回歸測試。
 - 用 `claude/…` 開頭的分支加 PR，PR 目標是 `master`（除非另有說明），不直接推 `master`。
