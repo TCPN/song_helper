@@ -38,6 +38,7 @@ export function refresh_lyrics() {
   shown_key = key;
   var lyrics = song_slide_lyrics(song);
   shown_sections = lyrics.sections;
+  document.querySelector('#lyrics_title').textContent = song.name || '';
   document.querySelector('#lyrics_messages').replaceChildren(...lyrics_messages(lyrics).map(({ type, text }) => {
     var li = document.createElement('li');
     li.className = 'lyrics-message ' + type;
@@ -224,7 +225,6 @@ export function setup_lyrics_view() {
     update_checks();
   });
   var buttons = [['#lyrics_select_all', ()=>{ var lines = line_elements(); select_lines(lines[0], lines[lines.length - 1]); }],
-    ['#lyrics_select_none', ()=>{ select_lines(null); }],
     ['#lyrics_copy', copy_selected]];
   for (const [id, action] of buttons) {
     var button = document.querySelector(id);

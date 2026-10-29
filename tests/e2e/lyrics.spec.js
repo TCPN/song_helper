@@ -157,7 +157,7 @@ test.describe('歌詞檢視', () => {
     await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 2 行');
   });
 
-  test('沒有勾選框；段名不能被選取。點段名選取整段，已經選取整段時取消；全選、全不選', async ({ app }) => {
+  test('沒有勾選框；段名不能被選取。點段名選取整段，已經選取整段時取消；全選（沒有全不選）', async ({ app }) => {
     await app.goto('#song_id=11&mode=lyrics');
     await expect(app.page.locator('#lyrics_view input')).toHaveCount(0);
     expect(await names(app).first().evaluate((n) => getComputedStyle(n).userSelect)).toBe('none');
@@ -175,7 +175,9 @@ test.describe('歌詞檢視', () => {
     await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 4 行');
     expect(await clipboard(app)).toBe('一二三四\n甲乙丙丁\n\n五六七八\n子丑寅卯');
 
-    await app.page.locator('#lyrics_select_none').click();
+    await expect(app.page.locator('#lyrics_select_none')).toHaveCount(0);
+    await names(app).nth(1).click();
+    await names(app).nth(1).click();
     expect(await selection(app)).toBe('');
     await expect(app.page.locator('#lyrics_copy')).toHaveAttribute('aria-disabled', 'true');
   });
@@ -214,6 +216,35 @@ test.describe('歌詞檢視', () => {
       return r.getBoundingClientRect().left;
     });
     expect(message_left).toBeCloseTo(line_text_left, 0);
+  });
+
+  test('歌名在歌詞前面、訊息在歌詞後面；段和段之間空 0.5em，最後一段後面不空；歌詞的空白寬一點', async ({ app }) => {
+    await app.goto('#song_id=11&mode=lyrics');
+    await expect(app.page.locator('#lyrics_title')).toHaveText('沒分段的歌');
+    const order = await view(app).evaluate((v) => [...v.children].map((c) => c.id || c.className));
+    expect(order.indexOf('lyrics_title')).toBeLessThan(order.indexOf('lyrics_sections'));
+    expect(order.indexOf('lyrics_sections')).toBeLessThan(order.indexOf('lyrics_messages'));
+    await expect(messages(app)).toHaveCount(2);
+    const margins = await app.page.locator('#lyrics_sections .lyrics-section').evaluateAll((ss) => ss.map((s) => {
+      const st = getComputedStyle(s);
+      return parseFloat(st.marginBottom) / parseFloat(st.fontSize);
+    }));
+    expect(margins).toEqual([0.5, 0]);
+    expect(await lines(app).first().evaluate((l) => parseFloat(getComputedStyle(l).wordSpacing) / parseFloat(getComputedStyle(l).fontSize))).toBeCloseTo(0.5);
+    // 換歌時歌名跟著換
+    await app.goto('#song_id=12&mode=lyrics');
+    await expect(app.page.locator('#lyrics_title')).toHaveText('有投影片欄的歌');
+  });
+
+  test('列印時只印歌名和歌詞：不印全選／複製等按鈕和訊息', async ({ app }) => {
+    await app.goto('#song_id=11&mode=lyrics');
+    await app.page.emulateMedia({ media: 'print' });
+    await expect(app.page.locator('#lyrics_title')).toBeVisible();
+    await expect(lines(app).first()).toBeVisible();
+    await expect(app.page.locator('.lyrics-actions')).toBeHidden();
+    await expect(app.page.locator('#lyrics_messages')).toBeHidden();
+    await app.page.emulateMedia({ media: 'screen' });
+    await expect(app.page.locator('.lyrics-actions')).toBeVisible();
   });
 
   test('沒有歌詞的歌：沒有段，訊息說沒有歌詞', async ({ app }) => {

@@ -732,6 +732,17 @@ table#song_list a#wish_link {
 		display: none !important;
 	}
 
+	/* 歌詞檢視：只印歌名和歌詞，不印全選／複製等按鈕和訊息，也不印看不見的譜紙 */
+	.lyrics-mode #score_page, .lyrics-actions, .lyrics-messages {
+		display: none !important;
+	}
+
+	#lyrics_view {
+		width: 100%;
+		margin: 0;
+		padding: 0;
+	}
+
 	#score_popup_bg {
 		top: 0;
 	}
@@ -1016,8 +1027,8 @@ button.popup-window-close:hover {
 /* 訊息一則一行，小字、不粗體、不能選取；前面是 icon（js/lyrics-view.js 的 message_icon） */
 .lyrics-messages {
 	list-style: none;
-	/* 和下面的歌詞之間空大約一行；左邊和歌詞的字對齊（.lyrics-line 的 0.4em padding，訊息的字是 0.8em） */
-	margin: 0.6em 0 1em;
+	/* 放在歌詞後面，和歌詞之間空大約一行；左邊和歌詞的字對齊（.lyrics-line 的 0.4em padding，訊息的字是 0.8em） */
+	margin: 1em 0 0;
 	padding: 0 0 0 calc(0.4em / 0.8);
 	font-size: 0.8em;
 	font-weight: normal;
@@ -1038,20 +1049,36 @@ button.popup-window-close:hover {
 	display: none;
 }
 
+/* 歌名：放在歌詞前面，左邊和歌詞的字對齊（字是 1.2em，所以 0.4em 除以 1.2） */
+.lyrics-title {
+	font-size: 1.2em;
+	margin: 0.8em 0 0.2em;
+	padding: 0 0 0 calc(0.4em / 1.2);
+}
+
+.lyrics-title:empty {
+	display: none;
+}
+
+/* 段和段之間空 0.5em（最後一段後面不空） */
 .lyrics-section {
 	padding: 0;
 }
 
+.lyrics-section:not(:last-child) {
+	margin-bottom: 0.5em;
+}
+
 /* 段名：小字、淡色、不粗體，包一個圓角邊框；點了整段全選／取消。
-   左邊緣對齊歌詞的字（.lyrics-line 左邊有 0.4em 的 padding，段名的字比較小，所以除以 0.85） */
+   左邊緣對齊歌詞的字（.lyrics-line 左邊有 0.4em 的 padding，段名的字是 0.6em，所以除以 0.6） */
 .lyrics-name {
 	display: inline-block;
-	font-size: 0.85em;
+	font-size: 0.6em;
 	color: #888;
 	border: 1px solid #bbb;
 	border-radius: 4px;
 	padding: 0 0.4em;
-	margin: 0.5em 0 0.5em calc(0.4em / 0.85);
+	margin: 0.5em 0 0.5em calc(0.4em / 0.6);
 	font-family: ui-monospace, Menlo, Consolas, monospace;
 	user-select: none;
 }
@@ -1061,8 +1088,10 @@ button.popup-window-close:hover {
 	margin: 0;
 }
 
+/* 歌詞裡的空白在畫面上寬一點（word-spacing 只影響顯示，複製出來還是一個空白） */
 .lyrics-line {
 	line-height: 1.8;
+	word-spacing: 0.5em;
 	padding: 0 0.4em;
 	overflow-wrap: anywhere;
 }
