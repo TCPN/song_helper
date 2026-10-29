@@ -82,6 +82,16 @@
 `songs.json` 含整份歌譜與歌詞，而 repo 是公開的，所以它列在 `.gitignore`，**不要 commit**。
 部署出去的 `songs.json` 任何人都能下載（內容和網站上看得到的一樣）；快照不會自己更新，部署前請重新執行一次 `npm run update-songs`。
 
+### 檢查歌曲資料
+
+`npm run check-songs` 會抓試算表，列出需要整理的歌（只列編號與歌名）。檢查項目定義在 `js/song-checks.js` 的 `SONG_CHECKS`，要加新的檢查就在那裡加一項。
+
+- `--snapshot songs.json`：改讀 `update-songs` 產生的快照（連不到試算表時）
+- `--only no-parts`：只跑指定的檢查
+- `--json`：輸出 JSON，方便程式或 agent 讀
+
+目前的檢查：`no-parts`：有歌詞（`w:`）但譜裡沒有 `P:` 段落標記的歌（投影片歌詞會整首當一段）。
+
 ## 網址 hash（對外介面）
 
 使用者可能已把網址存成書籤，所以這個格式要保持相容：

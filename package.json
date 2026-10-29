@@ -9,7 +9,8 @@
     "test:unit": "node --test \"tests/unit/*.test.mjs\"",
     "test:e2e": "playwright test",
     "test:headed": "playwright test --headed",
-    "update-songs": "node scripts/update-songs.mjs"
+    "update-songs": "node scripts/update-songs.mjs",
+    "check-songs": "node scripts/check-songs.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.56.0"
