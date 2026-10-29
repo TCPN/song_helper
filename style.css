@@ -1031,11 +1031,14 @@ button.popup-window-close:hover {
 	padding: 0.5em 0 0;
 }
 
-/* 段名：小字、淡色、不粗體；點了整段全選／取消 */
+/* 段名：小字、淡色、不粗體，包一個圓角邊框；點了整段全選／取消 */
 .lyrics-name {
 	display: inline-block;
 	font-size: 0.85em;
 	color: #888;
+	border: 1px solid #bbb;
+	border-radius: 4px;
+	padding: 0 0.4em;
 	cursor: pointer;
 	user-select: none;
 }
@@ -1055,14 +1058,12 @@ button.popup-window-close:hover {
 	gap: 0.4em;
 	min-height: 1.8em;
 	line-height: 1.4;
-	padding: 0 0.3em;
+	padding: 0 0.4em;
+	/* 點一行是選取／取消，不要順便選到文字 */
+	user-select: none;
 	border-radius: 0.2em;
 	cursor: pointer;
 	overflow-wrap: anywhere;
-}
-
-.lyrics-line input {
-	margin: 0;
 }
 
 .lyrics-line.selected {
