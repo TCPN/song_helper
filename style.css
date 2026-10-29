@@ -1016,7 +1016,8 @@ button.popup-window-close:hover {
 /* 訊息一則一行，小字、不粗體、不能選取；前面是 icon（js/lyrics-view.js 的 message_icon） */
 .lyrics-messages {
 	list-style: none;
-	margin: 0.6em 0 0;
+	/* 和下面的歌詞之間空大約一行 */
+	margin: 0.6em 0 1em;
 	padding: 0;
 	font-size: 0.8em;
 	font-weight: normal;
@@ -1024,16 +1025,13 @@ button.popup-window-close:hover {
 	user-select: none;
 }
 
-.lyrics-message {
-	display: flex;
-	align-items: center;
-	gap: 0.35em;
-}
-
+/* icon 是一般的行內元素，底部對齊文字的 baseline 下方一點（和字的下緣齊） */
 .lyrics-message-icon {
-	flex: none;
-	width: 1.15em;
-	height: 1.15em;
+	display: inline-block;
+	width: 1.1em;
+	height: 1.1em;
+	vertical-align: -0.18em;
+	margin-right: 0.35em;
 }
 
 .lyrics-messages:empty {
@@ -1041,7 +1039,7 @@ button.popup-window-close:hover {
 }
 
 .lyrics-section {
-	padding: 0.5em 0 0;
+	padding: 0;
 }
 
 /* 段名：小字、淡色、不粗體，包一個圓角邊框；點了整段全選／取消。
@@ -1053,7 +1051,8 @@ button.popup-window-close:hover {
 	border: 1px solid #bbb;
 	border-radius: 4px;
 	padding: 0 0.4em;
-	margin-left: calc(0.4em / 0.85);
+	margin: 0.5em 0 0.5em calc(0.4em / 0.85);
+	font-family: ui-monospace, Menlo, Consolas, monospace;
 	user-select: none;
 }
 
