@@ -144,30 +144,19 @@ async function copy_selected() {
   var { count, text } = selected_text();
   if (!text)
     return;
-  var copied = true;
   try {
     await navigator.clipboard.writeText(text);
+    set_status(`已複製 ${count} 行`);
   } catch (e) {
-    // 沒有權限或不是 https（學校網頁用 http 開時）時，改用選取文字＋execCommand
-    copied = copy_with_textarea(text);
+    // 沒有權限或不是 https（學校網頁用 http 開時）時，改用 execCommand 複製目前選取的文字：
+    // 會觸發下面的 copy 事件，一樣整理成純文字，選取也留著
+    var copied = false;
+    try {
+      copied = document.execCommand('copy');
+    } catch (e) {}
+    if (!copied)
+      set_status('無法複製，請用 Ctrl+C 或手機的「複製」');
   }
-  set_status(copied ? `已複製 ${count} 行` : '無法複製，請手動選取文字');
-}
-
-function copy_with_textarea(text) {
-  var area = document.createElement('textarea');
-  area.value = text;
-  area.setAttribute('readonly', '');
-  area.style.position = 'fixed';
-  area.style.opacity = '0';
-  document.body.appendChild(area);
-  area.select();
-  var ok = false;
-  try {
-    ok = document.execCommand('copy');
-  } catch (e) {}
-  area.remove();
-  return ok;
 }
 
 // 註冊工具列的切換按鈕與歌詞檢視的事件

@@ -126,6 +126,19 @@ test.describe('歌詞檢視', () => {
     expect(await selection(app)).not.toBe('');
   });
 
+  test('剪貼簿 API 不能用時（例如 http），「複製」改用 execCommand，一樣整理成純文字，選取留著', async ({ app }) => {
+    await app.goto('#song_id=11&mode=lyrics');
+    await app.page.evaluate(() => {
+      navigator.clipboard.writeText = () => Promise.reject(new Error('not allowed'));
+    });
+    await select_text(app, 1, 0, 2);
+    await app.page.locator('#lyrics_copy').click();
+    await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 2 行');
+    expect(await clipboard(app)).toBe('甲乙丙丁\n\n五六七八');
+    expect(await selection(app)).toMatch(/^甲乙丙丁\s+五六七八$/);
+    await expect(app.page.locator('#lyrics_copy')).toHaveAttribute('aria-disabled', 'false');
+  });
+
   test('用鍵盤複製（Ctrl+C）也整理成同樣的純文字', async ({ app }) => {
     await app.goto('#song_id=11&mode=lyrics');
     await select_text(app, 1, 0, 2);
