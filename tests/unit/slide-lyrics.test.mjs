@@ -189,4 +189,6 @@ test('lines_text：只放勾選的行；同一段落換行，換段落或換段�
   const picked = new Set(['0.0.0', '0.0.2', '2.0.0']);
   assert.equal(lines_text(sections, (s, p, l) => picked.has(`${s}.${p}.${l}`)), '一\n三\n\n五');
   assert.equal(lines_text(sections, () => false), '');
+  // 傳回字串時用它代替整行（只選到一部分）
+  assert.equal(lines_text(sections, (s, p, l) => (s == 0 && p == 0 && l == 2 ? '三' : s == 0 && p == 1 ? '四' : false)), '三\n\n四');
 });

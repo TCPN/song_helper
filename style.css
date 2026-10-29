@@ -1053,19 +1053,11 @@ button.popup-window-close:hover {
 }
 
 .lyrics-line {
-	display: flex;
-	align-items: center;
-	gap: 0.4em;
-	min-height: 1.8em;
-	line-height: 1.4;
+	line-height: 1.8;
 	padding: 0 0.4em;
-	/* 點一行是選取／取消，不要順便選到文字 */
-	user-select: none;
-	border-radius: 0.2em;
-	cursor: pointer;
 	overflow-wrap: anywhere;
 }
 
-.lyrics-line.selected {
-	background: #dbe7f3;
+.lyrics-actions {
+	user-select: none;
 }

@@ -285,15 +285,17 @@ export function lyrics_messages(lyrics) {
 }
 
 // 複製用的純文字：selected(段, 段落, 行) 為 true 的行，一行一句；換段落或換段時空一行；不放段名
+// selected 傳回字串時用那個字串代替整行（只選到一行的一部分）
 export function lines_text(sections, selected = () => true) {
   var text = '';
   var last = null;
   sections.forEach((section, s) => section.paragraphs.forEach((paragraph, p) => paragraph.forEach((line, l) => {
-    if (!selected(s, p, l))
+    var pick = selected(s, p, l);
+    if (!pick)
       return;
     if (last)
       text += last.s == s && last.p == p ? '\n' : '\n\n';
-    text += line;
+    text += typeof pick == 'string' ? pick : line;
     last = { s, p };
   })));
   return text;

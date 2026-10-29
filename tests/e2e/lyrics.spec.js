@@ -31,7 +31,20 @@ test.describe('歌詞檢視', () => {
   const lines = (app) => app.page.locator('#lyrics_sections .lyrics-line');
   const messages = (app) => app.page.locator('#lyrics_messages li');
   const toggle = (app) => app.page.locator('#score_popup_top_bar > .view-mode-button');
-  const line_at = (app, i) => lines(app).nth(i);
+  // 用一般的文字選取：從第 from 行的第 from_offset 個字到第 to 行的第 to_offset 個字（省略時到行尾）
+  async function select_text(app, from, from_offset, to, to_offset) {
+    await app.page.evaluate(([from, from_offset, to, to_offset]) => {
+      const lines = document.querySelectorAll('#lyrics_sections .lyrics-line');
+      const start = lines[from].firstChild;
+      const end = lines[to].firstChild;
+      const range = document.createRange();
+      range.setStart(start, from_offset);
+      range.setEnd(end, to_offset == null ? end.length : to_offset);
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+    }, [from, from_offset, to, to_offset]);
+  }
+  const selection = (app) => app.page.evaluate(() => getSelection().toString());
 
   async function clipboard(app) {
     return app.page.evaluate(() => navigator.clipboard.readText());
@@ -67,7 +80,7 @@ test.describe('歌詞檢視', () => {
     await expect(app.page.locator('#score_page')).toBeVisible();
   });
 
-  test('有 P: 的歌：段名是段落＋第幾行 w:，每一行一個選取單位；訊息只有來源', async ({ app }) => {
+  test('有 P: 的歌：段名是段落＋第幾行 w:，每一行一個 .lyrics-line；訊息只有來源', async ({ app }) => {
     await app.goto('#song_id=10&mode=lyrics');
     await expect(names(app)).toHaveText(['A1', 'A2', 'B1']);
     await expect(lines(app)).toHaveText(['一二三四五六七八', '甲乙丙丁戊己庚辛', '副']);
@@ -99,50 +112,48 @@ test.describe('歌詞檢視', () => {
     await expect(names(app)).toHaveText(['無段名']);
   });
 
-  test('選取的行複製成純文字：同一段落換行，換段落或換段空一行，不含段名', async ({ app }) => {
+  test('用一般的文字選取：按「複製」整理成純文字，換段落或換段空一行，不含段名', async ({ app }) => {
     await app.goto('#song_id=12&mode=lyrics');
-    // 預設都沒勾，不能複製
+    // 沒有選取時不能複製
     await expect(app.page.locator('#lyrics_copy')).toHaveAttribute('aria-disabled', 'true');
-    await line_at(app, 0).click();
-    await line_at(app, 2).click();
-    await line_at(app, 3).click();
-    // 再點一次取消
-    await line_at(app, 3).click();
-    await expect(line_at(app, 3)).not.toHaveClass(/selected/);
-    await line_at(app, 3).click();
-    await expect(lines(app).nth(0)).toHaveClass(/selected/);
+    // 從「第二句」選到「副歌一」（跨過段內分段和段名）
+    await select_text(app, 0, 4, 3, 3);
+    await expect(app.page.locator('#lyrics_copy')).toHaveAttribute('aria-disabled', 'false');
     await app.page.locator('#lyrics_copy').click();
-    await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 3 行');
-    expect(await clipboard(app)).toBe('第一句 第二句\n\n第四句\n\n副歌一句');
+    await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 4 行');
+    expect(await clipboard(app)).toBe('第二句\n第三句\n\n第四句\n\n副歌一');
+    // 按按鈕不會取消選取
+    expect(await selection(app)).not.toBe('');
   });
 
-  test('沒有勾選框，點一行選取；點段名整段全選，已經全選時全部取消；全選、全不選', async ({ app }) => {
+  test('用鍵盤複製（Ctrl+C）也整理成同樣的純文字', async ({ app }) => {
     await app.goto('#song_id=11&mode=lyrics');
-    const head = (i) => names(app).nth(i);
+    await select_text(app, 1, 0, 2);
+    await app.page.keyboard.press('ControlOrMeta+c');
+    expect(await clipboard(app)).toBe('甲乙丙丁\n\n五六七八');
+    await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 2 行');
+  });
+
+  test('沒有勾選框；段名不能被選取。點段名選取整段，已經選取整段時取消；全選、全不選', async ({ app }) => {
+    await app.goto('#song_id=11&mode=lyrics');
     await expect(app.page.locator('#lyrics_view input')).toHaveCount(0);
-    await head(0).click();
-    await expect(line_at(app, 0)).toHaveAttribute('aria-checked', 'true');
-    await expect(line_at(app, 1)).toHaveAttribute('aria-checked', 'true');
-    await expect(line_at(app, 2)).toHaveAttribute('aria-checked', 'false');
-    // 部分勾選時點段名：補成全選
-    await line_at(app, 1).click();
-    await expect(line_at(app, 1)).toHaveAttribute('aria-checked', 'false');
-    await head(0).click();
-    await expect(line_at(app, 1)).toHaveAttribute('aria-checked', 'true');
-    // 已經全選：全部取消
-    await head(0).click();
-    await expect(line_at(app, 0)).toHaveAttribute('aria-checked', 'false');
-    await expect(line_at(app, 1)).toHaveAttribute('aria-checked', 'false');
+    expect(await names(app).first().evaluate((n) => getComputedStyle(n).userSelect)).toBe('none');
+    await names(app).nth(1).click();
+    expect(await selection(app)).toMatch(/^五六七八\s+子丑寅卯$/);
+    await names(app).nth(1).click();
+    expect(await selection(app)).toBe('');
+    // 只選了一部分時點段名：選取整段
+    await select_text(app, 0, 1, 0, 2);
+    await names(app).nth(0).click();
+    expect(await selection(app)).toMatch(/^一二三四\s+甲乙丙丁$/);
 
     await app.page.locator('#lyrics_select_all').click();
-    for (let i = 0; i < 4; i++)
-      await expect(line_at(app, i)).toHaveAttribute('aria-checked', 'true');
     await app.page.locator('#lyrics_copy').click();
     await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 4 行');
     expect(await clipboard(app)).toBe('一二三四\n甲乙丙丁\n\n五六七八\n子丑寅卯');
 
     await app.page.locator('#lyrics_select_none').click();
-    await expect(line_at(app, 0)).toHaveAttribute('aria-checked', 'false');
+    expect(await selection(app)).toBe('');
     await expect(app.page.locator('#lyrics_copy')).toHaveAttribute('aria-disabled', 'true');
   });
 

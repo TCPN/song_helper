@@ -1,5 +1,5 @@
 // 歌詞檢視：一首歌的另一種檢視方式（網址 mode=lyrics）。列出各段歌詞（前面標段名），
-// 每一節的每一行是一個選取單位（點那一行），選取後複製成純文字；工具列的「檢視歌詞」／「檢視歌譜」切換
+// 用一般的文字選取選歌詞，複製時整理成純文字（不含段名，換段落或換段時空一行）；工具列的「檢視歌詞」／「檢視歌譜」切換
 import { state } from './state.js';
 import { song_slide_lyrics, lyrics_messages, lines_text } from './slide-lyrics.js';
 import { update_hash } from './route.js';
@@ -9,7 +9,7 @@ const CONTAINER = '#score_popup_container';
 
 // 目前列出的段（每一行的 data-s／data-p／data-l 是在這裡的位置）
 var shown_sections = [];
-// 列出的是哪首歌的哪份歌詞；資料沒變時重畫不清掉選取
+// 列出的是哪首歌的哪份歌詞；資料沒變時不重畫，選取的文字留著
 var shown_key = null;
 
 export function is_lyrics_mode() {
@@ -58,7 +58,7 @@ export function reset_lyrics_view() {
 function section_element(section, s) {
   var element = document.createElement('section');
   element.className = 'lyrics-section';
-  // 段名：點了整段全選；已經全選時全部取消
+  // 段名：不會被選取、不會被複製；點了選取整段，已經選取整段時取消
   var head = document.createElement('span');
   head.className = 'lyrics-name';
   head.dataset.section = s;
@@ -71,15 +71,10 @@ function section_element(section, s) {
     var block = document.createElement('div');
     block.className = 'lyrics-paragraph';
     paragraph.forEach((line, l) => {
-      // 每一行是一個選取單位：點了選取／取消（沒有勾選框）
       var row = document.createElement('div');
       row.className = 'lyrics-line';
       Object.assign(row.dataset, { s, p, l });
-      row.setAttribute('role', 'checkbox');
-      row.setAttribute('aria-checked', 'false');
-      row.tabIndex = 0;
       row.textContent = line;
-      click_on_enter(row);
       block.appendChild(row);
     });
     element.appendChild(block);
@@ -92,44 +87,63 @@ function line_elements(section) {
   return [...document.querySelectorAll(`#lyrics_sections .lyrics-line${scope}`)];
 }
 
-function selected(line) {
-  return line.getAttribute('aria-checked') == 'true';
+// 目前選取的文字在每一行選到的部分：Map('段.段落.行' → 文字)；沒有選到歌詞時是空的
+function selected_parts() {
+  var parts = new Map();
+  var selection = document.getSelection();
+  if (!selection || selection.rangeCount == 0 || selection.isCollapsed)
+    return parts;
+  var range = selection.getRangeAt(0);
+  for (const line of line_elements()) {
+    if (!range.intersectsNode(line))
+      continue;
+    var part = document.createRange();
+    part.selectNodeContents(line);
+    if (range.compareBoundaryPoints(Range.START_TO_START, part) > 0)
+      part.setStart(range.startContainer, range.startOffset);
+    if (range.compareBoundaryPoints(Range.END_TO_END, part) < 0)
+      part.setEnd(range.endContainer, range.endOffset);
+    var text = part.toString().trim();
+    if (text)
+      parts.set(`${line.dataset.s}.${line.dataset.p}.${line.dataset.l}`, text);
+  }
+  return parts;
 }
 
-function set_selected(line, value) {
-  line.setAttribute('aria-checked', value);
-  line.classList.toggle('selected', value);
+// 選取的歌詞 → 複製用的純文字（js/slide-lyrics.js 的 lines_text：只選到一行的一部分時只放那部分）
+function selected_text() {
+  var parts = selected_parts();
+  return { count: parts.size, text: lines_text(shown_sections, (s, p, l) => parts.get(`${s}.${p}.${l}`) || false) };
 }
 
-function is_selected(s, p, l) {
-  var line = document.querySelector(`#lyrics_sections .lyrics-line[data-s="${s}"][data-p="${p}"][data-l="${l}"]`);
-  return !!(line && selected(line));
+// 選取從 first 這一行的開頭到 last 這一行的結尾；沒有行時取消選取
+function select_lines(first, last) {
+  var selection = document.getSelection();
+  selection.removeAllRanges();
+  if (!first)
+    return;
+  var range = document.createRange();
+  range.setStart(first, 0);
+  range.setEnd(last, last.childNodes.length);
+  selection.addRange(range);
 }
 
 function set_status(text) {
   document.querySelector('#lyrics_status').textContent = text;
 }
 
-// 有選取的行時才能複製
+// 有選取歌詞時才能複製
 function update_checks() {
-  var none = !line_elements().some(selected);
+  var none = selected_parts().size == 0;
   var copy = document.querySelector('#lyrics_copy');
   copy.classList.toggle('disabled', none);
   copy.setAttribute('aria-disabled', none);
 }
 
-function set_all(value) {
-  for (const line of line_elements())
-    set_selected(line, value);
-  set_status('');
-  update_checks();
-}
-
 async function copy_selected() {
-  var text = lines_text(shown_sections, is_selected);
+  var { count, text } = selected_text();
   if (!text)
     return;
-  var count = line_elements().filter(selected).length;
   var copied = true;
   try {
     await navigator.clipboard.writeText(text);
@@ -163,29 +177,45 @@ export function setup_lyrics_view() {
     button.addEventListener('click', ()=>{ update_hash('mode', is_lyrics_mode() ? undefined : 'lyrics'); });
     click_on_enter(button);
   }
-  // 點一行：選取／取消；點段名：整段全選，已經全選時全部取消
-  document.querySelector('#lyrics_sections').addEventListener('click', (event)=>{
-    var line = event.target.closest('.lyrics-line');
+  var sections = document.querySelector('#lyrics_sections');
+  // 按段名時不要先把選取的文字取消掉（才判斷得出是不是已經選了整段）
+  sections.addEventListener('mousedown', (event)=>{
+    if (event.target.closest('.lyrics-name'))
+      event.preventDefault();
+  });
+  // 點段名：選取整段，已經選取整段時取消
+  sections.addEventListener('click', (event)=>{
     var head = event.target.closest('.lyrics-name');
-    if (line) {
-      set_selected(line, !selected(line));
-    } else if (head) {
-      var lines = line_elements(head.dataset.section);
-      var all = lines.every(selected);
-      for (const l of lines)
-        set_selected(l, !all);
-    } else {
+    if (!head)
       return;
-    }
+    var lines = line_elements(head.dataset.section);
+    var parts = selected_parts();
+    var whole = lines.length > 0 && parts.size == lines.length && lines.every((l) => parts.get(`${l.dataset.s}.${l.dataset.p}.${l.dataset.l}`) == l.textContent.trim());
+    select_lines(whole ? null : lines[0], lines[lines.length - 1]);
+  });
+  // 用 Ctrl+C（或手機的「複製」）複製選取的歌詞時，也整理成純文字：不含段名，換段落或換段時空一行
+  sections.addEventListener('copy', (event)=>{
+    var { count, text } = selected_text();
+    if (!text)
+      return;
+    event.clipboardData.setData('text/plain', text);
+    event.preventDefault();
+    set_status(`已複製 ${count} 行`);
+  });
+  document.addEventListener('selectionchange', ()=>{
+    if (!is_lyrics_mode())
+      return;
     set_status('');
     update_checks();
   });
-  for (const [id, checked] of [['#lyrics_select_all', true], ['#lyrics_select_none', false]]) {
+  var buttons = [['#lyrics_select_all', ()=>{ var lines = line_elements(); select_lines(lines[0], lines[lines.length - 1]); }],
+    ['#lyrics_select_none', ()=>{ select_lines(null); }],
+    ['#lyrics_copy', copy_selected]];
+  for (const [id, action] of buttons) {
     var button = document.querySelector(id);
-    button.addEventListener('click', ()=>{ set_all(checked); });
+    // 按按鈕時不要把選取的文字取消掉
+    button.addEventListener('mousedown', (event)=>{ event.preventDefault(); });
+    button.addEventListener('click', action);
     click_on_enter(button);
   }
-  var copy = document.querySelector('#lyrics_copy');
-  copy.addEventListener('click', copy_selected);
-  click_on_enter(copy);
 }
