@@ -65,9 +65,14 @@ function checkbox(dataset) {
 function section_element(section, s) {
   var element = document.createElement('section');
   element.className = 'lyrics-section';
-  var head = document.createElement('label');
+  // 段名：點了整段全選；已經全選時全部取消
+  var head = document.createElement('span');
   head.className = 'lyrics-name';
-  head.append(checkbox({ section: s }), section.name || '（無段名）');
+  head.dataset.section = s;
+  head.setAttribute('role', 'button');
+  head.tabIndex = 0;
+  head.textContent = '[' + (section.name || '無段名') + ']';
+  click_on_enter(head);
   element.appendChild(head);
   section.paragraphs.forEach((paragraph, p) => {
     var block = document.createElement('div');
@@ -99,15 +104,8 @@ function set_status(text) {
   document.querySelector('#lyrics_status').textContent = text;
 }
 
-// 段名的勾選框跟著那段的行（全勾、部分勾）；有勾選的行時才能複製
+// 有勾選的行時才能複製
 function update_checks() {
-  for (const head of document.querySelectorAll('#lyrics_sections input[data-section]')) {
-    var lines = line_checkboxes(head.dataset.section);
-    var checked = lines.filter((c) => c.checked).length;
-    head.checked = lines.length > 0 && checked == lines.length;
-    head.indeterminate = checked > 0 && checked < lines.length;
-    head.disabled = lines.length == 0;
-  }
   for (const line of line_checkboxes())
     line.closest('.lyrics-line').classList.toggle('selected', line.checked);
   var none = !line_checkboxes().some((c) => c.checked);
@@ -161,12 +159,20 @@ export function setup_lyrics_view() {
     button.addEventListener('click', ()=>{ update_hash('mode', is_lyrics_mode() ? undefined : 'lyrics'); });
     click_on_enter(button);
   }
-  document.querySelector('#lyrics_sections').addEventListener('change', (event)=>{
-    var target = event.target;
-    // 段名的勾選框：整段的行一起勾／取消
-    if (target.dataset.section !== undefined)
-      for (const c of line_checkboxes(target.dataset.section))
-        c.checked = target.checked;
+  var sections = document.querySelector('#lyrics_sections');
+  sections.addEventListener('change', ()=>{
+    set_status('');
+    update_checks();
+  });
+  // 點段名：整段全選，已經全選時全部取消
+  sections.addEventListener('click', (event)=>{
+    var head = event.target.closest('.lyrics-name');
+    if (!head)
+      return;
+    var lines = line_checkboxes(head.dataset.section);
+    var all = lines.every((c) => c.checked);
+    for (const c of lines)
+      c.checked = !all;
     set_status('');
     update_checks();
   });
