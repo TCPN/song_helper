@@ -1,0 +1,43 @@
+name: 更新 ws1
+
+# 在 Actions 頁面按「Run workflow」，把 ws1 的 song_helper 網站
+# （https://www.csie.ntu.edu.tw/~r04922053/song_helper/）更新到指定 branch 的最新 commit。
+# 只有對 repo 有寫入權限的人能按。需要的 secrets 由 scripts/ws1/setup-github-key.sh 設定；
+# 那把金鑰在 ws1 上只能執行 remote-update.sh。
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 要更新到哪個 branch（留空 = 上面「Use workflow from」選的 branch）
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: update-ws1
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 更新 ws1
+        env:
+          BRANCH: ${{ inputs.branch || github.ref_name }}
+          WS1_SSH_KEY: ${{ secrets.WS1_SSH_KEY }}
+          WS1_KNOWN_HOSTS: ${{ secrets.WS1_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$WS1_SSH_KEY" ] || [ -z "$WS1_KNOWN_HOSTS" ]; then
+            echo "::error::還沒設定 WS1_SSH_KEY / WS1_KNOWN_HOSTS，請先在自己的電腦執行 scripts/ws1/setup-github-key.sh"
+            exit 1
+          fi
+          echo "更新到 $BRANCH"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$WS1_SSH_KEY" > ~/.ssh/ws1
+          printf '%s\n' "$WS1_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/ws1
+          # 金鑰在 ws1 上被限定只能執行 remote-update.sh，送過去的字串就是 branch 名稱
+          ssh -T -i ~/.ssh/ws1 -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+            r04922053@ws1.csie.ntu.edu.tw "$BRANCH" | tee -a "$GITHUB_STEP_SUMMARY"

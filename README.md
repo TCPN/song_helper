@@ -99,6 +99,20 @@ npm run serve        # 靜態伺服器，預設 http://127.0.0.1:4173
 不想用 npm 的話，`python3 -m http.server` 之類任何靜態伺服器都可以。
 因為用了 ES modules，直接用 `file://` 開 `index.html` 會被瀏覽器擋下，一定要透過伺服器。
 
+## 更新 ws1 的測試站
+
+https://www.csie.ntu.edu.tw/~r04922053/song_helper/ 是 ws1 上 `~/htdocs/song_helper` 這個 git clone。
+把它切到某個 branch 在 GitHub 上的最新 commit 有兩種方式，都是跑 `scripts/ws1/remote-update.sh`
+（ws1 上有未提交的修改時不會更新；只動這個資料夾，不碰 `~/htdocs/score` 和 `songs.json`）：
+
+- **GitHub 按鈕**：到 [Actions →「更新 ws1」](https://github.com/TCPN/song_helper/actions/workflows/update-ws1.yml)
+  按 Run workflow，填 branch 名稱（留空就用「Use workflow from」選的 branch）。手機也能按。
+  第一次用之前，要在能 ssh 到 ws1 的電腦上執行一次 `scripts/ws1/setup-github-key.sh`：
+  它會在 ws1 裝好腳本、加一把只能執行這支腳本的金鑰，並設定 secrets `WS1_SSH_KEY`、`WS1_KNOWN_HOSTS`。
+  `remote-update.sh` 有改時再執行一次，ws1 上的那份才會跟著更新。
+- **自己的電腦**：`scripts/ws1/update.sh`（列出最近的 branch 讓你選）或 `scripts/ws1/update.sh <branch>`，
+  用自己的 ssh 帳號登入 ws1，ws1 上不用先裝任何東西。
+
 ## 測試
 
 `npm test` 會先跑單元測試再跑 E2E 測試，也可以分開跑：
