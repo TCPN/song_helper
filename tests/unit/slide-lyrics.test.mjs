@@ -235,3 +235,8 @@ test('map_lines：每一行套用函式，段名與段落結構不變', () => {
   assert.deepEqual(map_lines(sections, strip_spaces), [{ name: 'A1', source: 'abc', paragraphs: [['一二', '三'], ['四五']] }]);
   assert.deepEqual(sections[0].paragraphs[0], ['一 二', '三']);
 });
+
+test('sections_from_abc：w: 行尾的 \\ 是續行，下一行（有沒有 w: 都可以）接在後面，\\ 不是歌詞', () => {
+  const abc = 'X:1\nK:C\nCDEF|GABc|\nw:一 二 三 四 \\\n五 六 七 八\nc4|]\nw:九 \\\nw:十\n';
+  assert.deepEqual(sections_from_abc(abc), [section('Verse', [['一二三四五六七八', '九十']])]);
+});

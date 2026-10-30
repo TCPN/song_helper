@@ -213,10 +213,33 @@ export function w_line_text(w) {
   return slots_text(w_slots(w));
 }
 
+// w:／W: 行尾的 `\` 是續行：下一行接在這行後面（下一行可以有或沒有 w:），`\` 本身不是歌詞（abcjs 也這樣顯示）
+function join_lyric_continuations(lines) {
+  var joined = [];
+  var continuing = false;
+  for (const line of lines) {
+    var text = line;
+    if (continuing) {
+      var last = joined.length - 1;
+      var field = joined[last].slice(0, 2);
+      // 接著的那一行不用再寫 w:；有寫的話拿掉
+      text = text.replace(new RegExp('^' + field), '');
+      joined[last] += ' ' + text;
+    } else {
+      joined.push(text);
+    }
+    var current = joined[joined.length - 1];
+    continuing = /^[wW]:/.test(current) && /\\\s*$/.test(current);
+    if (continuing)
+      joined[joined.length - 1] = current.replace(/\\\s*$/, '');
+  }
+  return joined;
+}
+
 // ABC → 從 w: 產生的段（{ name, source, paragraphs } 的陣列）
 // 行中間的 [P:B]：這行 w: 從那個音符開始的字都算 B 段（依音符數對齊 w: 的音節）
 export function sections_from_abc(abc) {
-  var lines = String(abc || '').split(/\r?\n/);
+  var lines = join_lyric_continuations(String(abc || '').split(/\r?\n/));
   var k = lines.findIndex((line) => /^K:/.test(line));
   var parts = []; // 依出現順序：{ name, verses: [[行…]…] }；name 是 null 表示第一個 P: 之前（或沒有 P:）
   var current = null; // 目前的段名
