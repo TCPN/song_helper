@@ -297,7 +297,9 @@ export function lyrics_messages(lyrics) {
 
 // 「去除空格」：拿掉中文字旁邊的空格（半形、全形）；英文等兩個非中文字之間的空格留著，不然字會黏在一起
 export function strip_spaces(text) {
-  return String(text).replace(new RegExp(`[ \u3000]+(?=${CJK.source})|(?<=${CJK.source})[ \u3000]+`, 'g'), '');
+  // 不用 lookbehind（Safari 16.4 之前不支援）：看每段空格的前一個字和後一個字
+  return String(text).replace(/[ \u3000]+/g, (spaces, at, all) =>
+    CJK.test(all.charAt(at - 1)) || CJK.test(all.charAt(at + spaces.length)) ? '' : spaces);
 }
 
 // 每一行都套上 fn 的段（{ name, paragraphs }，其他欄位照舊）
