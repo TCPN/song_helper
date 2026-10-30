@@ -40,7 +40,7 @@ function run(cmd, args, options) {
 
 export function createSyncServer({ repoDir, token, updateScript }) {
   const git = (...args) => run('git', args, { cwd: repoDir });
-  let failures = [];
+  const failures = new Map(); // 來源 IP → 最近一分鐘密碼錯誤的時間
 
   async function listBranches() {
     const fetched = await git('fetch', '--quiet', '--prune', 'origin', '+refs/heads/*:refs/remotes/origin/*');
@@ -71,13 +71,17 @@ export function createSyncServer({ repoDir, token, updateScript }) {
   }
 
   function authorized(req) {
+    // 依來源分開計數，別人亂試不會把自己鎖住
+    const ip = req.socket.remoteAddress;
     const now = Date.now();
-    failures = failures.filter((t) => now - t < 60_000);
-    if (failures.length >= 10) return 'locked';
+    const recent = (failures.get(ip) ?? []).filter((t) => now - t < 60_000);
+    if (recent.length >= 10) return 'locked';
     const header = req.headers.authorization ?? '';
     const given = header.startsWith('Bearer ') ? header.slice(7) : '';
     if (given && sameSecret(given, token)) return 'ok';
-    failures.push(now);
+    recent.push(now);
+    failures.set(ip, recent);
+    if (failures.size > 1000) failures.clear();
     return 'no';
   }
 
@@ -91,13 +95,14 @@ export function createSyncServer({ repoDir, token, updateScript }) {
     res.end(type.startsWith('application/json') ? JSON.stringify(body) : body);
   }
 
+  // 讀不到合法的 JSON 時回 null（呼叫端回 400）
   async function readJson(req) {
     let raw = '';
     for await (const chunk of req) {
       raw += chunk;
-      if (raw.length > 10_000) throw new Error('too large');
+      if (raw.length > 10_000) { req.destroy(); return null; }
     }
-    return raw ? JSON.parse(raw) : {};
+    try { return raw ? JSON.parse(raw) : {}; } catch { return null; }
   }
 
   return createServer(async (req, res) => {
@@ -113,7 +118,9 @@ export function createSyncServer({ repoDir, token, updateScript }) {
       if (url.pathname === '/api/status') return send(res, 200, { head: await currentHead() });
       if (url.pathname === '/api/branches') return send(res, 200, await listBranches());
       if (url.pathname === '/api/sync') {
-        const { branch } = await readJson(req);
+        const body = await readJson(req);
+        if (!body) return send(res, 400, { error: '請求格式不對' });
+        const { branch } = body;
         const result = await sync(branch);
         return send(res, result.ok ? 200 : 400, { ...result, head: await currentHead() });
       }

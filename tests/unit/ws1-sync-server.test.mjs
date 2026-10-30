@@ -87,3 +87,8 @@ test('不存在或不合法的 branch 不會動到網站', async () => {
   }
   assert.equal(git(site, 'rev-parse', 'HEAD'), before);
 });
+
+test('請求內容不是 JSON 時回 400', async () => {
+  const res = await fetch(base + '/api/sync', { method: 'POST', headers: { Authorization: `Bearer ${TOKEN}` }, body: 'not json' });
+  assert.equal(res.status, 400);
+});
