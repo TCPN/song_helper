@@ -24,6 +24,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: 更新 ws1
+        # 明寫 shell 才會有 pipefail，ws1 上失敗時 job 才會是紅的
+        shell: bash
         env:
           BRANCH: ${{ inputs.branch || github.ref_name }}
           WS1_SSH_KEY: ${{ secrets.WS1_SSH_KEY }}

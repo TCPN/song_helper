@@ -32,14 +32,22 @@ umask 077
 mkdir -p ~/.ssh
 touch ~/.ssh/authorized_keys
 { grep -v ' $COMMENT\$' ~/.ssh/authorized_keys || true
-  echo "command=\"\$HOME/bin/song-helper-update.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $pub"
+  echo "command=\"\$HOME/bin/song-helper-update.sh\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty,no-user-rc $pub"
 } > ~/.ssh/song-helper-ak.tmp
 cat ~/.ssh/song-helper-ak.tmp > ~/.ssh/authorized_keys
 rm ~/.ssh/song-helper-ak.tmp
 EOF
 
 echo "3/4 確認新金鑰只能執行更新腳本"
-ssh-keyscan -q "$HOSTNAME_ONLY" > "$tmp/known_hosts"
+# host key 從自己已經信任的 known_hosts 拿（第 1 步剛連過 ws1）；找不到才從網路抓，並讓人核對 fingerprint
+ssh-keygen -F "$HOSTNAME_ONLY" 2>/dev/null | grep -v '^#' > "$tmp/known_hosts" || true
+if [ ! -s "$tmp/known_hosts" ]; then
+  ssh-keyscan -q "$HOSTNAME_ONLY" > "$tmp/known_hosts"
+  echo "   known_hosts 裡找不到 $HOSTNAME_ONLY，從網路抓到的 host key："
+  ssh-keygen -lf "$tmp/known_hosts"
+  read -rp "   和 ws1 公布的 fingerprint 一樣嗎？[y/N] " ok
+  [ "$ok" = y ] || [ "$ok" = Y ] || { echo "已取消" >&2; exit 1; }
+fi
 check=$(ssh -T -i "$tmp/key" -o IdentitiesOnly=yes -o UserKnownHostsFile="$tmp/known_hosts" \
   -o StrictHostKeyChecking=yes "$HOST" 2>&1 || true)
 case "$check" in
