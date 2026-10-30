@@ -364,4 +364,35 @@ test.describe('歌詞檢視', () => {
     await app.page.locator('#song_list tbody tr[data-target="2"] td.song_name').click();
     await expect(info_rows(app).nth(6).locator('td')).toHaveText(['歌詞:', '無']);
   });
+
+  test('「去除空格」開關：拿掉中文字旁邊的空格，複製出來也是；下次打開沿用；英文的空格留著', async ({ app }) => {
+    await app.goto('#song_id=12&mode=lyrics');
+    const button = app.page.locator('#lyrics_strip_spaces');
+    await expect(button).toHaveAttribute('aria-checked', 'false');
+    await expect(lines(app).first()).toHaveText('第一句 第二句');
+    await button.click();
+    await expect(button).toHaveAttribute('aria-checked', 'true');
+    await expect(lines(app).first()).toHaveText('第一句第二句');
+    await app.page.locator('#lyrics_select_all').click();
+    await app.page.locator('#lyrics_copy').click();
+    expect(await clipboard(app)).toBe('第一句第二句\n第三句\n\n第四句\n\n副歌一句');
+    // 換歌、重新載入都沿用
+    await app.goto('#song_id=1&mode=lyrics');
+    await expect(button).toHaveAttribute('aria-checked', 'true');
+    await expect(lines(app).first()).toHaveText('do re mi fa sol fa mi re do');
+    await app.page.reload();
+    await app.goto('#song_id=12&mode=lyrics');
+    await expect(lines(app).first()).toHaveText('第一句第二句');
+    await button.click();
+    await expect(lines(app).first()).toHaveText('第一句 第二句');
+  });
+
+  test('歌曲列表的 T 按鈕 hover 時不變色', async ({ app }) => {
+    await app.goto();
+    const link = app.page.locator('#song_list tbody tr[data-target="10"] td.song_lyrics a');
+    const before = await link.evaluate((a) => getComputedStyle(a).color);
+    await link.hover();
+    expect(await link.evaluate((a) => getComputedStyle(a).color)).toBe(before);
+    expect(before).toBe('rgb(0, 0, 0)');
+  });
 });

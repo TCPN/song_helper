@@ -1,7 +1,7 @@
 // 歌詞檢視：一首歌的另一種檢視方式（網址 mode=lyrics）。列出各段歌詞（前面標段名），
 // 用一般的文字選取選歌詞，複製時整理成純文字（不含段名，換段落或換段時空一行）；「檢視」選單的「檢視歌譜」／「檢視歌詞」切換
 import { state } from './state.js';
-import { song_slide_lyrics, lyrics_messages, lines_text, UNNAMED } from './slide-lyrics.js';
+import { song_slide_lyrics, lyrics_messages, lines_text, strip_spaces, map_lines, UNNAMED } from './slide-lyrics.js';
 import { update_hash } from './route.js';
 import { click_on_enter } from './dom.js';
 
@@ -11,6 +11,17 @@ const CONTAINER = '#score_popup_container';
 var shown_sections = [];
 // 列出的是哪首歌的哪份歌詞；資料沒變時不重畫，選取的文字留著
 var shown_key = null;
+
+// 「去除空格」開著沒有：記在 localStorage，下次沿用（不放進網址）
+const STRIP_SPACES_KEY = 'lyrics_strip_spaces';
+var strip = false;
+// 無痕模式等情況 localStorage 可能無法使用，讀不到就用預設值、存不了就算了
+function load_strip() {
+  try { return localStorage.getItem(STRIP_SPACES_KEY) == '1'; } catch (e) { return false; }
+}
+function save_strip() {
+  try { localStorage.setItem(STRIP_SPACES_KEY, strip ? '1' : '0'); } catch (e) {}
+}
 
 export function is_lyrics_mode() {
   return state.viewMode == 'lyrics';
@@ -34,12 +45,13 @@ export function refresh_lyrics() {
   var song = state.displayingSong;
   if (!is_lyrics_mode() || !song)
     return;
-  var key = JSON.stringify([song.id, song.name, song.slides, song.abc]);
+  var key = JSON.stringify([song.id, song.name, song.slides, song.abc, strip]);
   if (key == shown_key)
     return;
   shown_key = key;
   var lyrics = song_slide_lyrics(song);
-  shown_sections = lyrics.sections;
+  // 去除空格時畫面上和複製出來的都是去掉空格的字
+  shown_sections = strip ? map_lines(lyrics.sections, strip_spaces) : lyrics.sections;
   document.querySelector('#lyrics_title').textContent = song.name || '';
   document.querySelector('#lyrics_messages').replaceChildren(...lyrics_messages(lyrics).map(({ type, text }) => {
     var li = document.createElement('li');
@@ -157,6 +169,12 @@ function select_lines(first, last) {
   selection.addRange(range);
 }
 
+function update_strip_button() {
+  var button = document.querySelector('#lyrics_strip_spaces');
+  button.classList.toggle('on', strip);
+  button.setAttribute('aria-checked', strip);
+}
+
 function set_status(text) {
   document.querySelector('#lyrics_status').textContent = text;
 }
@@ -226,7 +244,10 @@ export function setup_lyrics_view() {
     set_status('');
     update_checks();
   });
+  strip = load_strip();
+  update_strip_button();
   var buttons = [['#lyrics_select_all', ()=>{ var lines = line_elements(); select_lines(lines[0], lines[lines.length - 1]); }],
+    ['#lyrics_strip_spaces', ()=>{ strip = !strip; save_strip(); update_strip_button(); refresh_lyrics(); }],
     ['#lyrics_copy', copy_selected]];
   for (const [id, action] of buttons) {
     var button = document.querySelector(id);

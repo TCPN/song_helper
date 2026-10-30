@@ -140,6 +140,11 @@ table#song_list .song_lyrics a {
 	user-select: none;
 }
 
+/* 歌詞按鈕的 T 不隨 hover／點擊變色 */
+table#song_list .song_lyrics a:hover, table#song_list .song_lyrics a:active {
+	color: black;
+}
+
 /* T 用 CSS 畫，不放進文字（搜尋比對的是整列的文字） */
 table#song_list .song_lyrics a::before {
 	content: "T";
@@ -1032,6 +1037,12 @@ button.popup-window-close:hover {
 
 .lyrics-button:hover {
 	background: #0002;
+}
+
+/* 開關（去除空格）：開著時是淺藍底（和「複製」的深色區分） */
+.lyrics-button.on {
+	background: #cde3f5;
+	color: #135;
 }
 
 .lyrics-button.primary {

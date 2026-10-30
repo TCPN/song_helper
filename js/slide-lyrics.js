@@ -295,6 +295,16 @@ export function lyrics_messages(lyrics) {
   return messages;
 }
 
+// 「去除空格」：拿掉中文字旁邊的空格（半形、全形）；英文等兩個非中文字之間的空格留著，不然字會黏在一起
+export function strip_spaces(text) {
+  return String(text).replace(new RegExp(`[ \u3000]+(?=${CJK.source})|(?<=${CJK.source})[ \u3000]+`, 'g'), '');
+}
+
+// 每一行都套上 fn 的段（{ name, paragraphs }，其他欄位照舊）
+export function map_lines(sections, fn) {
+  return sections.map((section) => ({ ...section, paragraphs: section.paragraphs.map((paragraph) => paragraph.map(fn)) }));
+}
+
 // 複製用的純文字：selected(段, 段落, 行) 為 true 的行，一行一句；換段落或換段時空一行；不放段名
 // selected 傳回字串時用那個字串代替整行（只選到一行的一部分）
 export function lines_text(sections, selected = () => true) {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parse_slide_cell, w_line_text, w_slots, music_line_marks, sections_from_abc, song_slide_lyrics, lyrics_messages, lines_text, has_slide_lyrics } from '../../js/slide-lyrics.js';
+import { parse_slide_cell, w_line_text, w_slots, music_line_marks, sections_from_abc, song_slide_lyrics, lyrics_messages, lines_text, has_slide_lyrics, strip_spaces, map_lines } from '../../js/slide-lyrics.js';
 
 const section = (name, paragraphs, source = null) => ({ name, source, paragraphs });
 
@@ -204,4 +204,18 @@ test('has_slide_lyrics：有譜，而且「投影片」欄有字或譜上有 w:�
   assert.equal(has_slide_lyrics({ abc, slides: '  \n' }), false);
   assert.equal(has_slide_lyrics({ abc: '', slides: '一句' }), false);
   assert.equal(has_slide_lyrics(null), false);
+});
+
+test('strip_spaces：拿掉中文字旁邊的空格（含全形），英文字之間的留著', () => {
+  assert.equal(strip_spaces('第一句 第二句'), '第一句第二句');
+  assert.equal(strip_spaces('主 啊　我要  讚美'), '主啊我要讚美');
+  assert.equal(strip_spaces('Amazing grace 奇異 恩典'), 'Amazing grace奇異恩典');
+  assert.equal(strip_spaces('do re mi'), 'do re mi');
+  assert.equal(strip_spaces('哈利路亞， 阿們'), '哈利路亞，阿們');
+});
+
+test('map_lines：每一行套用函式，段名與段落結構不變', () => {
+  const sections = [{ name: 'A1', source: 'abc', paragraphs: [['一 二', '三'], ['四 五']] }];
+  assert.deepEqual(map_lines(sections, strip_spaces), [{ name: 'A1', source: 'abc', paragraphs: [['一二', '三'], ['四五']] }]);
+  assert.deepEqual(sections[0].paragraphs[0], ['一 二', '三']);
 });
