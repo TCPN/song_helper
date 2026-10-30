@@ -1039,10 +1039,10 @@ button.popup-window-close:hover {
 	background: #0002;
 }
 
-/* 開關（去除空格）：開著時是淺藍底（和「複製」的深色區分） */
-.lyrics-button.on {
-	background: #cde3f5;
-	color: #135;
+/* 開關（去除空格）：開著時是鮮明的藍底（和沒開的灰底、「複製」的深色都區分得出來） */
+.lyrics-button.on, .lyrics-button.on:hover {
+	background: #6cb4f0;
+	color: #06233f;
 }
 
 .lyrics-button.primary {

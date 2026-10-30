@@ -98,15 +98,15 @@ test.describe('歌詞檢視', () => {
   test('網址 mode=lyrics 直接打開歌詞檢視；其他值是歌譜', async ({ app }) => {
     await app.goto('#song_id=10&mode=lyrics');
     await expect(view(app)).toBeVisible();
-    await expect(names(app)).toHaveText(['A1', 'A2', 'B1']);
+    await expect(names(app)).toHaveText(['A1', 'A2', 'B']);
     await app.goto('#song_id=10&mode=xyz');
     await expect(view(app)).toBeHidden();
     await expect(app.page.locator('#score_page')).toBeVisible();
   });
 
-  test('有 P: 的歌：段名是段落＋第幾行 w:，每一行一個 .lyrics-line；訊息只有來源', async ({ app }) => {
+  test('有 P: 的歌：段名是段落＋第幾行 w:（只有一節的段不加數字），每一行一個 .lyrics-line；訊息只有來源', async ({ app }) => {
     await app.goto('#song_id=10&mode=lyrics');
-    await expect(names(app)).toHaveText(['A1', 'A2', 'B1']);
+    await expect(names(app)).toHaveText(['A1', 'A2', 'B']);
     await expect(lines(app)).toHaveText(['一二三四五六七八', '甲乙丙丁戊己庚辛', '副']);
     await expect(messages(app)).toHaveText(['從歌譜中自動抽出']);
     // 訊息小字、不粗體

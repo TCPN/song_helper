@@ -273,12 +273,14 @@ export function sections_from_abc(abc) {
   }
   var sections = [];
   for (const p of parts) {
-    // 沒有 P: 的歌整首一段：只有一節時叫 Verse，多節時 Verse1、Verse2…；第一個 P: 之前的歌詞也一樣
+    // 每一段只有一節歌詞時段名不加數字（A、Verse），多節時 A1、A2…、Verse1、Verse2…；
+    // 沒有 P: 的歌（和第一個 P: 之前的歌詞）段名是 Verse
     var verses = p.verses.map((verse_lines) => (verse_lines || []).filter(Boolean));
-    var single = p.name === null && verses.filter((kept) => kept.length).length == 1;
+    var single = verses.filter((kept) => kept.length).length == 1;
+    var name = p.name === null ? UNNAMED : p.name;
     verses.forEach((kept, i) => {
       if (kept.length)
-        sections.push({ name: single ? UNNAMED : (p.name === null ? UNNAMED : p.name) + (i + 1), source: null, paragraphs: [kept] });
+        sections.push({ name: single ? name : name + (i + 1), source: null, paragraphs: [kept] });
     });
   }
   var w_paragraphs = to_paragraphs(w_text);
