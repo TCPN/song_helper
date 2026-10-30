@@ -55,18 +55,23 @@ test('parse_slide_cell：有段名但沒有字的段保留；空白格是空的'
   assert.deepEqual(parse_slide_cell(null), { order: null, sections: [] });
 });
 
-test('w_line_text：中文音節直接相連，英文的字之間隔一個空格', () => {
+test('w_line_text：中文音節直接相連，英文的字之間隔一個空格；中文旁邊是英文字母時也隔一個空格，標點不隔', () => {
   assert.equal(w_line_text('奇 異 恩 典 何 等 甘 甜'), '奇異恩典何等甘甜');
   assert.equal(w_line_text('how sweet the sound'), 'how sweet the sound');
-  assert.equal(w_line_text('主 Jesus 愛 我'), '主Jesus愛我');
+  assert.equal(w_line_text('主 Jesus 愛 我'), '主 Jesus 愛我');
+  assert.equal(w_line_text('哈 利 路 亞 ， 阿 們'), '哈利路亞，阿們');
+  assert.equal(w_line_text('阿 們 ,'), '阿們,');
+  assert.equal(w_line_text('第 1 首'), '第1首');
 });
 
-test('w_line_text：- 接回同一個字，_ * | 拿掉，~ 是空格，\\- 是連字號', () => {
+test('w_line_text：- 接回同一個字，_ * | 拿掉，~ 分開同一個音下的字（中文之間不顯示），\\- 是連字號', () => {
   assert.equal(w_line_text('A-maz-ing grace'), 'Amazing grace');
   assert.equal(w_line_text('a--b'), 'ab');
   assert.equal(w_line_text('sweet_ _ the * sound'), 'sweet the sound');
   assert.equal(w_line_text('一 二 | 三 四|五'), '一二三四五');
   assert.equal(w_line_text('of~the Lord'), 'of the Lord');
+  assert.equal(w_line_text('主~耶 穌'), '主耶穌');
+  assert.equal(w_line_text('主~Jesus'), '主 Jesus');
   assert.equal(w_line_text('self\\-less'), 'self-less');
   assert.equal(w_line_text('  '), '');
 });
@@ -102,9 +107,17 @@ test('sections_from_abc：行首的 [P:B] 從這行換段；行中間的 [P:C] �
 test('sections_from_abc：行中間的 [P:] 依音符數切開歌詞（休止符、裝飾音、和弦記號不算音符，和音算一個）', () => {
   const abc = 'X:1\nK:C\nP:A\n"C"C z {g}D [CE]E |[P:B] !fermata!F G|\nw:一 二 三 四 五\n';
   assert.deepEqual(sections_from_abc(abc), [
-    section('A1', [['一二三四']]),
+    section('A1', [['一 二三四']]),
     section('B1', [['五']]),
   ]);
+});
+
+test('sections_from_abc：休止符的位置空一格（連續的休止符只空一格，行首行尾不空）', () => {
+  const abc = 'X:1\nK:C\nz C D z z E | F z2 |]\nw:一 二 三 四\n';
+  assert.deepEqual(sections_from_abc(abc), [section('Verse', [['一二 三四']])]);
+  // 行中間的 [P:] 之後，休止符的位置從那一段算起
+  const parts = 'X:1\nK:C\nP:A\nC D [P:B] E z F|\nw:一 二 三 四\n';
+  assert.deepEqual(sections_from_abc(parts), [section('A1', [['一二']]), section('B1', [['三 四']])]);
 });
 
 test('sections_from_abc：歌詞比 [P:] 之前的音符少時，後面那段沒有字', () => {
@@ -116,9 +129,12 @@ test('music_line_marks：段落標記與小節線的位置是之前的音符數'
   assert.deepEqual(music_line_marks('[P:A]CD EF|:GA [P:B]B2c2:|[1 d4|]'), {
     marks: [{ name: 'A', at: 0 }, { name: 'B', at: 6 }],
     bars: [4, 8, 9],
+    rests: [],
   });
   // % 之後是註解；"..." 裡的字母不算
-  assert.deepEqual(music_line_marks('"Am"A B|% c d'), { marks: [], bars: [2] });
+  assert.deepEqual(music_line_marks('"Am"A B|% c d'), { marks: [], bars: [2], rests: [] });
+  // 休止符 z Z 記在之前有幾個音符的位置，連續的只記一次；x 是看不見的休止符，不記
+  assert.deepEqual(music_line_marks('z C z2 z D x E Z|'), { marks: [], bars: [3], rests: [0, 1, 3] });
 });
 
 test('w_slots：每個音符一個音節；| 跳到下一小節', () => {

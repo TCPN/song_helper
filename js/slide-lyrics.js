@@ -75,12 +75,14 @@ export function parse_slide_cell(text) {
 // 中日韓文字（含全形標點）：兩個音節之間如果有一邊是這種字，接起來時不加空格
 const CJK = /[\u2E80-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF\uFF00-\uFFEF]/;
 
-// 一行譜裡有歌詞的音符數，與段落標記、小節線的位置（都以「之前有幾個音符」表示）
-// → { marks: [{ name, at }]（[P:B] 的段名與位置）, bars: [位置…] }
+// 一行譜裡有歌詞的音符數，與段落標記、小節線、休止符的位置（都以「之前有幾個音符」表示）
+// → { marks: [{ name, at }]（[P:B] 的段名與位置）, bars: [位置…], rests: [位置…] }
 // 休止符（z x Z X）、裝飾音 {…}、和弦記號 "…"、裝飾 !…! +…+ 不算音符；[CEG] 和音算一個
+// rests 只記看得見的休止符 z Z（x X 是看不見的休止符，只用來排版）
 export function music_line_marks(line) {
   var marks = [];
   var bars = [];
+  var rests = [];
   var notes = 0;
   var i = 0;
   var skip_to = (ch) => {
@@ -116,15 +118,18 @@ export function music_line_marks(line) {
     } else {
       if (/[A-Ga-g]/.test(c))
         notes++;
+      else if ((c == 'z' || c == 'Z') && rests[rests.length - 1] !== notes)
+        rests.push(notes);
       i++;
     }
   }
-  return { marks, bars };
+  return { marks, bars, rests };
 }
 
 // 一行 w: 的內容（不含「w:」）→ 每個音符對到的音節：[{ text, hyphen }]
 // text 空字串是沒有字的音符（`_` 延長、`*` 跳過、單獨的 `-`）；hyphen：和下一個音節是同一個字（後面接 `-`）
-// `|` 跳到下一個小節（bars 是小節線前的音符數，見 music_line_marks），`~` 是同一個音下的空格，`\-` 是連字號
+// `|` 跳到下一個小節（bars 是小節線前的音符數，見 music_line_marks），`~` 是同一個音下分開的字（留在 text 裡，
+// 接成一行時由 slots_text 決定要不要空格），`\-` 是連字號
 export function w_slots(w, bars = []) {
   var slots = [];
   var tokens = [...w.replace(/\\-/g, '\u0000').matchAll(/[^\s\-_*|]+|\S/g)];
@@ -147,34 +152,58 @@ export function w_slots(w, bars = []) {
       while (next !== undefined && slots.length < next)
         slots.push({ text: '', hyphen: false });
     } else {
-      slots.push({ text: token.replace(/~/g, ' ').replace(/\u0000/g, '-'), hyphen: false });
+      slots.push({ text: token.replace(/\u0000/g, '-'), hyphen: false });
     }
   });
   return slots;
 }
 
-// 音節 → 純文字：同一個字（hyphen）直接相連；字和字之間中文直接相連，英文等隔一個空格
-export function slots_text(slots) {
-  var words = [];
+// 兩個字接在一起時中間要不要空格：兩邊都不是中文（英文單字等）、或中文旁邊是英文字母時要；
+// 中文和中文、中文和標點之間不要
+const LETTER = /[A-Za-z]/;
+function needs_space(before, after) {
+  var a = CJK.test(before), b = CJK.test(after);
+  if (!a && !b)
+    return true;
+  return (a && LETTER.test(after)) || (b && LETTER.test(before));
+}
+
+// 音節 → 純文字：同一個字（hyphen）直接相連；字和字之間照 needs_space 決定要不要空格；
+// `~` 分開的字也一樣（中文之間不顯示）。rests：第幾個音節之前有休止符（見 music_line_marks），那裡一定空一格
+export function slots_text(slots, rests = []) {
+  var words = []; // { text, rest }：rest 是前面有休止符
   var word = '';
   var joined = false;
-  for (const slot of slots) {
+  var rest = false;
+  slots.forEach((slot, k) => {
+    if (rests.includes(k) && k > 0) {
+      if (word)
+        words.push({ text: word, rest });
+      word = '';
+      joined = false;
+      rest = true;
+    }
     if (slot.text) {
       if (!joined && word) {
-        words.push(word);
+        words.push({ text: word, rest });
         word = '';
+        rest = false;
       }
       word += slot.text;
     }
     joined = slot.hyphen;
-  }
+  });
   if (word)
-    words.push(word);
+    words.push({ text: word, rest });
   var text = '';
   for (const w of words) {
-    if (text && !CJK.test(text[text.length - 1]) && !CJK.test(w[0]))
-      text += ' ';
-    text += w;
+    w.text.split('~').forEach((part, i) => {
+      if (!part)
+        return;
+      if (text && ((w.rest && i == 0) || needs_space(text[text.length - 1], part[0])))
+        text += ' ';
+      text += part;
+    });
   }
   return text.replace(/ {2,}/g, ' ').trim();
 }
@@ -193,6 +222,7 @@ export function sections_from_abc(abc) {
   var current = null; // 目前的段名
   var segments = [{ at: 0, name: null }]; // 目前這行譜的段：從第幾個音符開始是哪一段
   var bars = [];
+  var rests = [];
   var verse = 0; // 目前這行譜下面的第幾行 w:
   var w_text = []; // W: 的行（空字串 = 分段）
   function add_line(name, verse, text) {
@@ -207,7 +237,7 @@ export function sections_from_abc(abc) {
       var slots = w_slots(m[1], bars);
       segments.forEach((seg, i) => {
         var end = i + 1 < segments.length ? segments[i + 1].at : slots.length;
-        var text = slots_text(slots.slice(seg.at, end));
+        var text = slots_text(slots.slice(seg.at, end), rests.map((r) => r - seg.at));
         if (text)
           add_line(seg.name, verse, text);
       });
@@ -230,6 +260,7 @@ export function sections_from_abc(abc) {
     verse = 0;
     var info = music_line_marks(line);
     bars = info.bars;
+    rests = info.rests;
     segments = [{ at: 0, name: current }];
     for (const mark of info.marks) {
       var last = segments[segments.length - 1];
