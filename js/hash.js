@@ -1,4 +1,4 @@
-// 網址 hash（#song_id=…&transpose=…）的解析與組合。這個格式是對外契約，不可無故改變。
+// 網址 hash（#song_id=…&transpose=…&view=lyrics）的解析與組合。這個格式是對外契約，不可無故改變。
 
 // "a=1&b&c=x=y" → { a: '1', b: true, c: 'x=y' }
 export function parse_params(s){

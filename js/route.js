@@ -1,8 +1,9 @@
-// 網址 hash 的讀寫與執行（#song_id=…&transpose=…，對外契約）
+// 網址 hash 的讀寫與執行（#song_id=…&transpose=…&view=lyrics，對外契約）
 import { parse_params, params_to_str } from './hash.js';
 import { state } from './state.js';
 import { select_song } from './list.js';
 import { render_score, close_score } from './score.js';
+import { set_view_mode } from './lyrics-view.js';
 
 export function parse_hash(){
   return parse_params(location.hash.slice(1));
@@ -44,6 +45,8 @@ export function exec_hash(){
       select_song(dsongobj.id);
       state.displayingSong = dsongobj;
       document.querySelector('#transpose').value = transpose || 0;
+      // view=lyrics 是歌詞檢視，其他值（或沒有）是歌譜
+      set_view_mode(hash_params['view']);
       render_score(transpose || 0);
     }else{
       close_score();

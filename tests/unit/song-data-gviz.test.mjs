@@ -11,9 +11,9 @@ function gviz(rows, status = 'ok') {
 
 test('parse_gviz_response：可以交給 getSongArray 轉成歌曲物件', (t) => {
   t.mock.method(console, 'log', () => {});
-  const row = [{ v: 5 }, { v: '歌名' }, { v: 'G' }, { v: '3/4' }, { v: 'GAB' }, null, null, null, null, null, { v: 'X:1\nK:G\nG|' }];
+  const row = [{ v: 5 }, { v: '歌名' }, { v: 'G' }, { v: '3/4' }, { v: 'GAB' }, null, null, null, { v: '[A]\n一' }, null, { v: 'X:1\nK:G\nG|' }];
   assert.deepEqual(getSongArray(parse_gviz_response(gviz([row]))), [{
-    id: 5, name: '歌名', tone: 'G', timesig: '3/4', melody: 'GAB', abc: 'X:1\nK:G\nG|',
+    id: 5, name: '歌名', tone: 'G', timesig: '3/4', melody: 'GAB', slides: '[A]\n一', abc: 'X:1\nK:G\nG|',
   }]);
 });
 

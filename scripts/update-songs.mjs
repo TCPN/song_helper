@@ -2,18 +2,11 @@
 // songs.json 含整份歌譜與歌詞，repo 是公開的，所以它在 .gitignore 裡，不要 commit。
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { SHEET_QUERY_URL, parse_gviz_response, getSongArray } from '../js/song-data.js';
+import { fetch_songs } from './fetch-songs.mjs';
 
 const OUTPUT = fileURLToPath(new URL('../songs.json', import.meta.url));
 
-const response = await fetch(SHEET_QUERY_URL, { signal: AbortSignal.timeout(30000) });
-if (!response.ok)
-  throw new Error(`試算表下載失敗：HTTP ${response.status}`);
-const rows = getSongArray(parse_gviz_response(await response.text()));
-// 沒有編號的列（空白列等）網站上也沒有用，不放進快照
-const songs = rows.filter((song) => song.id !== null);
-if (songs.length < rows.length)
-  console.log(`略過 ${rows.length - songs.length} 列沒有編號的資料`);
+const songs = await fetch_songs();
 
 // 防呆：資料看起來不對就不要覆寫，以免部署出空白或錯位的列表
 const badSong = songs.find((song) => typeof song.id !== 'number' || (song.name !== null && typeof song.name !== 'string'));

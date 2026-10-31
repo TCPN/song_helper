@@ -10,11 +10,11 @@ function fakeDataTable(rows) {
   };
 }
 
-test('getSongArray：取出編號、歌名、調號、拍號、首句旋律、abc 欄位', (t) => {
+test('getSongArray：取出編號、歌名、調號、拍號、首句旋律、投影片、abc 欄位', (t) => {
   t.mock.method(console, 'log', () => {});
   const row = [5, '歌名', 'G', '3/4', 'GAB', '出處', '分類', '譜', '投影片', 'ppt', 'X:1\nK:G\nG|'];
   assert.deepEqual(getSongArray(fakeDataTable([row])), [{
-    id: 5, name: '歌名', tone: 'G', timesig: '3/4', melody: 'GAB', abc: 'X:1\nK:G\nG|',
+    id: 5, name: '歌名', tone: 'G', timesig: '3/4', melody: 'GAB', slides: '投影片', abc: 'X:1\nK:G\nG|',
   }]);
 });
 

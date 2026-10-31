@@ -10,6 +10,7 @@ import { paginate_score, reset_pages, set_score_lines } from './score-pages.js';
 import { line_start_bars } from './page-breaks.js';
 import { build_render_params, build_midi_params, widened_staffwidth } from './render-params.js';
 import { current_layout, show_layout } from './layout-panel.js';
+import { refresh_lyrics, reset_lyrics_view } from './lyrics-view.js';
 
 // 點譜面上的音符時呼叫（abcjs 的 clickListener）
 var clickListener = console.log;
@@ -45,6 +46,8 @@ export function render_score(transpose){
   update_toolbar_layout();
   document.title = `${song.name} (${display_tone})`
   state.displayingSong = song;
+  // 歌詞檢視開著時（換歌、試算表的譜更新）一起更新歌詞
+  refresh_lyrics();
 }
 
 // 只重畫譜面（「排版」改了譜面寬度、字級時）：不重建播放器、不捲動歌單、工具列不變
@@ -124,11 +127,13 @@ export function close_score(){
     document.querySelector(button).setAttribute('aria-expanded', false);
   }
   state.displayingSong = null;
+  reset_lyrics_view();
   reset_pages();
   clearSettings();
   save_scroll('html');
   update_hash('song_id', undefined);
   update_hash('transpose', undefined);
+  update_hash('view', undefined);
   restore_scroll('html');
 }
 

@@ -11,6 +11,7 @@ import { setup_score_view } from './score-view.js';
 import { setup_score_pages } from './score-pages.js';
 import { setup_layout_panel } from './layout-panel.js';
 import { setup_toolbar_layout } from './toolbar.js';
+import { setup_lyrics_view } from './lyrics-view.js';
 import { save_scroll, restore_scroll } from './dom.js';
 
 state.originalTitle = document.title;
@@ -24,6 +25,7 @@ setup_score_pages();
 setup_layout_panel({ rerender: redraw_score });
 setup_toolbar_layout();
 setup_popups();
+setup_lyrics_view();
 window.addEventListener('hashchange', exec_hash);
 window.addEventListener('beforeprint', ()=>{save_scroll('html')});
 window.addEventListener('afterprint', ()=>{restore_scroll('html')});

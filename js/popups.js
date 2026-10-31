@@ -2,6 +2,7 @@
 import { state } from './state.js';
 import { tempo_text } from './abc.js';
 import { getDom, openDom, closeDom } from './dom.js';
+import { has_slide_lyrics } from './slide-lyrics.js';
 
 export function show_song_info(song_id){
   var elem = getDom('#info-popup-container');
@@ -9,15 +10,16 @@ export function show_song_info(song_id){
   var song = state.songs.find(s=>s.id == song_id);
   if(!song)
     return;
-  var score_cell;
-  if(song.abc){
-    score_cell = document.createElement('a');
-    score_cell.href = '#song_id=' + song.id;
-    score_cell.textContent = '開啟';
-    score_cell.addEventListener('click', function(){ closeDom('#info-popup-container'); });
-  }else{
-    score_cell = '無';
+  // 「開啟」連結：關閉資訊彈窗，開譜面（歌詞是歌詞檢視）
+  function open_link(hash){
+    var link = document.createElement('a');
+    link.href = hash;
+    link.textContent = '開啟';
+    link.addEventListener('click', function(){ closeDom('#info-popup-container'); });
+    return link;
   }
+  var score_cell = song.abc ? open_link('#song_id=' + song.id) : '無';
+  var lyrics_cell = has_slide_lyrics(song) ? open_link('#song_id=' + song.id + '&view=lyrics') : '無';
   // 資料來自試算表，一律當成文字放進表格（不用 innerHTML），避免 HTML 被解析
   var table = document.createElement('table');
   [
@@ -27,6 +29,7 @@ export function show_song_info(song_id){
     ['拍號:', song.timesig],
     ['速度:', tempo_text(song.abc)],
     ['歌譜:', score_cell],
+    ['歌詞:', lyrics_cell],
   ].forEach(function([label, value]){
     var tr = table.insertRow();
     tr.insertCell().textContent = label;

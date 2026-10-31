@@ -94,6 +94,9 @@ test.describe('譜面的顯示方式', () => {
     await app.page.locator('#view_button').focus();
     await app.page.keyboard.press('Enter');
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
+    // 最前面是「檢視歌譜」「檢視歌詞」
+    await app.page.keyboard.press('Tab');
+    await app.page.keyboard.press('Tab');
     await app.page.keyboard.press('Tab');
     await expect(fit_item(app, 'page')).toBeFocused();
     await app.page.keyboard.press('Enter');
@@ -136,6 +139,9 @@ test.describe('譜面的顯示方式', () => {
     await app.page.locator('#view_button').focus();
     await app.page.keyboard.press('Enter');
     await expect(app.page.locator('#view-menu')).not.toHaveClass(/hide/);
+    // 最前面是「檢視歌譜」「檢視歌詞」
+    await app.page.keyboard.press('Tab');
+    await app.page.keyboard.press('Tab');
     await app.page.keyboard.press('Tab');
     await expect(fit_item(app, 'page')).toBeFocused();
     await app.page.keyboard.press('Enter');

@@ -6,6 +6,8 @@ export const state = {
   songs: null,
   // 正在顯示譜面的歌
   displayingSong: null,
+  // 譜面彈窗的檢視方式：'score'（歌譜）或 'lyrics'（歌詞，網址 view=lyrics）
+  viewMode: 'score',
   // 網址 hash 只在載入時處理一次（之後交給 hashchange）；見 updateListUI
   initialHashHandled: false,
   // 拿不到試算表最新資料（查詢失敗，或 Google 載入器無法使用）

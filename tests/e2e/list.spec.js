@@ -10,10 +10,10 @@ test.describe('歌曲列表', () => {
 
   test('每列依序顯示「編號.」「歌名」「調號調」，譜面欄只有圖示、沒有文字', async ({ app }) => {
     await app.goto();
-    await expect(app.rows().nth(0).locator('td')).toHaveText(['1.', '測試歌一', 'C調', '']);
-    await expect(app.rows().nth(1).locator('td')).toHaveText(['2.', '測試歌二', 'G調', '']);
-    await expect(app.rows().nth(3).locator('td')).toHaveText(['4.', '小調測試', 'Am調', '']);
-    await expect(app.rows().nth(0).locator('td')).toHaveClass(['song_index', 'song_name', 'song_tone', 'song_score']);
+    await expect(app.rows().nth(0).locator('td')).toHaveText(['1.', '測試歌一', 'C調', '', '']);
+    await expect(app.rows().nth(1).locator('td')).toHaveText(['2.', '測試歌二', 'G調', '', '']);
+    await expect(app.rows().nth(3).locator('td')).toHaveText(['4.', '小調測試', 'Am調', '', '']);
+    await expect(app.rows().nth(0).locator('td')).toHaveClass(['song_index', 'song_name', 'song_tone', 'song_score', 'song_lyrics']);
   });
 
   test('有譜的歌：連結指向 #song_id=N，並以圖示區分「含和弦」與「僅旋律」', async ({ app }) => {

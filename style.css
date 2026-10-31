@@ -124,6 +124,32 @@ table#song_list .song_score a.note_score {
 	background-image: url(./score_note.png);
 }
 
+/* 譜右邊的歌詞按鈕（開歌詞檢視）：和譜的按鈕一樣大小、白底、陰影，裡面是有襯線的大寫 T */
+table#song_list .song_lyrics {
+	padding-left: 0;
+}
+
+table#song_list .song_lyrics a {
+	background-color: #fff;
+	box-shadow: 1px 1px #ccc;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 14px;
+	line-height: 16px;
+	text-align: center;
+	text-decoration: none;
+	user-select: none;
+}
+
+/* 歌詞按鈕的 T 不隨 hover／點擊變色 */
+table#song_list .song_lyrics a:hover, table#song_list .song_lyrics a:active {
+	color: black;
+}
+
+/* T 用 CSS 畫，不放進文字（搜尋比對的是整列的文字） */
+table#song_list .song_lyrics a::before {
+	content: "T";
+}
+
 #song_list thead th {
 	position: sticky;
 	top: 0;
@@ -732,6 +758,19 @@ table#song_list a#wish_link {
 		display: none !important;
 	}
 
+	/* 歌詞檢視：只印歌名和歌詞，不印全選／複製等按鈕和訊息，也不印看不見的譜紙 */
+	.lyrics-mode #score_page, .lyrics-actions, .lyrics-messages {
+		display: none !important;
+	}
+
+	/* 填滿整張紙寬，歌名和歌詞從紙的左邊開始（螢幕上的寬度和置中寫在後面，所以要 !important） */
+	#lyrics_view {
+		width: 100% !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		border-radius: 0;
+	}
+
 	#score_popup_bg {
 		top: 0;
 	}
@@ -939,4 +978,159 @@ button.popup-window-close:hover {
 }
 .menu-item:hover {
     box-shadow: inset 0 0 0 100vmax #7777;
+}
+
+/* 歌詞檢視（js/lyrics-view.js，網址 mode=lyrics）：譜紙仍然排版（abcjs 要量得到大小），只是看不見 */
+.lyrics-mode #score_page {
+	position: absolute;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+/* 「檢視」選單的顯示方式與譜紙、「排版」只在歌譜檢視時有 */
+.lyrics-mode #page_nav, .lyrics-mode #page_break_bar, .lyrics-mode .score-only {
+	display: none;
+}
+
+#lyrics_view {
+	box-sizing: border-box;
+	width: min(36em, 100% - 32px);
+	margin: 1em auto auto;
+	background: #fff;
+	color: #000;
+	border-radius: 0.3em;
+	padding: 0 1em 1em;
+	align-self: flex-start;
+}
+
+#lyrics_view.hide {
+	display: none;
+}
+
+.lyrics-actions {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding: 0.6em 0;
+	background: #fff;
+	border-bottom: 1px solid #0002;
+}
+
+.lyrics-status {
+	flex: 1;
+	font-size: 0.85em;
+	color: #363;
+	text-align: right;
+}
+
+.lyrics-button {
+	padding: 0.3em 0.8em;
+	border-radius: 0.3em;
+	background: #0001;
+	cursor: pointer;
+	user-select: none;
+	white-space: nowrap;
+}
+
+.lyrics-button:hover {
+	background: #0002;
+}
+
+/* 開關（去除空格）：開著時是鮮明的藍底（和沒開的灰底、「複製」的深色都區分得出來） */
+.lyrics-button.on, .lyrics-button.on:hover {
+	background: #6cb4f0;
+	color: #06233f;
+}
+
+.lyrics-button.primary {
+	background: #357;
+	color: #fff;
+}
+
+.lyrics-button.primary:hover {
+	background: #246;
+}
+
+.lyrics-button.disabled {
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+/* 訊息一則一行，小字、不粗體、不能選取；前面是 icon（js/lyrics-view.js 的 message_icon） */
+.lyrics-messages {
+	list-style: none;
+	/* 放在歌詞後面，和歌詞之間空 2em（訊息的字級）；左邊和歌詞的字對齊（.lyrics-line 的 0.4em padding，訊息的字是 0.8em） */
+	margin: 2em 0 0;
+	padding: 0 0 0 calc(0.4em / 0.8);
+	font-size: 0.8em;
+	font-weight: normal;
+	color: #666;
+	user-select: none;
+}
+
+/* icon 是一般的行內元素，底部對齊文字的 baseline 下方一點（和字的下緣齊） */
+.lyrics-message-icon {
+	display: inline-block;
+	width: 1.1em;
+	height: 1.1em;
+	vertical-align: -0.18em;
+	margin-right: 0.35em;
+}
+
+.lyrics-messages:empty {
+	display: none;
+}
+
+/* 歌名：放在歌詞前面，左邊和歌詞的字對齊（字是 1.2em，所以 0.4em 除以 1.2） */
+.lyrics-title {
+	font-size: 1.2em;
+	margin: 0.8em 0 0.8em;
+	padding: 0 0 0 calc(0.4em / 1.2);
+}
+
+.lyrics-title:empty {
+	display: none;
+}
+
+/* 段和段之間空 0.5em（最後一段後面不空） */
+.lyrics-section {
+	padding: 0;
+}
+
+.lyrics-section:not(:last-child) {
+	margin-bottom: 0.5em;
+}
+
+/* 段名：小字、淡色、不粗體，包一個圓角邊框；點了整段全選／取消。
+   左邊緣對齊歌詞的字（.lyrics-line 左邊有 0.4em 的 padding，段名的字是 0.6em，所以除以 0.6） */
+.lyrics-name {
+	display: inline-block;
+	font-size: 0.6em;
+	color: #888;
+	border: 1px solid #bbb;
+	border-radius: 4px;
+	padding: 0 0.4em;
+	margin: 0.5em 0 0.5em calc(0.4em / 0.6);
+	font-family: ui-monospace, Menlo, Consolas, monospace;
+	user-select: none;
+}
+
+/* 段內分段（投影片換頁）不多空間，每一行一樣高 */
+.lyrics-paragraph {
+	margin: 0;
+}
+
+/* 歌詞裡的空白在畫面上寬一點（word-spacing 只影響顯示，複製出來還是一個空白） */
+.lyrics-line {
+	line-height: 1.8;
+	word-spacing: 0.5em;
+	padding: 0 0.4em;
+	overflow-wrap: anywhere;
+}
+
+.lyrics-actions {
+	user-select: none;
 }

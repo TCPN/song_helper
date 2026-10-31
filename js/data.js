@@ -6,6 +6,7 @@ import { getCachedData, setCachedData } from './cache.js';
 import { createList, setup_song_list_selection, fixedListWidth } from './list.js';
 import { exec_hash, hash_song_openable } from './route.js';
 import { render_score, close_score, current_transpose } from './score.js';
+import { refresh_lyrics } from './lyrics-view.js';
 
 // 試算表查詢多久沒回應就放棄，改用快取或快照
 const QUERY_TIMEOUT_MS = 30000;
@@ -125,6 +126,8 @@ function updateListUI(songData, isNewest) {
       render_score(current_transpose()); // 沿用目前選單裡的移調值；標題也會用最新的歌名
     } else {
       state.displayingSong = newest;
+      // 譜沒變但「投影片」欄可能改了
+      refresh_lyrics();
       document.title = `${newest.name} (${document.querySelector('#current_visual_tone').textContent})`;
     }
   }

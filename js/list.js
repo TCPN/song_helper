@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { score_kind } from './abc.js';
 import { make_song_matcher } from './search.js';
 import { show_song_info } from './popups.js';
+import { has_slide_lyrics } from './slide-lyrics.js';
 
 export function getSongData(song_id){
   return state.songs.find(x=>(x.id==song_id));
@@ -41,6 +42,13 @@ export function createList(songs){
       }
       item_tpl.scoreMarkLink.href = '#song_id=' + songs[i].id;
     }
+    // 譜右邊的歌詞按鈕：直接開歌詞檢視；沒有歌詞時不顯示
+    var lyrics = has_slide_lyrics(songs[i]);
+    item_tpl.lyricsLink.classList.toggle('hide', !lyrics);
+    if(lyrics)
+      item_tpl.lyricsLink.href = '#song_id=' + songs[i].id + '&view=lyrics';
+    else
+      item_tpl.lyricsLink.removeAttribute('href');
     song_list_dom.appendChild(item_tpl.topElem);
     item_tpl.topElem.dataset.target = songs[i].id;
     item_tpl.topElem.song_obj = songs[i];
@@ -54,15 +62,23 @@ function createListItem(){
   var tone = document.createElement('td');
   var scoreMark = document.createElement('td');
   var scoreMarkLink = document.createElement('a');
+  var lyricsMark = document.createElement('td');
+  var lyricsLink = document.createElement('a');
+  lyricsLink.className = 'lyrics_link';
+  lyricsLink.title = '歌詞';
+  lyricsLink.setAttribute('aria-label', '歌詞');
   num.classList.add('song_index');
   name.classList.add('song_name');
   tone.classList.add('song_tone');
   scoreMark.classList.add('song_score');
+  lyricsMark.classList.add('song_lyrics');
   topElem.appendChild(num);
   topElem.appendChild(name);
   topElem.appendChild(tone);
   topElem.appendChild(scoreMark);
+  topElem.appendChild(lyricsMark);
   scoreMark.appendChild(scoreMarkLink);
+  lyricsMark.appendChild(lyricsLink);
   const listItem = {
     topElem,
     num,
@@ -70,6 +86,7 @@ function createListItem(){
     tone,
     scoreMark,
     scoreMarkLink,
+    lyricsLink,
   };
   topElem.item = listItem;
   return listItem;
