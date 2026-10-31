@@ -111,9 +111,10 @@ https://www.csie.ntu.edu.tw/~r04922053/song_helper/ 是 ws1 上 `~/htdocs/song_h
   它會在 ws1 裝好腳本、加一把只能執行這支腳本的金鑰，並設定 secrets `WS1_SSH_KEY`、`WS1_KNOWN_HOSTS`。
   `remote-update.sh` 有改時再執行一次，ws1 上的那份才會跟著更新。
 - **ws1 上的同步網頁**：http://ws1.csie.ntu.edu.tw:18771/ ，輸入密碼、按「抓最新 branches」，選一個再按「同步」。
-  程式是 `scripts/ws1/sync-server.mjs`（只用 Node 內建模組），用 `scripts/ws1/install-sync-server.sh` 從自己的電腦裝到
-  ws1 的 `~/song-helper-sync/`（不在 htdocs 裡；第一次安裝會產生密碼，存在那裡的 `token`），crontab 每 5 分鐘確認它還在跑。
-  改了程式就再執行一次安裝腳本。這個網頁是純 HTTP，密碼以明文傳送；它最多只能把測試站切到 GitHub 上已有的 branch。
+  在自己的電腦執行 `scripts/ws1/start-sync-server.sh` 就會啟動（或重新啟動）它：把 `scripts/ws1/sync-server.mjs`
+  （只用 Node 內建模組）複製到 ws1 的 `~/song-helper-sync/`（不在 htdocs 裡；第一次執行會產生密碼，存在那裡的 `token`），
+  在背景執行。ws1 重開機或程序被清掉後就沒了，再執行一次這個指令即可。
+  改了程式也是再執行一次。這個網頁是純 HTTP，密碼以明文傳送；它最多只能把測試站切到 GitHub 上已有的 branch。
 - **自己的電腦**：`scripts/ws1/update.sh`（列出最近的 branch 讓你選）或 `scripts/ws1/update.sh <branch>`，
   用自己的 ssh 帳號登入 ws1，ws1 上不用先裝任何東西。
 

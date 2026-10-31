@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 在 ws1 上常駐的小網頁：按「抓最新 branches」列出 GitHub 上的 branch，
 // 選一個按「同步」就用 remote-update.sh 把 ~/htdocs/song_helper 切到那個 branch 的最新 commit。
-// 只用 Node 內建模組，不需要 npm install。用 install-sync-server.sh 安裝，不要直接從 htdocs 執行。
+// 只用 Node 內建模組，不需要 npm install。用 start-sync-server.sh 複製到 ws1 並啟動，不要直接從 htdocs 執行。
 //
 // 環境變數：
 //   PORT              預設 18771
