@@ -133,7 +133,7 @@ export function close_score(){
   save_scroll('html');
   update_hash('song_id', undefined);
   update_hash('transpose', undefined);
-  update_hash('mode', undefined);
+  update_hash('view', undefined);
   restore_scroll('html');
 }
 

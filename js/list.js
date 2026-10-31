@@ -46,7 +46,7 @@ export function createList(songs){
     var lyrics = has_slide_lyrics(songs[i]);
     item_tpl.lyricsLink.classList.toggle('hide', !lyrics);
     if(lyrics)
-      item_tpl.lyricsLink.href = '#song_id=' + songs[i].id + '&mode=lyrics';
+      item_tpl.lyricsLink.href = '#song_id=' + songs[i].id + '&view=lyrics';
     else
       item_tpl.lyricsLink.removeAttribute('href');
     song_list_dom.appendChild(item_tpl.topElem);

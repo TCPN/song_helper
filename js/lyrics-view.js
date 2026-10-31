@@ -1,4 +1,4 @@
-// 歌詞檢視：一首歌的另一種檢視方式（網址 mode=lyrics）。列出各段歌詞（前面標段名），
+// 歌詞檢視：一首歌的另一種檢視方式（網址 view=lyrics）。列出各段歌詞（前面標段名），
 // 用一般的文字選取選歌詞，複製時整理成純文字（不含段名，換段落或換段時空一行）；「檢視」選單的「檢視歌譜」／「檢視歌詞」切換
 import { state } from './state.js';
 import { song_slide_lyrics, lyrics_messages, lines_text, strip_spaces, map_lines, UNNAMED } from './slide-lyrics.js';
@@ -210,7 +210,7 @@ async function copy_selected() {
 export function setup_lyrics_view() {
   for (const item of document.querySelectorAll('#view-menu [data-view-mode]')) {
     // 網址改了之後由 route.js 的 exec_hash 切換
-    item.addEventListener('click', ()=>{ update_hash('mode', item.dataset.viewMode == 'lyrics' ? 'lyrics' : undefined); });
+    item.addEventListener('click', ()=>{ update_hash('view', item.dataset.viewMode == 'lyrics' ? 'lyrics' : undefined); });
     click_on_enter(item);
   }
   var sections = document.querySelector('#lyrics_sections');

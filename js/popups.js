@@ -19,7 +19,7 @@ export function show_song_info(song_id){
     return link;
   }
   var score_cell = song.abc ? open_link('#song_id=' + song.id) : '無';
-  var lyrics_cell = has_slide_lyrics(song) ? open_link('#song_id=' + song.id + '&mode=lyrics') : '無';
+  var lyrics_cell = has_slide_lyrics(song) ? open_link('#song_id=' + song.id + '&view=lyrics') : '無';
   // 資料來自試算表，一律當成文字放進表格（不用 innerHTML），避免 HTML 被解析
   var table = document.createElement('table');
   [
