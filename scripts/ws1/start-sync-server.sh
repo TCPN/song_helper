@@ -26,7 +26,13 @@ fi
 # [n] 讓 pkill 不會比對到這個 shell 自己的指令列
 pkill -u "$(id -u)" -f '[n]ode sync-server.mjs' && sleep 1 || true
 PORT=$1 setsid nohup node sync-server.mjs >> server.log 2>&1 < /dev/null &
-sleep 1
+pid=$!
+sleep 2
+if ! kill -0 "$pid" 2>/dev/null; then
+  echo "伺服器沒有啟動成功，server.log 最後幾行：" >&2
+  tail -n 15 server.log >&2
+  exit 1
+fi
 tail -n 1 server.log
 REMOTE
 echo "打開 http://${HOST#*@}:$PORT/"
