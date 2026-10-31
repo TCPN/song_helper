@@ -1,5 +1,5 @@
 #!/bin/bash
-# 在自己的電腦上執行：把同步網頁（sync-server.mjs）的最新版複製到 ws1，並在 ws1 上（重新）啟動它。
+# 在自己的電腦或直接在 ws1 上執行：把同步網頁（sync-server.mjs）的最新版複製到 ws1，並在 ws1 上（重新）啟動它。
 #
 #   scripts/ws1/start-sync-server.sh
 #
@@ -13,10 +13,14 @@ HOST="${WS1_HOST:-r04922053@ws1.csie.ntu.edu.tw}"
 PORT="${PORT:-18771}"
 here=$(cd "$(dirname "$0")" && pwd)
 
-tar -C "$here" -cf - sync-server.mjs remote-update.sh \
-  | ssh "$HOST" 'mkdir -p ~/song-helper-sync && chmod 700 ~/song-helper-sync && tar -C ~/song-helper-sync -xf - && chmod 755 ~/song-helper-sync/remote-update.sh'
+# 已經在 ws1 上就直接執行，不用 ssh 連自己
+on_ws1() { [ "$(hostname -s)" = "$(echo "${HOST#*@}" | cut -d. -f1)" ]; }
+on_host() { if on_ws1; then bash -c "$*"; else ssh "$HOST" "$*"; fi; }
 
-ssh "$HOST" bash -s -- "$PORT" <<'REMOTE'
+tar -C "$here" -cf - sync-server.mjs remote-update.sh \
+  | on_host 'mkdir -p ~/song-helper-sync && chmod 700 ~/song-helper-sync && tar -C ~/song-helper-sync -xf - && chmod 755 ~/song-helper-sync/remote-update.sh'
+
+on_host bash -s -- "$PORT" <<'REMOTE'
 set -euo pipefail
 cd ~/song-helper-sync
 if [ ! -s token ]; then
