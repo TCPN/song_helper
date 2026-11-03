@@ -87,3 +87,12 @@ test('match_song：標題符合時不看歌詞；只有歌詞符合時傳回那�
   assert.equal(match_song(make_song_finder('秋'), '1.春之歌C調', lyrics), null);
   assert.equal(match_song(make_song_finder('秋'), '1.春之歌C調', () => lyric_search_index([])), null);
 });
+
+test('match_song：正規表達式也照樣比對歌詞（跨行接起來的那串）', () => {
+  const lyrics = () => lyric_search_index([{ paragraphs: [['春天來了', '花開了']] }]);
+  assert.deepEqual(match_song(make_song_finder('來.花'), '1.歌C調', lyrics), { lyric: '春天來了 花開了' });
+  assert.deepEqual(match_song(make_song_finder('^春'), '1.歌C調', lyrics), { lyric: '春天來了' });
+  assert.deepEqual(match_song(make_song_finder('開了$'), '1.歌C調', lyrics), { lyric: '花開了' });
+  // 幾乎全符合的式子先符合標題，不顯示歌詞
+  assert.deepEqual(match_song(make_song_finder('.'), '1.歌C調', lyrics), { lyric: null });
+});
