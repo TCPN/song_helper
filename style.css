@@ -1134,3 +1134,12 @@ button.popup-window-close:hover {
 .lyrics-actions {
 	user-select: none;
 }
+
+/* 只有歌詞符合搜尋時，歌名下面的那一句歌詞（#44） */
+table#song_list .lyric_match {
+	white-space: normal;
+	font-size: 0.8em;
+	line-height: 1.4;
+	color: #777;
+	padding-bottom: 0.3em;
+}

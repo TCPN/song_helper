@@ -96,3 +96,60 @@ test.describe('搜尋：含正規表達式特殊字元的歌名', () => {
     await expect(app.visibleRows().first().locator('td.song_name')).toHaveText('歌(一)');
   });
 });
+
+// #44：搜尋也比對歌詞（ABC 的 w:／W:，或「投影片」欄）；只有歌詞符合時，歌名下面顯示符合的那一句
+test.describe('搜尋：比對歌詞', () => {
+  test.use({
+    songs: [[
+      { id: 1, name: '春之歌', tone: 'C', timesig: '4/4', melody: '',
+        abc: 'X:1\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|]\nw:春-天 來_ 了 花 開 了\nGFED|C4|]\nw:小 鳥 在 唱 歌\n' },
+      { id: 2, name: '晚安曲', tone: 'G', timesig: '4/4', melody: '',
+        abc: 'X:2\nM:4/4\nL:1/4\nK:G\nGABc|]\n', slides: '[A]\n星星 亮了\n晚安 晚安' },
+      { id: 3, name: '花園', tone: 'D', timesig: '4/4', melody: '', abc: null },
+    ], {}],
+  });
+
+  test('只有歌詞符合：找得到，歌名下面顯示那一句', async ({ app }) => {
+    await app.goto();
+    await app.page.locator('#song_search').fill('天來了');
+    await expect(app.visibleRows()).toHaveCount(1);
+    const row = app.visibleRows().first();
+    await expect(row.locator('td.song_name > span')).toHaveText('春之歌');
+    await expect(row.locator('.lyric_match')).toBeVisible();
+    await expect(row.locator('.lyric_match')).toHaveText('春天來了花開了');
+  });
+
+  test('跨行的句子也找得到，顯示跨到的兩行', async ({ app }) => {
+    await app.goto();
+    await app.page.locator('#song_search').fill('開了小鳥');
+    await expect(app.visibleRows()).toHaveCount(1);
+    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('春天來了花開了 小鳥在唱歌');
+  });
+
+  test('「投影片」欄的歌詞也比對', async ({ app }) => {
+    await app.goto();
+    await app.page.locator('#song_search').fill('晚安晚安');
+    await expect(app.visibleRows()).toHaveCount(1);
+    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('晚安晚安');
+  });
+
+  test('歌名符合時不顯示歌詞；歌名與歌詞都符合的一起列出', async ({ app }) => {
+    await app.goto();
+    await app.page.locator('#song_search').fill('花');
+    await expect(app.visibleRows()).toHaveCount(2);
+    const garden = app.page.locator('#song_list tr[data-target="3"]');
+    await expect(garden).toBeVisible();
+    await expect(garden.locator('.lyric_match')).toBeHidden();
+    await expect(app.page.locator('#song_list tr[data-target="1"] .lyric_match')).toHaveText('春天來了花開了');
+  });
+
+  test('清空搜尋後，歌詞那一句不再顯示', async ({ app }) => {
+    await app.goto();
+    const search = app.page.locator('#song_search');
+    await search.fill('小鳥');
+    await expect(app.page.locator('.lyric_match:visible')).toHaveCount(1);
+    await search.fill('');
+    await expect(app.visibleRows()).toHaveCount(3);
+    await expect(app.page.locator('.lyric_match:visible')).toHaveCount(0);
+  });
+});
