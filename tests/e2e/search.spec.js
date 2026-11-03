@@ -153,3 +153,22 @@ test.describe('搜尋：比對歌詞', () => {
     await expect(app.page.locator('.lyric_match:visible')).toHaveCount(0);
   });
 });
+
+// 搜尋框有字時列表換資料（快取 → 試算表的最新資料），照搜尋框的字重新篩選，歌詞那一句也跟著更新
+test.describe('搜尋：換資料後重新篩選', () => {
+  test('快取的歌詞沒有、最新資料有時，最新資料到了就列出來', async ({ app, songs }) => {
+    const stale = songs.map((song) => ({ ...song }));
+    stale[0].abc = stale[0].abc.replace(/^w:.*$/m, 'w:la la la la la la la la la');
+    await app.seedCache(stale);
+    await app.delayQuery(1500);
+
+    await app.goto();
+    await app.page.locator('#song_search').fill('sol fa');
+    await expect(app.visibleRows()).toHaveCount(0);
+    await expect(app.page.locator('#found_nothing')).toBeVisible();
+
+    await expect(app.visibleRows()).toHaveCount(1);
+    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('do re mi fa sol fa mi re do');
+    await expect(app.page.locator('#found_nothing')).toHaveClass(/hide/);
+  });
+});

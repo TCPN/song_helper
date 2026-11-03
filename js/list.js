@@ -151,7 +151,13 @@ function lyric_index_of(song) {
   var key = lyric_key(song);
   index = lyric_indexes.get(key);
   if (!index) {
-    index = song_lyric_search_index(song);
+    try {
+      index = song_lyric_search_index(song);
+    } catch (e) {
+      // 格式異常的 ABC／投影片欄：當成沒有歌詞，不要讓整個搜尋（或閒置時的預先計算）停在這首
+      console.error('song ' + song.id + ': 無法抽出搜尋用的歌詞', e);
+      index = song_lyric_search_index({});
+    }
     lyric_indexes.set(key, index);
   }
   lyric_index_by_song.set(song, index);
