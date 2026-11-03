@@ -38,6 +38,12 @@
 					<th colspan="10">
 						<div id="song_list_filters">
 							<input id="song_search" type="search" placeholder="搜尋" autofocus/>
+							<!-- 搜尋範圍：搜尋標題／搜尋歌詞（js/list.js，存在 localStorage 的 search_scope） -->
+							<div id="search_options_button" title="搜尋範圍" aria-label="搜尋範圍" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="search_options"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+							<div id="search_options" class="hide" role="group" aria-label="搜尋範圍">
+								<label><input type="checkbox" data-search-scope="title"/>搜尋標題</label>
+								<label><input type="checkbox" data-search-scope="lyrics"/>搜尋歌詞</label>
+							</div>
 						</div>
 					</th>
 				</tr>

@@ -78,15 +78,86 @@ function last_start_at_or_before(starts, at) {
   return k;
 }
 
-// 一首歌是否符合：先比對標題文字；標題不符合才比對歌詞
-// → null（不符合）、{ lyric: null }（標題符合）、{ lyric: '符合的那一句' }（只有歌詞符合）
+// 搜尋範圍（搜尋框旁的開關，存在 localStorage）：預設只搜尋標題（編號、歌名、調性）
+export const DEFAULT_SEARCH_SCOPE = { title: true, lyrics: false };
+
+// localStorage 存的字串（JSON）→ { title, lyrics }；壞掉或兩個都關時用預設值（至少要搜尋一樣）
+export function parse_search_scope(text) {
+  var scope;
+  try {
+    scope = JSON.parse(text);
+  } catch (e) {
+    scope = null;
+  }
+  if (!scope || typeof scope != 'object')
+    return { ...DEFAULT_SEARCH_SCOPE };
+  var result = { title: scope.title !== false, lyrics: scope.lyrics === true };
+  return result.title || result.lyrics ? result : { ...DEFAULT_SEARCH_SCOPE };
+}
+
+// 搜尋結果的排序（數字小的在前，同一級照原本的順序）
+export const RANK_EXACT = 0;   // 歌名（或曲號）完全符合
+export const RANK_PREFIX = 1;  // 比對到歌名開頭
+export const RANK_TITLE = 2;   // 比對到標題（編號、歌名、調性）任一處
+export const RANK_LYRICS = 3;  // 只有歌詞符合
+
+// 符合處是不是剛好整串文字
+function whole(m, text) {
+  return !!m && m.index == 0 && m.length == text.length;
+}
+
+// 符合的列排在前面，依 rank 再依原本的順序（order）；不符合的列（rank 是 null）照原本的順序排在最後
+// entries：[{ rank, order, … }] → 新陣列
+export function sort_by_rank(entries) {
+  var key = (e) => (e.rank == null ? Infinity : e.rank);
+  return entries.slice().sort((a, b) => key(a) - key(b) || a.order - b.order);
+}
+
+// 把 current 的順序排成 desired（同一組元素）時，哪些元素不用動：
+// 留下最長的「在 current 裡位置遞增」的子序列，其他的才搬，搬動的次數最少
+// → Set（不用動的元素）
+export function unmoved(current, desired) {
+  var position = new Map(current.map((x, k) => [x, k]));
+  var pos = desired.map((x) => position.get(x));
+  // 最長遞增子序列（O(n log n)）：tails[l] = 長度 l+1 的子序列結尾在 desired 的 index
+  var tails = [];
+  var prev = new Array(desired.length);
+  pos.forEach((p, i) => {
+    var lo = 0, hi = tails.length;
+    while (lo < hi) {
+      var mid = (lo + hi) >> 1;
+      if (pos[tails[mid]] < p) lo = mid + 1; else hi = mid;
+    }
+    prev[i] = lo > 0 ? tails[lo - 1] : -1;
+    tails[lo] = i;
+  });
+  var keep = new Set();
+  for (var i = tails.length ? tails[tails.length - 1] : -1; i >= 0; i = prev[i])
+    keep.add(desired[i]);
+  return keep;
+}
+
+// 一首歌是否符合：先比對標題；標題不符合才比對歌詞
+// → null（不符合）或 { rank, lyric }；lyric 只有在只有歌詞符合時才是符合的那一句，否則 null
 // get_lyrics() 傳回 song_lyric_search_index 的結果；只在標題不符合時才呼叫，可以留給呼叫端快取
-export function match_song(find, title, get_lyrics) {
-  if (find(title))
-    return { lyric: null };
+// scope：要比對哪些（見 parse_search_scope），預設兩個都比對
+export function match_song(find, song, get_lyrics, scope = { title: true, lyrics: true }) {
+  if (scope.title) {
+    var name = String(song.name == null ? '' : song.name);
+    var id = String(song.id);
+    var in_name = find(name);
+    if (whole(in_name, name) || whole(find(id), id))
+      return { rank: RANK_EXACT, lyric: null };
+    if (in_name && in_name.index == 0)
+      return { rank: RANK_PREFIX, lyric: null };
+    if (find(song_title_text(song)))
+      return { rank: RANK_TITLE, lyric: null };
+  }
+  if (!scope.lyrics)
+    return null;
   var lyrics = get_lyrics();
   if (!lyrics.text)
     return null;
   var m = find(lyrics.text);
-  return m ? { lyric: matched_lyric_lines(lyrics, m) } : null;
+  return m ? { rank: RANK_LYRICS, lyric: matched_lyric_lines(lyrics, m) } : null;
 }

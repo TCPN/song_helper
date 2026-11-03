@@ -171,6 +171,58 @@ table#song_list .song_lyrics a::before {
 	background-color: transparent;
 	margin-bottom: 0.2em;
 	padding: 0 0.2em;
+	display: flex;
+	align-items: center;
+	gap: 0.3em;
+	position: relative;
+}
+
+/* 搜尋框右邊的「搜尋範圍」按鈕；不是預設範圍（例如也搜尋歌詞）時變藍，提醒範圍改過 */
+#search_options_button {
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.2em;
+	height: 2.2em;
+	border-radius: 50%;
+	background: white;
+	box-shadow: 0 1px 2.5px #aaa;
+	color: #555;
+	cursor: pointer;
+}
+#search_options_button .icon {
+	width: 1.3em;
+	height: 1.3em;
+}
+#search_options_button.changed {
+	background: #d0ebfb;
+	color: #0b5f8a;
+}
+
+/* 「搜尋範圍」面板：按鈕下面，靠右 */
+#search_options {
+	position: absolute;
+	top: 100%;
+	right: 0.2em;
+	margin-top: 0.3em;
+	padding: 0.4em 0.8em;
+	background: white;
+	box-shadow: 0 1px 5px #0005;
+	border-radius: 0.4em;
+	text-align: left;
+	font-weight: normal;
+	z-index: 1;
+}
+#search_options label {
+	display: block;
+	line-height: 2em;
+	white-space: nowrap;
+	cursor: pointer;
+}
+#search_options input {
+	margin: 0 0.4em 0 0;
+	vertical-align: middle;
 }
 
 #song_search {

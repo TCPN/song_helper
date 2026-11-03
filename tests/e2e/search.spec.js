@@ -97,8 +97,17 @@ test.describe('搜尋：含正規表達式特殊字元的歌名', () => {
   });
 });
 
+// 搜尋範圍存在 localStorage 的 search_scope；要在 goto 之前呼叫
+async function setScope(app, scope) {
+  await app.page.addInitScript((value) => localStorage.setItem('search_scope', value), JSON.stringify(scope));
+}
+
 // #44：搜尋也比對歌詞（ABC 的 w:／W:，或「投影片」欄）；只有歌詞符合時，歌名下面顯示符合的那一句
 test.describe('搜尋：比對歌詞', () => {
+  test.beforeEach(async ({ app }) => {
+    await setScope(app, { title: true, lyrics: true });
+  });
+
   test.use({
     songs: [[
       { id: 1, name: '春之歌', tone: 'C', timesig: '4/4', melody: '',
@@ -157,6 +166,7 @@ test.describe('搜尋：比對歌詞', () => {
 // 搜尋框有字時列表換資料（快取 → 試算表的最新資料），照搜尋框的字重新篩選，歌詞那一句也跟著更新
 test.describe('搜尋：換資料後重新篩選', () => {
   test('快取的歌詞沒有、最新資料有時，最新資料到了就列出來', async ({ app, songs }) => {
+    await setScope(app, { title: true, lyrics: true });
     const stale = songs.map((song) => ({ ...song }));
     stale[0].abc = stale[0].abc.replace(/^w:.*$/m, 'w:la la la la la la la la la');
     await app.seedCache(stale);
@@ -170,5 +180,78 @@ test.describe('搜尋：換資料後重新篩選', () => {
     await expect(app.visibleRows()).toHaveCount(1);
     await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('do re mi fa sol fa mi re do');
     await expect(app.page.locator('#found_nothing')).toHaveClass(/hide/);
+  });
+});
+
+// 搜尋範圍：搜尋框右邊的按鈕打開面板，[x] 搜尋標題 [ ] 搜尋歌詞（預設），存在 localStorage
+test.describe('搜尋範圍', () => {
+  test.use({
+    songs: [[
+      { id: 1, name: '春之歌', tone: 'C', timesig: '4/4', melody: '',
+        abc: 'X:1\nM:4/4\nL:1/4\nK:C\nCDEF|]\nw:春 天 來 了\n' },
+      { id: 2, name: '冬天', tone: 'G', timesig: '4/4', melody: '', abc: null },
+    ], {}],
+  });
+
+  test('預設只搜尋標題；打開「搜尋歌詞」後也比對歌詞，重新整理後還記得', async ({ app }) => {
+    await app.goto();
+    const search = app.page.locator('#song_search');
+    await search.fill('天');
+    await expect(app.visibleRows()).toHaveCount(1);
+    await expect(app.page.locator('#search_options_button')).not.toHaveClass(/changed/);
+
+    await app.page.locator('#search_options_button').click();
+    await expect(app.page.locator('#search_options')).toBeVisible();
+    await expect(app.page.locator('[data-search-scope="title"]')).toBeChecked();
+    await expect(app.page.locator('[data-search-scope="title"]')).toBeDisabled(); // 只剩一個勾選時不能取消
+    await expect(app.page.locator('[data-search-scope="lyrics"]')).not.toBeChecked();
+    await app.page.locator('[data-search-scope="lyrics"]').check();
+    await expect(app.visibleRows()).toHaveCount(2);
+    await expect(app.page.locator('#search_options_button')).toHaveClass(/changed/);
+
+    // 點面板外面收起
+    await app.page.locator('#found_nothing').evaluate(() => document.body.click());
+    await expect(app.page.locator('#search_options')).toBeHidden();
+
+    await app.page.reload();
+    await app.ready();
+    await app.page.locator('#song_search').fill('天');
+    await expect(app.visibleRows()).toHaveCount(2);
+  });
+
+  test('只搜尋歌詞：歌名符合的不列出；搜尋框空白時全部列出', async ({ app }) => {
+    await setScope(app, { title: false, lyrics: true });
+    await app.goto();
+    const search = app.page.locator('#song_search');
+    await search.fill('天');
+    await expect(app.visibleRows()).toHaveCount(1);
+    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('春天來了');
+    await search.fill('');
+    await expect(app.visibleRows()).toHaveCount(2);
+  });
+});
+
+// 搜尋結果依符合程度排序：歌名（或曲號）完全符合 → 歌名開頭 → 標題任一處 → 只有歌詞符合；同一級照原本順序
+test.describe('搜尋結果排序', () => {
+  test.use({
+    songs: [[
+      { id: 1, name: '晨歌', tone: 'C', timesig: '4/4', melody: '',
+        abc: 'X:1\nM:4/4\nL:1/4\nK:C\nCDEF|]\nw:平 安 喜 樂\n' },
+      { id: 2, name: '我的平安', tone: 'C', timesig: '4/4', melody: '', abc: null },
+      { id: 3, name: '平安夜', tone: 'C', timesig: '4/4', melody: '', abc: null },
+      { id: 4, name: '平安', tone: 'C', timesig: '4/4', melody: '', abc: null },
+      { id: 5, name: '別的歌', tone: 'C', timesig: '4/4', melody: '', abc: null },
+    ], {}],
+  });
+
+  test('排序後清空搜尋恢復原本順序', async ({ app }) => {
+    await app.page.addInitScript(() => localStorage.setItem('search_scope', '{"title":true,"lyrics":true}'));
+    await app.goto();
+    const names = () => app.visibleRows().locator('td.song_name > span');
+    const search = app.page.locator('#song_search');
+    await search.fill('平安');
+    await expect(names()).toHaveText(['平安', '平安夜', '我的平安', '晨歌']);
+    await search.fill('');
+    await expect(names()).toHaveText(['晨歌', '我的平安', '平安夜', '平安', '別的歌']);
   });
 });
