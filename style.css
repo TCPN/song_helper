@@ -84,6 +84,17 @@ table#song_list td {
 	white-space: nowrap;
 }
 
+/* 歌名下面多一行歌詞時，曲號、調性、按鈕對齊歌名第一行的中間（而不是整列的中間）：
+   格子都靠上，每格第一行的行高都是 tr 的 2em（line-height 的 em 在 tr 上就換算成 px 再繼承），
+   文字自然在那一行置中；按鈕是 16px 高的 block，用上下 margin 補到同樣的行高 */
+table#song_list tbody td {
+	vertical-align: top;
+}
+table#song_list tbody td.song_score a,
+table#song_list tbody td.song_lyrics a {
+	margin: calc((2rem - 16px) / 2) 0; /* 2rem = tr 的 2em（列表沒改字級） */
+}
+
 @media (max-width: 480px) {
   table#song_list td {
 	font-size: 0.9em;
