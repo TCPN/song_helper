@@ -1210,9 +1210,9 @@ table#song_list .lyric_match {
 	color: #aaa;
 	padding-bottom: 0.3em;
 }
-/* 搜尋到的字：粗體、藍色（亮度和旁邊的 #aaa 差不多） */
+/* 搜尋到的字：粗體、藍色（亮度和旁邊的 #aaa 差不多，飽和度 46%） */
 table#song_list .lyric_match b {
-	color: #80aee0;
+	color: #8caed4; /* hsl(211, 46%, 69%) */
 }
 table#song_list .lyric_match > span {
 	display: block;
