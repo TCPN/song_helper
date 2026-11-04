@@ -16,7 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          # lts/* 在 2026-10 底換成 Node 26 後，Playwright 1.56 的 `playwright install` 解壓 Chromium 時會卡住到逾時；先固定 24
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium

@@ -84,6 +84,17 @@ table#song_list td {
 	white-space: nowrap;
 }
 
+/* 歌名下面多一行歌詞時，曲號、調性、按鈕對齊歌名第一行的中間（而不是整列的中間）：
+   格子都靠上，每格第一行的行高都是 tr 的 2em（line-height 的 em 在 tr 上就換算成 px 再繼承），
+   文字自然在那一行置中；按鈕是 16px 高的 block，用上下 margin 補到同樣的行高 */
+table#song_list tbody td {
+	vertical-align: top;
+}
+table#song_list tbody td.song_score a,
+table#song_list tbody td.song_lyrics a {
+	margin: calc((2rem - 16px) / 2) 0; /* 2rem = tr 的 2em（列表沒改字級） */
+}
+
 @media (max-width: 480px) {
   table#song_list td {
 	font-size: 0.9em;
@@ -160,6 +171,58 @@ table#song_list .song_lyrics a::before {
 	background-color: transparent;
 	margin-bottom: 0.2em;
 	padding: 0 0.2em;
+	display: flex;
+	align-items: center;
+	gap: 0.3em;
+	position: relative;
+}
+
+/* 搜尋框右邊的「搜尋範圍」按鈕；不是預設範圍（例如也搜尋歌詞）時變藍，提醒範圍改過 */
+#search_options_button {
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.2em;
+	height: 2.2em;
+	border-radius: 50%;
+	background: white;
+	box-shadow: 0 1px 2.5px #aaa;
+	color: #555;
+	cursor: pointer;
+}
+#search_options_button .icon {
+	width: 1.3em;
+	height: 1.3em;
+}
+#search_options_button.changed {
+	background: #d0ebfb;
+	color: #0b5f8a;
+}
+
+/* 「搜尋範圍」面板：按鈕下面，靠右 */
+#search_options {
+	position: absolute;
+	top: 100%;
+	right: 0.2em;
+	margin-top: 0.3em;
+	padding: 0.4em 0.8em;
+	background: white;
+	box-shadow: 0 1px 5px #0005;
+	border-radius: 0.4em;
+	text-align: left;
+	font-weight: normal;
+	z-index: 1;
+}
+#search_options label {
+	display: block;
+	line-height: 2em;
+	white-space: nowrap;
+	cursor: pointer;
+}
+#search_options input {
+	margin: 0 0.4em 0 0;
+	vertical-align: middle;
 }
 
 #song_search {
@@ -1133,4 +1196,27 @@ button.popup-window-close:hover {
 
 .lyrics-actions {
 	user-select: none;
+}
+
+/* 只有歌詞符合搜尋時，歌名下面的那一句歌詞（#44） */
+/* 不換行，可以延伸到右邊調性、按鈕底下（那幾格的第二行是空的），到表格右邊就截掉（顯示「…」）。
+   外層 width: 0 + min-width: 100% 讓這行不撐寬歌名那一欄；裡面的 span 寬度由 js/list.js 量好放在 --lyric-match-width */
+table#song_list .lyric_match {
+	width: 0;
+	min-width: 100%;
+	white-space: nowrap;
+	font-size: 0.8em;
+	line-height: 1.4;
+	color: #aaa;
+	padding-bottom: 0.3em;
+}
+/* 搜尋到的字：粗體、藍色（亮度和旁邊的 #aaa 差不多，飽和度 46%） */
+table#song_list .lyric_match b {
+	color: #8caed4; /* hsl(211, 46%, 69%) */
+}
+table#song_list .lyric_match > span {
+	display: block;
+	width: var(--lyric-match-width, 100%);
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
