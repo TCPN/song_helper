@@ -41,8 +41,7 @@ export function createList(songs){
     var item_tpl = (rows[i] && rows[i].item)|| createListItem();
     item_tpl.num.textContent = songs[i].id + '.';
     item_tpl.nameText.textContent = songs[i].name;
-    item_tpl.lyricText.textContent = '';
-    item_tpl.lyricMatch.classList.add('hide');
+    show_lyric_snippet(item_tpl, null);
     item_tpl.tone.textContent = songs[i].tone + '調';
     // 重用的列先清掉舊的譜面連結（快取與最新資料的譜可能不同）
     item_tpl.scoreMarkLink.classList.remove('chord_score', 'note_score');
@@ -221,6 +220,19 @@ function warm_lyric_indexes(songs) {
   schedule_idle(work);
 }
 
+// 歌名下面那句歌詞：{ before, match, after }（search.js 的 lyric_snippet），符合的字用 <b>；null 時藏起來
+// 內容沒變就不動 DOM（每次按鍵都會呼叫）
+function show_lyric_snippet(item, snippet) {
+  var key = snippet ? snippet.before + '\u0000' + snippet.match + '\u0000' + snippet.after : '';
+  if (item.lyricKey !== key) {
+    item.lyricKey = key;
+    var b = document.createElement('b');
+    b.textContent = snippet ? snippet.match : '';
+    item.lyricText.replaceChildren(snippet ? snippet.before : '', b, snippet ? snippet.after : '');
+  }
+  item.lyricMatch.classList.toggle('hide', !snippet);
+}
+
 // 篩選並排序：符合的列依符合程度（search.js 的 RANK_*）排在前面，同一級照原本的順序
 function filter_song(pattern) {
   var tbody = document.querySelector('#song_list').tBodies[0];
@@ -237,10 +249,7 @@ function filter_song(pattern) {
     if (result)
       found_something = true;
     if (item) {
-      var lyric = (result && result.lyric) || '';
-      if (item.lyricText.textContent !== lyric)
-        item.lyricText.textContent = lyric;
-      item.lyricMatch.classList.toggle('hide', !lyric);
+      show_lyric_snippet(item, result && result.lyric);
     }
     return { row: v, rank: result ? result.rank : null, order: item ? item.order : k };
   });

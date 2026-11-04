@@ -125,7 +125,8 @@ test.describe('搜尋：比對歌詞', () => {
     const row = app.visibleRows().first();
     await expect(row.locator('td.song_name > span')).toHaveText('春之歌');
     await expect(row.locator('.lyric_match')).toBeVisible();
-    await expect(row.locator('.lyric_match')).toHaveText('春天來了花開了');
+    await expect(row.locator('.lyric_match')).toHaveText('春天來了花開了 小鳥在唱歌'); // 換行顯示成空格
+    await expect(row.locator('.lyric_match b')).toHaveText('天來了'); // 符合的字用粗體
   });
 
   test('跨行的句子也找得到，顯示跨到的兩行', async ({ app }) => {
@@ -133,13 +134,14 @@ test.describe('搜尋：比對歌詞', () => {
     await app.page.locator('#song_search').fill('開了小鳥');
     await expect(app.visibleRows()).toHaveCount(1);
     await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('春天來了花開了 小鳥在唱歌');
+    await expect(app.visibleRows().first().locator('.lyric_match b')).toHaveText('開了 小鳥');
   });
 
   test('「投影片」欄的歌詞也比對', async ({ app }) => {
     await app.goto();
     await app.page.locator('#song_search').fill('晚安晚安');
     await expect(app.visibleRows()).toHaveCount(1);
-    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('晚安晚安');
+    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('星星 亮了 晚安 晚安'); // 空格、換行都是一個空格
   });
 
   test('歌名符合時不顯示歌詞；歌名與歌詞都符合的一起列出', async ({ app }) => {
@@ -149,7 +151,7 @@ test.describe('搜尋：比對歌詞', () => {
     const garden = app.page.locator('#song_list tr[data-target="3"]');
     await expect(garden).toBeVisible();
     await expect(garden.locator('.lyric_match')).toBeHidden();
-    await expect(app.page.locator('#song_list tr[data-target="1"] .lyric_match')).toHaveText('春天來了花開了');
+    await expect(app.page.locator('#song_list tr[data-target="1"] .lyric_match')).toHaveText('春天來了花開了 小鳥在唱歌');
   });
 
   test('清空搜尋後，歌詞那一句不再顯示', async ({ app }) => {
@@ -178,7 +180,7 @@ test.describe('搜尋：換資料後重新篩選', () => {
     await expect(app.page.locator('#found_nothing')).toBeVisible();
 
     await expect(app.visibleRows()).toHaveCount(1);
-    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('…re mi fa sol fa mi re do'); // 符合處之前最多十個字
+    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('do re mi fa sol fa mi re do');
     await expect(app.page.locator('#found_nothing')).toHaveClass(/hide/);
   });
 });

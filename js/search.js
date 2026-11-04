@@ -36,27 +36,32 @@ export function song_title_text(song) {
   return song.id + '.' + song.name + song.tone + '調';
 }
 
-// 段（js/slide-lyrics.js 的 { paragraphs }）→ 搜尋用的歌詞：{ text, lines, starts }
-// 每行先去掉中文旁的空格（strip_spaces），再全部接成一串 text，跨行的句子也找得到：
-// 中文接中文不加空格，英文單字之間留一個空格。starts[i] 是第 i 行在 text 裡的開頭位置
+// 段（js/slide-lyrics.js 的 { paragraphs }）→ 搜尋用的歌詞：{ text, display, map }
+// display：顯示用，所有行照順序接起來，行內的空白（含全形空白）、換行、換段、換段落都變成一個空格
+// text：比對用，display 再去掉中文旁的空格（strip_spaces 的規則），跨行的句子也找得到；
+//   英文單字之間的空格留著。map[i] 是 text 第 i 個位置在 display 裡的位置（map[text.length] = display.length）
 export function lyric_search_index(sections) {
   var lines = [];
   for (const section of sections)
     for (const paragraph of section.paragraphs)
       for (const line of paragraph) {
-        var text = strip_spaces(line).trim();
-        if (text)
-          lines.push(text);
+        var t = String(line).replace(/[\s\u3000]+/g, ' ').trim();
+        if (t)
+          lines.push(t);
       }
+  var display = lines.join(' ');
   var text = '';
-  var starts = [];
-  for (const line of lines) {
-    if (text && strip_spaces(text[text.length - 1] + ' ' + line[0]).length == 3)
-      text += ' ';
-    starts.push(text.length);
-    text += line;
+  var map = [];
+  for (var i = 0; i < display.length; i++) {
+    var c = display[i];
+    // 空格前後一定不是空格（上面已經併成一個）；strip_spaces 留下它，才是比對用的空格
+    if (c == ' ' && strip_spaces(display[i - 1] + ' ' + display[i + 1]).length != 3)
+      continue;
+    text += c;
+    map.push(i);
   }
-  return { text, lines, starts };
+  map.push(display.length);
+  return { text, display, map };
 }
 
 // 一首歌的搜尋用歌詞（「投影片」欄有字就用它，不然從 ABC 的 w:／W: 抽出）
@@ -64,27 +69,37 @@ export function song_lyric_search_index(song) {
   return lyric_search_index(song_slide_lyrics(song).sections);
 }
 
-// 符合處（{ index, length }，位置是 index.text 裡的）所在的歌詞行；跨行時把那幾行用空格接起來
-// before：最多只留符合處之前的幾個字（同一行裡的；以字元算，不拆開 emoji 等），前面有截掉時加「…」
-export function matched_lyric_lines(index, match, before = Infinity) {
-  var first = last_start_at_or_before(index.starts, match.index);
-  var last = last_start_at_or_before(index.starts, match.index + Math.max(match.length, 1) - 1);
-  var text = index.lines.slice(first, last + 1).join(' ');
-  var head = Array.from(index.text.slice(index.starts[first], match.index));
-  if (head.length <= before)
-    return text;
-  var cut = head.slice(0, head.length - before).join('').length;
-  return '…' + text.slice(cut).replace(/^ +/, '');
+// 列表上歌詞那一句：符合處前後各最多幾個字
+export const LYRIC_CONTEXT = 10;
+
+// 符合處（{ index, length }，位置是 index.text 裡的）→ 顯示用的 { before, match, after }
+// match 是 display 裡符合的那段；前後各最多留 around 個字（空格不算字；以字元算，不拆開 emoji），
+// 有截掉時前面或後面加「…」
+export function lyric_snippet(index, match, around = LYRIC_CONTEXT) {
+  var start = index.map[match.index];
+  var end = match.length ? index.map[match.index + match.length - 1] + 1 : start;
+  var before = take_chars(Array.from(index.display.slice(0, start)).reverse(), around);
+  var after = take_chars(Array.from(index.display.slice(end)), around);
+  return {
+    before: (before.cut ? '…' : '') + before.chars.reverse().join('').replace(/^ +/, ''),
+    match: index.display.slice(start, end),
+    after: after.chars.join('').replace(/ +$/, '') + (after.cut ? '…' : ''),
+  };
 }
 
-// 列表上歌詞那一句：符合處之前最多留幾個字
-export const LYRIC_CONTEXT_BEFORE = 10;
-
-function last_start_at_or_before(starts, at) {
-  var k = 0;
-  while (k + 1 < starts.length && starts[k + 1] <= at)
-    k++;
-  return k;
+// 從頭取最多 count 個不是空格的字（中間的空格一起留下）→ { chars, cut：後面還有字被截掉 }
+function take_chars(chars, count) {
+  var kept = [];
+  var n = 0;
+  for (var k = 0; k < chars.length; k++) {
+    if (chars[k] != ' ') {
+      if (n == count)
+        return { chars: kept, cut: true };
+      n++;
+    }
+    kept.push(chars[k]);
+  }
+  return { chars: kept, cut: false };
 }
 
 // 搜尋範圍（搜尋框旁的開關，存在 localStorage）：預設只搜尋標題（編號、歌名、調性）
@@ -147,7 +162,7 @@ export function unmoved(current, desired) {
 }
 
 // 一首歌是否符合：先比對標題；標題不符合才比對歌詞
-// → null（不符合）或 { rank, lyric }；lyric 只有在只有歌詞符合時才是符合的那一句，否則 null
+// → null（不符合）或 { rank, lyric }；lyric 只有在只有歌詞符合時才是 lyric_snippet 的 { before, match, after }，否則 null
 // get_lyrics() 傳回 song_lyric_search_index 的結果；只在標題不符合時才呼叫，可以留給呼叫端快取
 // scope：要比對哪些（見 parse_search_scope），預設兩個都比對
 export function match_song(find, song, get_lyrics, scope = { title: true, lyrics: true }) {
@@ -168,5 +183,5 @@ export function match_song(find, song, get_lyrics, scope = { title: true, lyrics
   if (!lyrics.text)
     return null;
   var m = find(lyrics.text);
-  return m ? { rank: RANK_LYRICS, lyric: matched_lyric_lines(lyrics, m, LYRIC_CONTEXT_BEFORE) } : null;
+  return m ? { rank: RANK_LYRICS, lyric: lyric_snippet(lyrics, m) } : null;
 }

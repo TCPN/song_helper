@@ -1210,6 +1210,10 @@ table#song_list .lyric_match {
 	color: #aaa;
 	padding-bottom: 0.3em;
 }
+/* 搜尋到的字：粗體、比旁邊深一點 */
+table#song_list .lyric_match b {
+	color: #777;
+}
 table#song_list .lyric_match > span {
 	display: block;
 	width: var(--lyric-match-width, 100%);
