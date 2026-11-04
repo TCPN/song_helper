@@ -84,6 +84,9 @@ test('matched_lyric_lines：before 限制符合處之前的字數，截掉時加
   assert.equal(matched_lyric_lines(index, { index: 10, length: 1 }, 10), '一二三四五六七八九十甲乙丙丁');
   assert.equal(matched_lyric_lines(index, { index: 12, length: 1 }, 10), '…三四五六七八九十甲乙丙丁');
   assert.equal(matched_lyric_lines(index, { index: 12, length: 4 }, 3), '…十甲乙丙丁 下一行');
+  // 截掉後開頭的空格拿掉
+  const en = lyric_search_index([{ paragraphs: [['do re mi fa sol']] }]);
+  assert.equal(matched_lyric_lines(en, { index: 12, length: 3 }, 10), '…re mi fa sol');
   // 以字元算，不拆開 emoji
   const emoji = lyric_search_index([{ paragraphs: [['😀😀😀好']] }]);
   assert.equal(matched_lyric_lines(emoji, { index: 6, length: 1 }, 2), '…😀😀好');

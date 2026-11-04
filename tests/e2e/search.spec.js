@@ -178,7 +178,7 @@ test.describe('搜尋：換資料後重新篩選', () => {
     await expect(app.page.locator('#found_nothing')).toBeVisible();
 
     await expect(app.visibleRows()).toHaveCount(1);
-    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('do re mi fa sol fa mi re do');
+    await expect(app.visibleRows().first().locator('.lyric_match')).toHaveText('…re mi fa sol fa mi re do'); // 符合處之前最多十個字
     await expect(app.page.locator('#found_nothing')).toHaveClass(/hide/);
   });
 });

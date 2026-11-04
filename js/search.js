@@ -74,7 +74,7 @@ export function matched_lyric_lines(index, match, before = Infinity) {
   if (head.length <= before)
     return text;
   var cut = head.slice(0, head.length - before).join('').length;
-  return '…' + text.slice(cut);
+  return '…' + text.slice(cut).replace(/^ +/, '');
 }
 
 // 列表上歌詞那一句：符合處之前最多留幾個字
