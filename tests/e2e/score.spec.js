@@ -242,6 +242,17 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await expect(bar).toHaveClass(/compact/);
   });
 
+  test('450px 以上但最右邊的「關閉」放不下時，也切成精簡版面', async ({ app }) => {
+    const bar = app.page.locator('#score_popup_top_bar');
+    await app.page.setViewportSize({ width: 460, height: 667 });
+    await app.goto('#song_id=1');
+    await expect(bar).not.toHaveClass(/compact/);
+    // 只把「關閉」推到工具列外面（它前面的分隔線還在畫面裡），再讓工具列重新判斷
+    await app.page.addStyleTag({ content: '#close_score_button { margin-left: 300px !important; }' });
+    await app.page.setViewportSize({ width: 461, height: 667 });
+    await expect(bar).toHaveClass(/compact/);
+  });
+
   test('⋮ 可以用鍵盤打開，Tab 到選單項目按 Enter 執行', async ({ app }) => {
     await app.goto('#song_id=1');
     await moreButton(app).focus();
