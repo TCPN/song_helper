@@ -341,6 +341,27 @@ table#song_list a#wish_link {
 	cursor: pointer;
 }
 
+/* 點擊範圍：文字按鈕 40×28、icon 按鈕 28×28，以按鈕為中心向外撐開。
+ * 用不佔版面的 ::before 撐，按鈕的大小、間距和工具列的排版都不變；點到 ::before 等於點到按鈕 */
+#score_popup_top_bar :is(.print-button, .play-button, #view_button, #layout_button, #edit_button, #more_button, #close_score_button) {
+	position: relative;
+}
+
+#score_popup_top_bar :is(.print-button, .play-button, #view_button, #layout_button, #edit_button, #more_button, #close_score_button)::before {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 40px;
+	height: 28px;
+	transform: translate(-50%, -50%);
+}
+
+#score_popup_top_bar.compact #view_button::before,
+#score_popup_top_bar :is(#more_button, #close_score_button)::before {
+	width: 28px;
+}
+
 /* 移調數字浮在調號右上角，不佔按鈕的寬度，移調時工具列不會動；沒移調就不顯示 */
 #transpose_badge {
 	position: absolute;

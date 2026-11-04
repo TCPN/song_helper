@@ -363,3 +363,46 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await editor.close();
   });
 });
+
+// 按鈕的點擊範圍比字或 icon 大：文字按鈕 40×28、icon 按鈕 28×28，以按鈕為中心（不改變版面）
+test.describe('工具列按鈕的點擊範圍', () => {
+  // 以按鈕中心為準，點擊範圍內四個角往內 1px 的點都點得到按鈕；範圍外 2px 就點不到
+  async function expect_hit_area(app, selector, width, height) {
+    const result = await app.page.evaluate(({ selector, width, height }) => {
+      const button = document.querySelector(selector);
+      const r = button.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const hits = (dx, dy) => document.elementFromPoint(cx + dx, cy + dy)?.closest(selector) === button;
+      const x_in = width / 2 - 1, y_in = height / 2 - 1, x_out = width / 2 + 2, y_out = height / 2 + 2;
+      return {
+        inside: [hits(-x_in, -y_in), hits(x_in, -y_in), hits(-x_in, y_in), hits(x_in, y_in)],
+        outside: [hits(-x_out, 0), hits(x_out, 0), hits(0, -y_out), hits(0, y_out)],
+      };
+    }, { selector, width, height });
+    expect(result.inside, `${selector} 範圍內`).toEqual([true, true, true, true]);
+    expect(result.outside, `${selector} 範圍外`).toEqual([false, false, false, false]);
+  }
+
+  test('夠寬時：文字按鈕 40×28，關閉 28×28', async ({ app }) => {
+    await app.goto('#song_id=1');
+    for (const selector of ['#score_popup_top_bar > .print-button', '#score_popup_top_bar > .play-button',
+      '#view_button', '#layout_button', '#edit_button'])
+      await expect_hit_area(app, selector, 40, 28);
+    await expect_hit_area(app, '#close_score_button', 28, 28);
+  });
+
+  test('手機寬度（375px）：「檢視」、⋮、關閉的 icon 都是 28×28', async ({ app }) => {
+    await app.page.setViewportSize({ width: 375, height: 667 });
+    await app.goto('#song_id=1');
+    await expect(app.page.locator('#score_popup_top_bar')).toHaveClass(/compact/);
+    await expect_hit_area(app, '#view_button', 28, 28);
+    await expect_hit_area(app, '#close_score_button', 28, 28);
+    // ⋮ 和關閉之間的間距比 28px 少一點點，右邊會被關閉的範圍蓋住約 1px，只檢查上下和左邊
+    const r = await app.page.locator('#more_button').boundingBox();
+    const cx = r.x + r.width / 2, cy = r.y + r.height / 2;
+    const hit = (x, y) => app.page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest('#more_button') != null, [x, y]);
+    expect(await hit(cx - 13, cy - 13)).toBe(true);
+    expect(await hit(cx - 13, cy + 13)).toBe(true);
+    expect(await hit(cx, cy - 16)).toBe(false);
+  });
+});
