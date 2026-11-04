@@ -78,6 +78,17 @@ test('matched_lyric_lines：符合處所在的行；跨行時接起來', () => {
   assert.equal(matched_lyric_lines(index, { index: 0, length: 0 }), '春天來了');
 });
 
+test('matched_lyric_lines：before 限制符合處之前的字數，截掉時加「…」', () => {
+  const index = lyric_search_index([{ paragraphs: [['一二三四五六七八九十甲乙丙丁', '下一行']] }]);
+  // 「甲」在第 10 個字之後
+  assert.equal(matched_lyric_lines(index, { index: 10, length: 1 }, 10), '一二三四五六七八九十甲乙丙丁');
+  assert.equal(matched_lyric_lines(index, { index: 12, length: 1 }, 10), '…三四五六七八九十甲乙丙丁');
+  assert.equal(matched_lyric_lines(index, { index: 12, length: 4 }, 3), '…十甲乙丙丁 下一行');
+  // 以字元算，不拆開 emoji
+  const emoji = lyric_search_index([{ paragraphs: [['😀😀😀好']] }]);
+  assert.equal(matched_lyric_lines(emoji, { index: 6, length: 1 }, 2), '…😀😀好');
+});
+
 const song1 = { id: 1, name: '春之歌', tone: 'C' };
 
 test('match_song：標題符合時不看歌詞；只有歌詞符合時傳回那一句', () => {

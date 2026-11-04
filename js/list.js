@@ -14,6 +14,20 @@ export function fixedListWidth() {
   var song_list_table = document.querySelector('#song_list');
   var r = song_list_table.getClientRects()[0];
   song_list_table.style.maxWidth = `${r.width}px`;
+  update_lyric_match_width();
+}
+
+// 歌名下面那句歌詞可以用到的寬度：從歌名那一欄的內容左邊到表格右邊（右邊的調性、按鈕只佔第一行，
+// 第二行是空的）。存在表格的 --lyric-match-width，CSS 用它截斷那句歌詞
+function update_lyric_match_width() {
+  var table = document.querySelector('#song_list');
+  var cell = table.querySelector('tbody td.song_name');
+  if (!table.getClientRects().length || !cell)
+    return;
+  var left = cell.getBoundingClientRect().left + parseFloat(getComputedStyle(cell).paddingLeft);
+  var width = table.getBoundingClientRect().right - left;
+  if (width > 0)
+    table.style.setProperty('--lyric-match-width', `${Math.floor(width)}px`);
 }
 
 export function createList(songs){
@@ -27,7 +41,7 @@ export function createList(songs){
     var item_tpl = (rows[i] && rows[i].item)|| createListItem();
     item_tpl.num.textContent = songs[i].id + '.';
     item_tpl.nameText.textContent = songs[i].name;
-    item_tpl.lyricMatch.textContent = '';
+    item_tpl.lyricText.textContent = '';
     item_tpl.lyricMatch.classList.add('hide');
     item_tpl.tone.textContent = songs[i].tone + '調';
     // 重用的列先清掉舊的譜面連結（快取與最新資料的譜可能不同）
@@ -72,6 +86,8 @@ function createListItem(){
   // 只有歌詞符合搜尋時，歌名下面用小字顯示符合的那一句
   var lyricMatch = document.createElement('div');
   lyricMatch.className = 'lyric_match hide';
+  var lyricText = document.createElement('span');
+  lyricMatch.appendChild(lyricText);
   name.appendChild(nameText);
   name.appendChild(lyricMatch);
   var tone = document.createElement('td');
@@ -100,6 +116,7 @@ function createListItem(){
     name,
     nameText,
     lyricMatch,
+    lyricText,
     tone,
     scoreMark,
     scoreMarkLink,
@@ -221,8 +238,8 @@ function filter_song(pattern) {
       found_something = true;
     if (item) {
       var lyric = (result && result.lyric) || '';
-      if (item.lyricMatch.textContent !== lyric)
-        item.lyricMatch.textContent = lyric;
+      if (item.lyricText.textContent !== lyric)
+        item.lyricText.textContent = lyric;
       item.lyricMatch.classList.toggle('hide', !lyric);
     }
     return { row: v, rank: result ? result.rank : null, order: item ? item.order : k };
@@ -294,6 +311,8 @@ function setup_search_scope() {
 
 // 註冊搜尋框與列表的事件
 export function setup_list() {
+  // 視窗變窄時表格可能跟著變窄
+  window.addEventListener('resize', update_lyric_match_width);
   setup_search_scope();
   document.querySelector('#song_search').addEventListener('input', function(){ filter_song(this.value); });
   document.querySelector('#song_list tbody').addEventListener('click', song_list_onclick);

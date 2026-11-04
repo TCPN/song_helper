@@ -65,11 +65,20 @@ export function song_lyric_search_index(song) {
 }
 
 // 符合處（{ index, length }，位置是 index.text 裡的）所在的歌詞行；跨行時把那幾行用空格接起來
-export function matched_lyric_lines(index, match) {
+// before：最多只留符合處之前的幾個字（同一行裡的；以字元算，不拆開 emoji 等），前面有截掉時加「…」
+export function matched_lyric_lines(index, match, before = Infinity) {
   var first = last_start_at_or_before(index.starts, match.index);
   var last = last_start_at_or_before(index.starts, match.index + Math.max(match.length, 1) - 1);
-  return index.lines.slice(first, last + 1).join(' ');
+  var text = index.lines.slice(first, last + 1).join(' ');
+  var head = Array.from(index.text.slice(index.starts[first], match.index));
+  if (head.length <= before)
+    return text;
+  var cut = head.slice(0, head.length - before).join('').length;
+  return '…' + text.slice(cut);
 }
+
+// 列表上歌詞那一句：符合處之前最多留幾個字
+export const LYRIC_CONTEXT_BEFORE = 10;
 
 function last_start_at_or_before(starts, at) {
   var k = 0;
@@ -159,5 +168,5 @@ export function match_song(find, song, get_lyrics, scope = { title: true, lyrics
   if (!lyrics.text)
     return null;
   var m = find(lyrics.text);
-  return m ? { rank: RANK_LYRICS, lyric: matched_lyric_lines(lyrics, m) } : null;
+  return m ? { rank: RANK_LYRICS, lyric: matched_lyric_lines(lyrics, m, LYRIC_CONTEXT_BEFORE) } : null;
 }

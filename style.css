@@ -1199,10 +1199,20 @@ button.popup-window-close:hover {
 }
 
 /* 只有歌詞符合搜尋時，歌名下面的那一句歌詞（#44） */
+/* 不換行，可以延伸到右邊調性、按鈕底下（那幾格的第二行是空的），到表格右邊就截掉（顯示「…」）。
+   外層 width: 0 + min-width: 100% 讓這行不撐寬歌名那一欄；裡面的 span 寬度由 js/list.js 量好放在 --lyric-match-width */
 table#song_list .lyric_match {
-	white-space: normal;
+	width: 0;
+	min-width: 100%;
+	white-space: nowrap;
 	font-size: 0.8em;
 	line-height: 1.4;
-	color: #777;
+	color: #aaa;
 	padding-bottom: 0.3em;
+}
+table#song_list .lyric_match > span {
+	display: block;
+	width: var(--lyric-match-width, 100%);
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
