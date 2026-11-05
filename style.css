@@ -325,7 +325,7 @@ table#song_list a#wish_link {
 	margin-right: 0;
 }
 
-/* 精簡版面右邊的「檢視」、⋮、關閉之間的間距一樣，都是 0.6em：icon 1.2em 寬，加上間距比點擊範圍的 28px 多一點，
+/* 精簡版面右邊的「檢視」、⋮、關閉之間的間距一樣，都是 0.6em：icon 24px 寬，加上間距比點擊範圍的 28px 多，
  * 相鄰的點擊範圍不重疊。關閉右邊的邊距不變 */
 #score_popup_top_bar.compact #more_group {
 	margin: 0.5ex 0.6em;
@@ -345,6 +345,12 @@ table#song_list a#wish_link {
 	height: 1.2em;
 	fill: currentColor;
 	vertical-align: middle;
+}
+
+/* 工具列上的 icon 固定 24px，不隨字級改變 */
+#score_popup_top_bar .icon {
+	width: 24px;
+	height: 24px;
 }
 
 #transpose_button, #view_button, #layout_button, #edit_button, #more_button, #close_score_button,
