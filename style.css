@@ -347,12 +347,6 @@ table#song_list a#wish_link {
 	vertical-align: middle;
 }
 
-/* 「檢視」icon 試用中的兩版：預設 A；#view_button 加上 data-icon="b" 換成 B（不用重新整理就能切換） */
-#view_button:not([data-icon="b"]) .view-icon-b,
-#view_button[data-icon="b"] .view-icon-a {
-	display: none;
-}
-
 #transpose_button, #view_button, #layout_button, #edit_button, #more_button, #close_score_button,
 .print-button, .play-button {
 	cursor: pointer;
