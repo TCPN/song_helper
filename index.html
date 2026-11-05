@@ -128,12 +128,12 @@
 			</div>
 			<!-- 「檢視」：最前面是歌譜／歌詞檢視（js/lyrics-view.js），再來是譜面的顯示方式與譜紙（js/score-view.js，
 			     歌詞檢視時不顯示）。工具列不夠寬時文字換成 icon：文件（長方形裡有橫線）疊在虛線方框的左上角，
-			     兩個框的線寬和「關閉」的 X 一樣 -->
+			     兩個框的線寬和「關閉」的 X 一樣，四邊往內縮半個線寬 -->
 			<span id="view_group" class="toolbar-item">
 				<div id="view_button" title="檢視" aria-label="檢視" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="view-menu"><span class="wide-only" aria-hidden="true">檢視</span><svg class="icon compact-only" viewBox="0 0 24 24" aria-hidden="true">
-						<rect x="1.5" y="1.5" width="21" height="21" rx="1.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="3 2.5"/>
-						<rect x="1.5" y="1.5" width="13" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
-						<path d="M5 6h6M5 9.5h6M5 13h3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+						<rect x="2.75" y="2.75" width="18.5" height="18.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="3 2.5"/>
+						<rect x="2.75" y="2.75" width="11.452" height="14.095" rx="1.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+						<path d="M5.833 6.714h5.286 M5.833 9.798h5.286 M5.833 12.881h3.083" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
 					</svg></div>
 				<div id="view-menu" class="hide menu" role="menu">
 					<span class="menu-item" data-view-mode="score" role="menuitemradio" tabindex="0">檢視歌譜</span>
