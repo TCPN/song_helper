@@ -402,18 +402,15 @@ test.describe('工具列按鈕的點擊範圍', () => {
     await expect_hit_area(app, '#close_score_button', 28, 28);
   });
 
-  test('手機寬度（375px）：「檢視」、⋮、關閉的 icon 都是 28×28', async ({ app }) => {
+  test('手機寬度（375px）：「檢視」、⋮、關閉的 icon 都是 28×28，彼此間距一樣', async ({ app }) => {
     await app.page.setViewportSize({ width: 375, height: 667 });
     await app.goto('#song_id=1');
     await expect(app.page.locator('#score_popup_top_bar')).toHaveClass(/compact/);
     await expect_hit_area(app, '#view_button', 28, 28);
     await expect_hit_area(app, '#close_score_button', 28, 28);
-    // ⋮ 和關閉之間的間距比 28px 少一點點，右邊會被關閉的範圍蓋住約 1px，只檢查上下和左邊
-    const r = await app.page.locator('#more_button').boundingBox();
-    const cx = r.x + r.width / 2, cy = r.y + r.height / 2;
-    const hit = (x, y) => app.page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest('#more_button') != null, [x, y]);
-    expect(await hit(cx - 13, cy - 13)).toBe(true);
-    expect(await hit(cx - 13, cy + 13)).toBe(true);
-    expect(await hit(cx, cy - 16)).toBe(false);
+    await expect_hit_area(app, '#more_button', 28, 28);
+    const [view, more, close] = await Promise.all(['#view_button svg', '#more_button svg', '#close_score_button svg']
+      .map((selector) => app.page.locator(selector).boundingBox()));
+    expect(more.x - (view.x + view.width)).toBeCloseTo(close.x - (more.x + more.width), 1);
   });
 });

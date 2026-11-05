@@ -322,6 +322,17 @@ table#song_list a#wish_link {
 
 #score_popup_top_bar.compact #view_group {
 	margin-left: auto;
+	margin-right: 0;
+}
+
+/* 精簡版面右邊的「檢視」、⋮、關閉之間的間距一樣，都是 0.6em：icon 1.2em 寬，加上間距比點擊範圍的 28px 多一點，
+ * 相鄰的點擊範圍不重疊。關閉右邊的邊距不變 */
+#score_popup_top_bar.compact #more_group {
+	margin: 0.5ex 0.6em;
+}
+
+#score_popup_top_bar.compact #close_score_button {
+	margin-left: 0;
 }
 
 #score_popup_top_bar:not(.compact) .compact-only,
@@ -342,7 +353,8 @@ table#song_list a#wish_link {
 }
 
 /* 點擊範圍：文字按鈕 40×28、icon 按鈕 28×28，以按鈕為中心向外撐開。
- * 用不佔版面的 ::before 撐，按鈕的大小、間距和工具列的排版都不變；點到 ::before 等於點到按鈕 */
+ * 用不佔版面的 ::before 撐，按鈕的大小、間距和工具列的排版都不變；點到 ::before 等於點到按鈕。
+ * 編號和調性刻意不改（本身已經夠大） */
 #score_popup_top_bar :is(.print-button, .play-button, #view_button, #layout_button, #edit_button, #more_button, #close_score_button) {
 	position: relative;
 }
