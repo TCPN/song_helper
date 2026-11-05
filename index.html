@@ -127,11 +127,11 @@
 				<div id="player-control"></div>
 			</div>
 			<!-- 「檢視」：最前面是歌譜／歌詞檢視（js/lyrics-view.js），再來是譜面的顯示方式與譜紙（js/score-view.js，
-			     歌詞檢視時不顯示）。工具列不夠寬時文字換成 icon：一張文件（長方形裡有橫線） -->
+			     歌詞檢視時不顯示）。工具列不夠寬時文字換成 icon：一張紙（三條橫線），右下角往內折（斜邊和底邊夾 30°） -->
 			<span id="view_group" class="toolbar-item">
 				<div id="view_button" title="檢視" aria-label="檢視" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="view-menu"><span class="wide-only" aria-hidden="true">檢視</span><svg class="icon compact-only" viewBox="0 0 24 24" aria-hidden="true">
-						<rect x="4.5" y="1.5" width="15" height="21" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-						<path d="M8 6h8M8 10h8M8 14h8M8 18h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+						<path d="M6 1.5H18A1.5 1.5 0 0 1 19.5 3V18L11.71 22.5H6A1.5 1.5 0 0 1 4.5 21V3A1.5 1.5 0 0 1 6 1.5ZM11.71 22.5L15.6 15.75L19.5 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+						<path d="M8 5.5h8M8 9.5h8M8 13.5h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
 					</svg></div>
 				<div id="view-menu" class="hide menu" role="menu">
 					<span class="menu-item" data-view-mode="score" role="menuitemradio" tabindex="0">檢視歌譜</span>
