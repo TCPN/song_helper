@@ -320,19 +320,22 @@ table#song_list a#wish_link {
 	padding: 0 0.5em;
 }
 
+/* 精簡版面右邊的「檢視」、⋮、關閉用同一套排法：外層（群組或按鈕本身）不留邊距，按鈕本身都是 28×28 的方塊、
+ * icon 置中（方塊就是點擊範圍），方塊之間固定隔 2px。最右邊緊貼工具列的右側內距 */
+#score_popup_top_bar.compact :is(#view_group, #more_group, #close_score_button) {
+	margin: 0 0 0 2px;
+}
+
 #score_popup_top_bar.compact #view_group {
 	margin-left: auto;
-	margin-right: 0;
 }
 
-/* 精簡版面右邊的「檢視」、⋮、關閉之間的間距一樣，都是 0.6em：icon 20px 寬，加上間距比點擊範圍的 28px 多，
- * 相鄰的點擊範圍不重疊。關閉右邊的邊距不變 */
-#score_popup_top_bar.compact #more_group {
-	margin: 0.5ex 0.6em;
-}
-
-#score_popup_top_bar.compact #close_score_button {
-	margin-left: 0;
+#score_popup_top_bar.compact :is(#view_button, #more_button, #close_score_button) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
 }
 
 #score_popup_top_bar:not(.compact) .compact-only,
