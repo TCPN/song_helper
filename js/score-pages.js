@@ -227,6 +227,9 @@ function page_keydown(event) {
     return;
   if(document.querySelector('#score_popup_top_bar').contains(event.target))
     return;
+  // 在文字區裡（歌詞排版編輯）方向鍵是移動游標
+  if(event.target.closest && event.target.closest('textarea'))
+    return;
   event.preventDefault();
   turn_page(step);
 }

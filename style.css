@@ -864,7 +864,7 @@ table#song_list a#wish_link {
 	}
 
 	/* 歌詞檢視：只印歌名和歌詞，不印全選／複製等按鈕和訊息，也不印看不見的譜紙 */
-	.lyrics-mode #score_page, .lyrics-actions, .lyrics-messages {
+	.lyrics-mode #score_page, .lyrics-actions, .lyrics-messages, .lyrics-editor-bar, .lyrics-editor-warnings, .lyrics-editor-hint {
 		display: none !important;
 	}
 
@@ -1238,6 +1238,97 @@ button.popup-window-close:hover {
 
 .lyrics-actions {
 	user-select: none;
+}
+
+/* icon 按鈕（編輯排版、復原、重做、存檔、關閉）：和文字按鈕一樣高，icon 1.2em */
+.lyrics-icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.3em 0.5em;
+	line-height: 1;
+}
+
+.lyrics-icon-button svg {
+	width: 1.2em;
+	height: 1.2em;
+}
+
+/* 歌詞排版編輯（js/lyrics-editor.js）：打開時蓋掉複製用的按鈕列、歌詞和訊息（歌名留著） */
+#lyrics_editor.hide, #lyrics_view:not(.editing) #lyrics_editor_bar, .editing .lyrics-actions, .editing #lyrics_sections, .editing #lyrics_messages {
+	display: none;
+}
+
+.lyrics-editor-bar {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding: 0.6em 0;
+	background: #fff;
+	border-bottom: 1px solid #0002;
+	user-select: none;
+}
+
+.lyrics-editor-warnings {
+	list-style: none;
+	margin: 0.6em 0 0;
+	padding: 0.4em 0.6em;
+	font-size: 0.85em;
+	background: #fff6d0;
+	border: 1px solid #e8cf6a;
+	border-radius: 0.3em;
+	user-select: none;
+}
+
+.lyrics-editor-warnings li + li {
+	margin-top: 0.3em;
+}
+
+.lyrics-editor-warnings:empty {
+	display: none;
+}
+
+.lyrics-editor-hint {
+	margin: 0.6em 0 0;
+	font-size: 0.8em;
+	color: #888;
+	user-select: none;
+}
+
+.lyrics-editor-name {
+	cursor: default;
+}
+
+/* 文字區：和歌詞檢視一樣的字和行高，高度跟著內容（js 的 fit），不能拉大小 */
+.lyrics-editor-text {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	font: inherit;
+	line-height: 1.8;
+	word-spacing: 0.5em;
+	padding: 0 0.4em;
+	border: 1px solid #ccc;
+	border-radius: 0.3em;
+	resize: none;
+	overflow: hidden;
+	color: inherit;
+	background: #fff;
+}
+
+.lyrics-editor-text:focus {
+	outline: none;
+	border-color: #6cb4f0;
+	box-shadow: 0 0 0 2px #6cb4f055;
+}
+
+/* 文字和原本不一樣的段：黃色框 */
+.lyrics-editor-text.changed {
+	border-color: #e0b400;
+	background: #fffbea;
 }
 
 /* 只有歌詞符合搜尋時，歌名下面的那一句歌詞（#44） */

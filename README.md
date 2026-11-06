@@ -54,6 +54,11 @@
     行中間的 `[P:B]` 依音符數對齊 `w:`，標記後面的字都算 `B` 段（休止符、裝飾音不算音符，和音算一個，`w:` 裡的 `|` 跳到下一小節）。
     沒有 `P:` 時整首一段，只有一節叫 `Verse`，多節時 `Verse1`、`Verse2`…；「投影片」欄第一個 `[段名]` 之前的文字也叫 `Verse`。`W:`（譜後歌詞）放在最後一段 `W`。
     音節接回來時中文直接相連、英文隔一個空格，中文旁邊是英文字母時也隔一個空格（標點不隔）；`-` 接回同一個字，`_` `*` 是沒有字的音符，`~` 分開同一個音下的字（套用同樣的規則，所以中文之間不顯示）；譜上休止符（`z` `Z`）的位置空一格。`w:` 行尾的 `\` 是續行，下一行（有沒有 `w:` 都可以）接在後面。
+  - 歌詞排版編輯（`js/lyrics-editor.js`、`js/lyric-layout.js`）：歌詞檢視按鈕列最左邊的鉛筆打開，蓋在歌詞上面（不改網址）。每段一個文字區，段名在文字區外面（不能選取、刪不掉），
+    可以加減空格與換行，空一行是段內分段（投影片換頁）。隨時把去掉空白後的字和原本的歌詞（「投影片」欄或從譜上抽出的）比對，不一樣時上方顯示黃色警告（哪一段、刪掉／加了／改成什麼），那段的框變黃。
+    按鈕：復原、重做（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是，換行與空格各一步，連續打字合成一步）、存檔（Ctrl+S；改到字時先確認）、關閉（沒存檔時先確認）。
+    存在這台裝置的 localStorage `lyrics_layout`（`{ 歌號: 「投影片」欄格式的文字 }`，之後可以直接貼回試算表）；和原本一模一樣時刪掉暫存。
+    有暫存時歌詞檢視用暫存的排版，加一則「使用這台裝置暫存的排版（還沒存回試算表）」，暫存的字和原本不一樣時再加一則警告。換歌或回到歌譜檢視時不再編輯（沒存的修改不留）。
 - 螢幕寬度小於 450px（或工具列放不下）時，列印、播放、編輯、排版收進「⋮」選單（「排版…」打開的面板出現在「⋮」旁邊），「檢視」換成 icon
 - 歌曲列表最後有「沒有找到想要的歌？快來許願」，「快來許願」連到許願用的 Google 表單
 - 狀態都記在網址 hash，例如 `#song_id=12&transpose=2`（歌詞檢視再加 `&view=lyrics`），方便分享與存書籤
@@ -75,9 +80,10 @@
 | `js/layout-panel.js` | 工具列「排版」選單的面板（行間距均等化、行距、譜面寬度、歌詞與和弦字級、設定分頁） |
 | `js/editor-links.js` | 「編輯」與「⋮」選單的開關、編輯器連結 |
 | `js/lyrics-view.js` | 歌詞檢視（`view=lyrics`）：「檢視」選單的切換、列出各段、選取、複製 |
+| `js/lyrics-editor.js` | 歌詞排版編輯：每段一個文字區、文字變動警告、復原／重做、存在 localStorage |
 | `js/toolbar.js` | 螢幕寬度小於 450px（或工具列放不下）時切換成精簡版面（「⋮」選單） |
 | `js/state.js`, `js/dom.js` | 共用狀態、DOM 小工具 |
-| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js`, `js/score-marks.js`, `js/slide-lyrics.js` | 純函式（不碰 DOM，有單元測試） |
+| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js`, `js/score-marks.js`, `js/slide-lyrics.js`, `js/lyric-layout.js` | 純函式（不碰 DOM，有單元測試） |
 | `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |

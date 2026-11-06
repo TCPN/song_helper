@@ -26,7 +26,7 @@ function expand_slashes(text) {
 }
 
 // 多行文字 → 段落（空行分開），每行去掉前後空白
-function to_paragraphs(lines) {
+export function to_paragraphs(lines) {
   var paragraphs = [];
   var current = [];
   for (const line of lines) {
@@ -319,16 +319,27 @@ export const UNNAMED = 'Verse';
 // → { from: 'cell' | 'abc', order, sections, score_has_lyrics, score_has_parts, cell_has_headers }
 //   score_has_lyrics／score_has_parts：譜上有沒有 w: 歌詞、P: 段落標記（js/song-checks.js 的規則）；
 //   cell_has_headers：「投影片」欄有沒有 [段名]（沒用格子時為 null）
-export function song_slide_lyrics(song) {
+//
+// local：本機暫存的排版（js/lyrics-editor.js 存在 localStorage 的「投影片」欄格式文字）。有的話改用它：
+//   from 是 'local'，source_sections 是原本（格子或 ABC）的段，local_differs 是暫存的字（去掉空白後）和原本的不一樣
+export function song_slide_lyrics(song, local = null) {
   var abc = song && song.abc;
   var score = { score_has_lyrics: has_lyrics(abc), score_has_parts: has_part_marks(abc) };
   var cell = song && song.slides;
+  var source;
   if (cell != null && String(cell).trim()) {
     var parsed = parse_slide_cell(cell);
-    return { from: 'cell', order: parsed.order, sections: parsed.sections, ...score,
+    source = { from: 'cell', order: parsed.order, sections: parsed.sections, ...score,
       cell_has_headers: parsed.sections.some((s) => s.name !== null) };
+  } else {
+    source = { from: 'abc', order: null, sections: sections_from_abc(abc), ...score, cell_has_headers: null };
   }
-  return { from: 'abc', order: null, sections: sections_from_abc(abc), ...score, cell_has_headers: null };
+  if (local == null || !String(local).trim())
+    return source;
+  var saved = parse_slide_cell(local);
+  var chars = (sections) => sections.map((s) => s.paragraphs.flat().join('')).join('').replace(/\s+/g, '');
+  return { ...source, from: 'local', order: saved.order, sections: saved.sections, source_sections: source.sections,
+    local_differs: chars(saved.sections) != chars(source.sections) };
 }
 
 // 這首歌能不能開歌詞檢視：要有譜（歌詞檢視開在譜面彈窗裡），而且「投影片」欄有字或譜上有 w:／W: 歌詞
@@ -339,11 +350,16 @@ export function has_slide_lyrics(song) {
   return !!(song.slides != null && String(song.slides).trim()) || /^[wW]:/m.test(song.abc);
 }
 
-// 歌詞後面的訊息，一則一行：{ type, text }。type 'info'：歌詞從哪裡來（「投影片」欄不寫）；'warning'：缺少段落標記
+// 歌詞後面的訊息，一則一行：{ type, text }。type 'info'：歌詞從哪裡來（「投影片」欄不寫）；
+// 'warning'：缺少段落標記、暫存的排版和原本的字不一樣
 export function lyrics_messages(lyrics) {
   var messages = [];
   if (lyrics.from == 'abc')
     messages.push({ type: 'info', text: lyrics.sections.length ? '從歌譜中自動抽出' : '這首歌沒有歌詞' });
+  if (lyrics.from == 'local')
+    messages.push({ type: 'info', text: '使用這台裝置暫存的排版（還沒存回試算表）' });
+  if (lyrics.local_differs)
+    messages.push({ type: 'warning', text: '暫存的排版和目前的歌詞文字不一樣' });
   if (lyrics.score_has_lyrics && !lyrics.score_has_parts)
     messages.push({ type: 'warning', text: '歌譜缺少段落標記（P:）' });
   if (lyrics.cell_has_headers === false)

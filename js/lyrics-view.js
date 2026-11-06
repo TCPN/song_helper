@@ -3,12 +3,15 @@
 import { state } from './state.js';
 import { song_slide_lyrics, lyrics_messages, lines_text, strip_spaces, map_lines, UNNAMED } from './slide-lyrics.js';
 import { update_hash } from './route.js';
-import { click_on_enter } from './dom.js';
+import { click_on_enter, message_icon } from './dom.js';
+import { setup_lyrics_editor, open_lyrics_editor, close_lyrics_editor, load_local_layout, editing_song_id } from './lyrics-editor.js';
 
 const CONTAINER = '#score_popup_container';
 
 // 目前列出的段（每一行的 data-s／data-p／data-l 是在這裡的位置）
 var shown_sections = [];
+// 目前列出的歌詞（js/slide-lyrics.js 的 song_slide_lyrics，沒去除空格）：編輯排版從這裡開始
+var shown_lyrics = null;
 // 列出的是哪首歌的哪份歌詞；資料沒變時不重畫，選取的文字留著
 var shown_key = null;
 
@@ -31,6 +34,9 @@ export function is_lyrics_mode() {
 export function set_view_mode(mode) {
   state.viewMode = mode == 'lyrics' ? 'lyrics' : 'score';
   var lyrics = is_lyrics_mode();
+  // 回到歌譜檢視時不再編輯（沒存的修改不留）
+  if (!lyrics)
+    close_lyrics_editor();
   document.querySelector(CONTAINER).classList.toggle('lyrics-mode', lyrics);
   document.querySelector('#lyrics_view').classList.toggle('hide', !lyrics);
   for (const item of document.querySelectorAll('#view-menu [data-view-mode]')) {
@@ -45,11 +51,16 @@ export function refresh_lyrics() {
   var song = state.displayingSong;
   if (!is_lyrics_mode() || !song)
     return;
-  var key = JSON.stringify([song.id, song.name, song.slides, song.abc, strip]);
+  // 換歌時不再編輯上一首
+  if (editing_song_id() !== null && editing_song_id() != song.id)
+    close_lyrics_editor();
+  var local = load_local_layout(song.id);
+  var key = JSON.stringify([song.id, song.name, song.slides, song.abc, strip, local]);
   if (key == shown_key)
     return;
   shown_key = key;
-  var lyrics = song_slide_lyrics(song);
+  var lyrics = song_slide_lyrics(song, local);
+  shown_lyrics = lyrics;
   // 去除空格時畫面上和複製出來的都是去掉空格的字
   shown_sections = strip ? map_lines(lyrics.sections, strip_spaces) : lyrics.sections;
   document.querySelector('#lyrics_title').textContent = song.name || '';
@@ -62,31 +73,17 @@ export function refresh_lyrics() {
   document.querySelector('#lyrics_sections').replaceChildren(...shown_sections.map(section_element));
   set_status('');
   update_checks();
+  var edit = document.querySelector('#lyrics_edit');
+  edit.classList.toggle('disabled', !lyrics.sections.length);
+  edit.setAttribute('aria-disabled', !lyrics.sections.length);
 }
 
-// 訊息前面的 icon：warning 是黃色三角形裡的驚嘆號，info 是淺灰圓形裡的藍色 i
-const ICON_PATHS = {
-  warning: [['path', { d: 'M8 1.5 15 14.5H1Z', fill: '#f2c200', stroke: '#c99a00', 'stroke-width': 1, 'stroke-linejoin': 'round' }],
-    ['path', { d: 'M8 6v4', stroke: '#000', 'stroke-width': 1.6, 'stroke-linecap': 'round' }],
-    ['circle', { cx: 8, cy: 12.3, r: 0.9, fill: '#000' }]],
-  info: [['circle', { cx: 8, cy: 8, r: 7, fill: '#e3e3e3' }],
-    ['circle', { cx: 8, cy: 4.6, r: 1, fill: '#2a6fc9' }],
-    ['path', { d: 'M8 7v5', stroke: '#2a6fc9', 'stroke-width': 1.8, 'stroke-linecap': 'round' }]],
-};
-
-function message_icon(type) {
-  var NS = 'http://www.w3.org/2000/svg';
-  var svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 16 16');
-  svg.setAttribute('class', 'lyrics-message-icon');
-  svg.setAttribute('aria-hidden', 'true');
-  for (const [tag, attrs] of ICON_PATHS[type]) {
-    var shape = document.createElementNS(NS, tag);
-    for (const [k, v] of Object.entries(attrs))
-      shape.setAttribute(k, v);
-    svg.appendChild(shape);
-  }
-  return svg;
+// 「編輯排版」：用目前列出的段（有暫存就是暫存的）開編輯器，和原本（格子或譜上）的字比對
+function edit_layout() {
+  var song = state.displayingSong;
+  if (!shown_lyrics || !song || !shown_lyrics.sections.length)
+    return;
+  open_lyrics_editor(song.id, shown_lyrics.sections, shown_lyrics.source_sections || shown_lyrics.sections);
 }
 
 // 關閉譜面時：回到歌譜檢視，下次打開重新列出
@@ -244,11 +241,14 @@ export function setup_lyrics_view() {
     set_status('');
     update_checks();
   });
+  // 編輯器存檔或關閉後重新列出（暫存的排版可能變了）
+  setup_lyrics_editor({ changed: refresh_lyrics });
   strip = load_strip();
   update_strip_button();
   var buttons = [['#lyrics_select_all', ()=>{ var lines = line_elements(); select_lines(lines[0], lines[lines.length - 1]); }],
     ['#lyrics_strip_spaces', ()=>{ strip = !strip; save_strip(); update_strip_button(); refresh_lyrics(); }],
-    ['#lyrics_copy', copy_selected]];
+    ['#lyrics_copy', copy_selected],
+    ['#lyrics_edit', edit_layout]];
   for (const [id, action] of buttons) {
     var button = document.querySelector(id);
     // 按按鈕時不要把選取的文字取消掉
