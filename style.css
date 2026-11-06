@@ -1131,8 +1131,14 @@ button.popup-window-close:hover {
 	text-align: right;
 }
 
+/* 按鈕列的按鈕（文字、icon、選單按鈕）一樣高 */
 .lyrics-button {
-	padding: 0.3em 0.8em;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	height: 1.9em;
+	padding: 0 0.8em;
 	border-radius: 0.3em;
 	background: #0001;
 	cursor: pointer;
@@ -1245,13 +1251,31 @@ button.popup-window-close:hover {
 	position: relative;
 }
 
+.lyrics-menu-group {
+	display: inline-flex;
+}
+
+/* 按鈕是 flex，字之間的空白會被吃掉，用 margin 隔開 */
+.lyrics-caret {
+	margin-left: 0.3em;
+	font-size: 0.8em;
+}
+
+/* 底色和按鈕相近的淺灰（按鈕是半透明的 #0001，疊在白底上約 #f0f0f0），深色字 */
 .lyrics-menu {
 	top: calc(100% + 0.3em);
 	left: 0;
 	z-index: 2;
-	color: #fff;
+	color: #000;
+	background: #f0f0f0;
+	box-shadow: 0 1px 4px #0003;
 	white-space: nowrap;
 	border-radius: 0.3em;
+}
+
+.lyrics-menu .menu-item:hover {
+	box-shadow: none;
+	background: #0001;
 }
 
 .lyrics-menu.align-right {
@@ -1268,7 +1292,7 @@ button.popup-window-close:hover {
 .lyrics-menu .menu-item small {
 	display: block;
 	font-size: 0.75em;
-	color: #bbb;
+	color: #777;
 }
 
 .lyrics-menu .menu-item.selected::before {
@@ -1279,11 +1303,7 @@ button.popup-window-close:hover {
 
 /* icon 按鈕（編輯排版、復原、重做、存檔、關閉）：和文字按鈕一樣高，icon 1.2em */
 .lyrics-icon-button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	padding: 0.3em 0.5em;
-	line-height: 1;
+	padding: 0 0.5em;
 }
 
 .lyrics-icon-button svg {
