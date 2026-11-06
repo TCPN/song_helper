@@ -38,7 +38,7 @@ function save_local_layout(song_id, text) {
   }
 }
 
-// 編輯中：{ song_id, sections, source_cell, original_texts, compare_whole, saved, history, boundaries, last_value, before_input, composition_start }
+// 編輯中：{ song_id, sections, source_cell, original_texts, compare_whole, saved, history, boundaries, last_value, before_input, composition_start, changed }
 // 復原紀錄的每一步是 { text, boundaries }；boundaries 是每段開頭在 text 裡的位置
 var editing = null;
 var on_change = () => {};
@@ -74,11 +74,13 @@ function is_dirty() {
 }
 
 // 文字區的高度跟著內容（不出現捲軸），再把段名、分隔線、有變動的底色放到對的位置
-function layout() {
+// marks 為 false 時只調高度（接著會呼叫 update()，由它放）
+function layout(marks = true) {
   var area = textarea();
   area.style.height = 'auto';
   area.style.height = area.scrollHeight + (area.offsetHeight - area.clientHeight) + 'px';
-  place_marks();
+  if (marks)
+    place_marks();
 }
 
 // 量每段第一行在文字區裡的高度：用一個樣式和文字區一樣、看不見的 div 排同樣的字，在每段開頭放一個記號
@@ -119,7 +121,8 @@ function place_marks() {
     width = Math.max(width, name.offsetWidth);
   });
   $('#lyrics_editor_gutter').style.width = width + 'px';
-  var changed = changed_sections();
+  // 有變動的段用 update() 最後一次比對的結果（組字中不重新比對）
+  var changed = editing.changed;
   $('#lyrics_editor_marks').replaceChildren(...tops.flatMap((top, i) => {
     var marks = [];
     // 這段到下一段的空行之前（最後一段到文字區底）
@@ -151,7 +154,7 @@ export function open_lyrics_editor(song_id, sections, source_sections) {
   var start = { text, boundaries };
   editing = { song_id, sections, source_cell: sections_to_cell(source_sections), compare_whole,
     original_texts: compare_whole ? [original.join('\n')] : original, saved: start, history: create_history(start),
-    boundaries: boundaries.slice(), last_value: text, before_input: null };
+    boundaries: boundaries.slice(), last_value: text, before_input: null, changed: new Set() };
   // 段名：不是文字區的一部分，不能選取、刪不掉；點了游標移到那段的開頭
   $('#lyrics_editor_gutter').replaceChildren(...sections.map((section, i) => {
     var name = document.createElement('div');
@@ -164,7 +167,7 @@ export function open_lyrics_editor(song_id, sections, source_sections) {
   $('#lyrics_view').classList.add('editing');
   $('#lyrics_editor').classList.remove('hide');
   set_status('');
-  layout();
+  layout(false);
   update();
 }
 
@@ -200,8 +203,7 @@ function changes() {
 }
 
 // 文字和原本不一樣的段（位置的集合）
-function changed_sections() {
-  var found = changes();
+function changed_sections(found) {
   if (editing.compare_whole)
     return new Set(found.length ? editing.boundaries.map((b, i) => i) : []);
   return new Set(found.map((c) => c.index));
@@ -210,7 +212,8 @@ function changed_sections() {
 // 有變動的段：段名和那段的底色變黃，上方列出警告
 function update() {
   var found = changes();
-  var changed = changed_sections();
+  var changed = changed_sections(found);
+  editing.changed = changed;
   for (const name of document.querySelectorAll('#lyrics_editor_gutter .lyrics-editor-name'))
     name.classList.toggle('changed', changed.has(Number(name.dataset.s)));
   $('#lyrics_editor_warnings').replaceChildren(...found.map(({ index }) => {
@@ -261,8 +264,10 @@ function merge_key(event) {
 // 記一步（內容和上一步一樣時不記，例如 Safari 組字結束後又來一次 input）
 function record(key) {
   var now = snapshot();
-  if (same(now, editing.history.stack[editing.history.index]))
+  if (same(now, editing.history.stack[editing.history.index])) {
+    place_marks();
     return;
+  }
   history_record(editing.history, now, key, Date.now());
   set_status('');
   update();
@@ -283,7 +288,7 @@ function on_input(event) {
   }
   editing.boundaries = moved;
   editing.last_value = area.value;
-  layout();
+  layout(event.isComposing);
   if (event.isComposing)
     return;
   record(merge_key(event));
@@ -317,7 +322,7 @@ function on_composition_end() {
   }
   editing.boundaries = moved;
   editing.last_value = area.value;
-  layout();
+  layout(false);
   record('type:' + section_at(area.selectionEnd));
 }
 
@@ -333,7 +338,7 @@ function restore(step) {
   area.value = step.text;
   editing.boundaries = step.boundaries.slice();
   editing.last_value = step.text;
-  layout();
+  layout(false);
   area.focus();
   area.setSelectionRange(at, at);
   set_status('');
