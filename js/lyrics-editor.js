@@ -159,12 +159,27 @@ function merge_key(event, s) {
   return null;
 }
 
+// 記一步（內容和上一步一樣時不記，例如 Safari 組字結束後又來一次 input）
+function record(key) {
+  var texts = current_texts();
+  if (same(texts, editing.history.stack[editing.history.index]))
+    return;
+  history_record(editing.history, texts, key, Date.now());
+  set_status('');
+  update();
+}
+
+// 注音、拼音等輸入法組字中（isComposing）只調高度：半成品不記成一步、也不拿去比對，組字結束（compositionend）時才記
 function on_input(event) {
   var textarea = event.target;
   fit(textarea);
-  history_record(editing.history, current_texts(), merge_key(event, textarea.dataset.s), Date.now());
-  set_status('');
-  update();
+  if (event.isComposing)
+    return;
+  record(merge_key(event, textarea.dataset.s));
+}
+
+function on_composition_end(event) {
+  record('type:' + event.target.dataset.s);
 }
 
 // 復原／重做：放回那一步的內容，游標放在第一個不一樣的地方
@@ -249,6 +264,7 @@ export function setup_lyrics_editor({ changed } = {}) {
   on_change = changed || (() => {});
   var sections = $('#lyrics_editor_sections');
   sections.addEventListener('input', on_input);
+  sections.addEventListener('compositionend', on_composition_end);
   // 瀏覽器自己的復原／重做（選單、手機搖一搖等）改走我們的紀錄
   sections.addEventListener('beforeinput', (event) => {
     if (event.inputType == 'historyUndo' || event.inputType == 'historyRedo') {

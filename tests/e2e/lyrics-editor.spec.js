@@ -107,6 +107,23 @@ test.describe('歌詞排版編輯', () => {
     await expect(button(app, 'redo')).toHaveAttribute('aria-disabled', 'true');
   });
 
+  test('輸入法組字（注音、拼音）：組字中的半成品不記成一步、不出現警告；組字結束才算一步', async ({ app }) => {
+    await open_editor(app, 10);
+    await caret(app, 1, 2);
+    const cdp = await app.page.context().newCDPSession(app.page);
+    for (const text of ['ㄒ', 'ㄒㄧ', 'ㄒㄧㄚ'])
+      await cdp.send('Input.imeSetComposition', { text, selectionStart: text.length, selectionEnd: text.length });
+    await expect(areas(app).nth(1)).toHaveValue('甲乙ㄒㄧㄚ丙丁戊己庚辛');
+    await expect(warnings(app)).toHaveCount(0);
+    await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
+    await cdp.send('Input.insertText', { text: '下' });
+    await expect(areas(app).nth(1)).toHaveValue('甲乙下丙丁戊己庚辛');
+    await expect(warnings(app)).toHaveText(['「A2」的文字和原本不一樣：加了「下」（…甲乙▲丙丁戊…）']);
+    await button(app, 'undo').click();
+    await expect(areas(app).nth(1)).toHaveValue('甲乙丙丁戊己庚辛');
+    await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
+  });
+
   test('存檔存在 localStorage（「投影片」欄格式），關閉後歌詞檢視用暫存的排版並顯示訊息；再打開從暫存開始', async ({ app }) => {
     await open_editor(app, 10);
     await caret(app, 0, 4);
