@@ -242,6 +242,17 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     await expect(bar).toHaveClass(/compact/);
   });
 
+  test('450px 以上但最右邊的「關閉」放不下時，也切成精簡版面', async ({ app }) => {
+    const bar = app.page.locator('#score_popup_top_bar');
+    await app.page.setViewportSize({ width: 460, height: 667 });
+    await app.goto('#song_id=1');
+    await expect(bar).not.toHaveClass(/compact/);
+    // 只把「關閉」推到工具列外面（它前面的分隔線還在畫面裡），再讓工具列重新判斷
+    await app.page.addStyleTag({ content: '#close_score_button { margin-left: 300px !important; }' });
+    await app.page.setViewportSize({ width: 461, height: 667 });
+    await expect(bar).toHaveClass(/compact/);
+  });
+
   test('⋮ 可以用鍵盤打開，Tab 到選單項目按 Enter 執行', async ({ app }) => {
     await app.goto('#song_id=1');
     await moreButton(app).focus();
@@ -361,5 +372,45 @@ test.describe('工具列不夠寬時的 ⋮ 選單', () => {
     expect(url.pathname).toBe('/song_edit/');
     expect(url.hash).toBe('#song_id=2');
     await editor.close();
+  });
+});
+
+// 按鈕的點擊範圍比字或 icon 大：文字按鈕 40×28、icon 按鈕 28×28，以按鈕為中心（不改變版面）
+test.describe('工具列按鈕的點擊範圍', () => {
+  // 以按鈕中心為準，點擊範圍內四個角往內 1px 的點都點得到按鈕；範圍外 2px 就點不到
+  async function expect_hit_area(app, selector, width, height) {
+    const result = await app.page.evaluate(({ selector, width, height }) => {
+      const button = document.querySelector(selector);
+      const r = button.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const hits = (dx, dy) => document.elementFromPoint(cx + dx, cy + dy)?.closest(selector) === button;
+      const x_in = width / 2 - 1, y_in = height / 2 - 1, x_out = width / 2 + 2, y_out = height / 2 + 2;
+      return {
+        inside: [hits(-x_in, -y_in), hits(x_in, -y_in), hits(-x_in, y_in), hits(x_in, y_in)],
+        outside: [hits(-x_out, 0), hits(x_out, 0), hits(0, -y_out), hits(0, y_out)],
+      };
+    }, { selector, width, height });
+    expect(result.inside, `${selector} 範圍內`).toEqual([true, true, true, true]);
+    expect(result.outside, `${selector} 範圍外`).toEqual([false, false, false, false]);
+  }
+
+  test('夠寬時：文字按鈕 40×28，關閉 28×28', async ({ app }) => {
+    await app.goto('#song_id=1');
+    for (const selector of ['#score_popup_top_bar > .print-button', '#score_popup_top_bar > .play-button',
+      '#view_button', '#layout_button', '#edit_button'])
+      await expect_hit_area(app, selector, 40, 28);
+    await expect_hit_area(app, '#close_score_button', 28, 28);
+  });
+
+  test('手機寬度（375px）：「檢視」、⋮、關閉的 icon 都是 28×28，彼此間距一樣', async ({ app }) => {
+    await app.page.setViewportSize({ width: 375, height: 667 });
+    await app.goto('#song_id=1');
+    await expect(app.page.locator('#score_popup_top_bar')).toHaveClass(/compact/);
+    await expect_hit_area(app, '#view_button', 28, 28);
+    await expect_hit_area(app, '#close_score_button', 28, 28);
+    await expect_hit_area(app, '#more_button', 28, 28);
+    const [view, more, close] = await Promise.all(['#view_button svg', '#more_button svg', '#close_score_button svg']
+      .map((selector) => app.page.locator(selector).boundingBox()));
+    expect(more.x - (view.x + view.width)).toBeCloseTo(close.x - (more.x + more.width), 1);
   });
 });

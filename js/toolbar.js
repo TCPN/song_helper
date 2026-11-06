@@ -6,7 +6,8 @@ export const COMPACT_MAX_WIDTH = 450;
 
 // 螢幕寬度小於 COMPACT_MAX_WIDTH 就切成精簡版面。
 // 以防萬一（例如很長的調名、字比較大）再用完整的版面量一次：顯示中的項目從最左到最右的寬度超過工具列，也切成精簡版面。
-// 只量排在工具列裡的項目，展開的選單（position: absolute）不算
+// 只量排在工具列裡的項目，展開的選單（position: absolute／fixed）不算；
+// 按鈕為了點擊範圍用了 position: relative，仍佔版面，要算
 export function update_toolbar_layout() {
   var bar = document.querySelector(TOP_BAR);
   var was_compact = bar.classList.contains('compact');
@@ -15,7 +16,7 @@ export function update_toolbar_layout() {
     bar.classList.add('compact');
   else {
     var items = Array.from(bar.children).filter((item)=>(
-      item.offsetParent != null && getComputedStyle(item).position == 'static'));
+      item.offsetParent != null && !['absolute', 'fixed'].includes(getComputedStyle(item).position)));
     if(items.length == 0)
       return;
     var first = items[0].getBoundingClientRect();

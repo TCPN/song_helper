@@ -320,8 +320,22 @@ table#song_list a#wish_link {
 	padding: 0 0.5em;
 }
 
+/* 精簡版面右邊的「檢視」、⋮、關閉用同一套排法：外層（群組或按鈕本身）不留邊距，按鈕本身都是 28×28 的方塊、
+ * icon 置中（方塊就是點擊範圍），方塊之間固定隔 12px（中心距離 40px）。最右邊緊貼工具列的右側內距 */
+#score_popup_top_bar.compact :is(#view_group, #more_group, #close_score_button) {
+	margin: 0 0 0 12px;
+}
+
 #score_popup_top_bar.compact #view_group {
 	margin-left: auto;
+}
+
+#score_popup_top_bar.compact :is(#view_button, #more_button, #close_score_button) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
 }
 
 #score_popup_top_bar:not(.compact) .compact-only,
@@ -336,9 +350,37 @@ table#song_list a#wish_link {
 	vertical-align: middle;
 }
 
+/* 工具列上的 icon 固定 20px，不隨字級改變 */
+#score_popup_top_bar .icon {
+	width: 20px;
+	height: 20px;
+}
+
 #transpose_button, #view_button, #layout_button, #edit_button, #more_button, #close_score_button,
 .print-button, .play-button {
 	cursor: pointer;
+}
+
+/* 點擊範圍：文字按鈕 40×28、icon 按鈕 28×28，以按鈕為中心向外撐開。
+ * 用不佔版面的 ::before 撐，按鈕的大小、間距和工具列的排版都不變；點到 ::before 等於點到按鈕。
+ * 編號和調性刻意不改（本身已經夠大） */
+#score_popup_top_bar :is(.print-button, .play-button, #view_button, #layout_button, #edit_button, #more_button, #close_score_button) {
+	position: relative;
+}
+
+#score_popup_top_bar :is(.print-button, .play-button, #view_button, #layout_button, #edit_button, #more_button, #close_score_button)::before {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 40px;
+	height: 28px;
+	transform: translate(-50%, -50%);
+}
+
+#score_popup_top_bar.compact #view_button::before,
+#score_popup_top_bar :is(#more_button, #close_score_button)::before {
+	width: 28px;
 }
 
 /* 移調數字浮在調號右上角，不佔按鈕的寬度，移調時工具列不會動；沒移調就不顯示 */
