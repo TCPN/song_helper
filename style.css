@@ -321,9 +321,9 @@ table#song_list a#wish_link {
 }
 
 /* 精簡版面右邊的「檢視」、⋮、關閉用同一套排法：外層（群組或按鈕本身）不留邊距，按鈕本身都是 28×28 的方塊、
- * icon 置中（方塊就是點擊範圍），方塊之間固定隔 2px。最右邊緊貼工具列的右側內距 */
+ * icon 置中（方塊就是點擊範圍），方塊之間固定隔 12px（中心距離 40px）。最右邊緊貼工具列的右側內距 */
 #score_popup_top_bar.compact :is(#view_group, #more_group, #close_score_button) {
-	margin: 0 0 0 2px;
+	margin: 0 0 0 12px;
 }
 
 #score_popup_top_bar.compact #view_group {
