@@ -1255,10 +1255,11 @@ button.popup-window-close:hover {
 	display: inline-flex;
 }
 
-/* 按鈕是 flex，字之間的空白會被吃掉，用 margin 隔開 */
+/* 下拉的 icon（往下的箭頭）：按鈕是 flex，字之間的空白會被吃掉，用 margin 隔開 */
 .lyrics-caret {
-	margin-left: 0.3em;
-	font-size: 0.8em;
+	width: 0.75em;
+	height: 0.75em;
+	margin-left: 0.35em;
 }
 
 /* 底色和按鈕相近的淺灰（按鈕是半透明的 #0001，疊在白底上約 #f0f0f0），深色字 */

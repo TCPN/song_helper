@@ -376,7 +376,9 @@ test.describe('歌詞檢視', () => {
       await item(mode).click();
       await expect(menu).toBeHidden();
     }
-    await expect(button).toHaveText('空格：半形▾');
+    await expect(button).toHaveText('空格：半形');
+    // 下拉的 icon 是畫的（svg），不是文字
+    await expect(button.locator('svg.lyrics-caret')).toBeVisible();
     // 和旁邊的按鈕一樣高
     const heights = await app.page.locator('#lyrics_view .lyrics-actions .lyrics-button').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
     expect(new Set(heights).size).toBe(1);
@@ -389,14 +391,14 @@ test.describe('歌詞檢視', () => {
     await expect(menu.locator('.menu-item')).toHaveText(['隱藏空格不顯示空格', '半形空格空格顯示成半形空格', '全形空格空格顯示成全形空格']);
     await expect(item('half')).toHaveAttribute('aria-checked', 'true');
     await item('hide').click();
-    await expect(button).toHaveText('空格：隱藏▾');
+    await expect(button).toHaveText('空格：隱藏');
     await expect(lines(app).first()).toHaveText('第一句第二句');
     await app.page.locator('#lyrics_select_all').click();
     await app.page.locator('#lyrics_copy').click();
     expect(await clipboard(app)).toBe('第一句第二句\n第三句\n\n第四句\n\n副歌一句');
 
     await choose('full');
-    await expect(button).toHaveText('空格：全形▾');
+    await expect(button).toHaveText('空格：全形');
     await expect(lines(app).first()).toHaveText('第一句　第二句');
     await app.page.locator('#lyrics_select_all').click();
     await app.page.locator('#lyrics_copy').click();
@@ -407,7 +409,7 @@ test.describe('歌詞檢視', () => {
     // 重新載入沿用
     await app.page.reload();
     await app.goto('#song_id=12&view=lyrics');
-    await expect(button).toHaveText('空格：全形▾');
+    await expect(button).toHaveText('空格：全形');
     await expect(lines(app).first()).toHaveText('第一句　第二句');
     await choose('half');
     await expect(lines(app).first()).toHaveText('第一句 第二句');
@@ -416,7 +418,7 @@ test.describe('歌詞檢視', () => {
   test('舊版「去除空格」開著（localStorage lyrics_strip_spaces = 1）時，當成隱藏空格', async ({ app }) => {
     await app.page.addInitScript(() => { localStorage.setItem('lyrics_strip_spaces', '1'); });
     await app.goto('#song_id=12&view=lyrics');
-    await expect(app.page.locator('#lyrics_space_button')).toHaveText('空格：隱藏▾');
+    await expect(app.page.locator('#lyrics_space_button')).toHaveText('空格：隱藏');
     await expect(lines(app).first()).toHaveText('第一句第二句');
   });
 
