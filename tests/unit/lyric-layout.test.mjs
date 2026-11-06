@@ -88,3 +88,34 @@ test('song_slide_lyrics：有本機暫存時用暫存的段，記下原本的段
   // 暫存是空的：照原本的
   assert.equal(song_slide_lyrics(song, '  ').from, 'abc');
 });
+
+import { join_sections, split_sections, apply_edit } from '../../js/lyric-layout.js';
+
+test('join_sections／split_sections：段和段之間一個換行，記下每段開頭的位置', () => {
+  const joined = join_sections(['一\n二', '', '三']);
+  assert.deepEqual(joined, { text: '一\n二\n\n三', boundaries: [0, 4, 5] });
+  assert.deepEqual(split_sections(joined.text, joined.boundaries), ['一\n二', '', '三']);
+});
+
+test('apply_edit：前面的段改動時，後面的段開頭跟著移動', () => {
+  // 'ab' | 'cd'：text 'ab\ncd'，第二段從 3 開始
+  assert.deepEqual(apply_edit('ab\ncd', 'a b\ncd', 2, [0, 3]), [0, 4]);
+  assert.deepEqual(apply_edit('ab\ncd', 'ab\nc d', 5, [0, 3]), [0, 3]);
+  // 在第一段最後按換行（游標在 3）：新的換行屬於第一段
+  assert.deepEqual(apply_edit('ab\ncd', 'ab\n\ncd', 3, [0, 3]), [0, 4]);
+  // 在第二段開頭按換行（游標在 4）：屬於第二段，開頭不動
+  assert.deepEqual(apply_edit('ab\ncd', 'ab\n\ncd', 4, [0, 3]), [0, 3]);
+  // 刪掉第二段開頭的字可以
+  assert.deepEqual(apply_edit('ab\ncd', 'ab\nd', 3, [0, 3]), [0, 3]);
+});
+
+test('apply_edit：刪到段和段之間的換行（段落標記）不允許', () => {
+  // 在第二段開頭按 Backspace
+  assert.equal(apply_edit('ab\ncd', 'abcd', 2, [0, 3]), null);
+  // 選取跨過兩段後打字
+  assert.equal(apply_edit('ab\ncd', 'aXd', 2, [0, 3]), null);
+  // 全選刪掉
+  assert.equal(apply_edit('ab\ncd', '', 0, [0, 3]), null);
+  // 段內的換行可以刪
+  assert.deepEqual(apply_edit('a\nb\ncd', 'ab\ncd', 1, [0, 4]), [0, 3]);
+});

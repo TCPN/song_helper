@@ -1298,37 +1298,87 @@ button.popup-window-close:hover {
 	user-select: none;
 }
 
-.lyrics-editor-name {
-	cursor: default;
+.lyrics-editor-area {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.4em;
+	margin-top: 0.6em;
 }
 
-/* 文字區：和歌詞檢視一樣的字和行高，高度跟著內容（js 的 fit），不能拉大小 */
+/* 段名浮在文字區左邊，對齊那段的第一行（js 量位置）；不能選取，點了游標移到那段開頭 */
+.lyrics-editor-gutter {
+	position: relative;
+	flex: none;
+	align-self: stretch;
+}
+
+.lyrics-editor-name {
+	position: absolute;
+	right: 0;
+	margin: 0;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.lyrics-editor-name.changed {
+	border-color: #e0b400;
+	background: #fff6d0;
+	color: #806600;
+}
+
+.lyrics-editor-box {
+	position: relative;
+	flex: 1;
+	min-width: 0;
+	background: #fff;
+	border-radius: 0.3em;
+}
+
+/* 段和段之間的線、有變動的段的底色：畫在文字區後面（文字區是透明的） */
+#lyrics_editor_marks {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.lyrics-editor-divider {
+	position: absolute;
+	left: 0;
+	right: 0;
+	border-top: 1px dashed #bbb;
+}
+
+.lyrics-editor-changed {
+	position: absolute;
+	left: 1px;
+	right: 1px;
+	background: #fff3c4;
+}
+
+/* 文字區：和歌詞檢視一樣的字和行高，高度跟著內容（js 的 layout），不能拉大小 */
 .lyrics-editor-text {
+	position: relative;
 	display: block;
 	box-sizing: border-box;
 	width: 100%;
 	font: inherit;
 	line-height: 1.8;
 	word-spacing: 0.5em;
-	padding: 0 0.4em;
+	padding: 0.2em 0.4em;
 	border: 1px solid #ccc;
 	border-radius: 0.3em;
 	resize: none;
 	overflow: hidden;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
 	color: inherit;
-	background: #fff;
+	background: transparent;
 }
 
 .lyrics-editor-text:focus {
 	outline: none;
 	border-color: #6cb4f0;
 	box-shadow: 0 0 0 2px #6cb4f055;
-}
-
-/* 文字和原本不一樣的段：黃色框 */
-.lyrics-editor-text.changed {
-	border-color: #e0b400;
-	background: #fffbea;
 }
 
 /* 只有歌詞符合搜尋時，歌名下面的那一句歌詞（#44） */

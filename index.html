@@ -70,9 +70,9 @@
 				<!-- 歌詞檢視（網址 view=lyrics，js/lyrics-view.js）：各段歌詞，點一行選取，複製成純文字 -->
 				<div id="lyrics_view" class="hide">
 					<div class="lyrics-actions" role="toolbar" aria-label="複製歌詞">
-						<span id="lyrics_edit" class="lyrics-button lyrics-icon-button" role="button" tabindex="0" title="編輯排版" aria-label="編輯排版"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16Z M13 7l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
 						<span id="lyrics_select_all" class="lyrics-button" role="button" tabindex="0">全選</span>
 						<span id="lyrics_strip_spaces" class="lyrics-button" role="switch" tabindex="0" aria-checked="false" title="拿掉中文字旁邊的空格（顯示和複製都是）">去除空格</span>
+						<span id="lyrics_edit" class="lyrics-button lyrics-icon-button" role="button" tabindex="0" title="編輯排版" aria-label="編輯排版"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16Z M13 7l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
 						<span id="lyrics_status" class="lyrics-status" aria-live="polite"></span>
 						<span id="lyrics_copy" class="lyrics-button primary" role="button" tabindex="0">複製</span>
 					</div>
@@ -87,12 +87,19 @@
 					<h2 id="lyrics_title" class="lyrics-title"></h2>
 					<div id="lyrics_sections"></div>
 					<ul id="lyrics_messages" class="lyrics-messages"></ul>
-					<!-- 歌詞排版編輯（js/lyrics-editor.js）：每段一個文字區，段名在文字區外面（不能選取、刪不掉）；
+					<!-- 歌詞排版編輯（js/lyrics-editor.js）：整首一個文字區，段名浮在文字區外面（不能選取、刪不掉）；
 					     只能改空格和換行，改到字時顯示警告；存在這台裝置的 localStorage -->
 					<div id="lyrics_editor" class="hide">
 						<ul id="lyrics_editor_warnings" class="lyrics-editor-warnings" aria-live="polite"></ul>
 						<p class="lyrics-editor-hint">只調整空格和換行；空一行是換一張投影片。</p>
-						<div id="lyrics_editor_sections"></div>
+						<!-- 整首一個文字區；左邊是浮在外面的段名，文字區底下畫段和段之間的線、有變動的段的底色 -->
+						<div class="lyrics-editor-area">
+							<div id="lyrics_editor_gutter" class="lyrics-editor-gutter"></div>
+							<div class="lyrics-editor-box">
+								<div id="lyrics_editor_marks" aria-hidden="true"></div>
+								<textarea id="lyrics_editor_text" class="lyrics-editor-text" rows="1" spellcheck="false" aria-label="歌詞排版"></textarea>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

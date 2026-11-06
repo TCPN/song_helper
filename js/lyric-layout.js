@@ -128,3 +128,45 @@ export function history_redo(history) {
   history.merge_key = null;
   return history.stack[++history.index];
 }
+
+// ---- 整首一個編輯區：各段的文字接在一起（段和段之間一個換行），段的開頭記成位置（boundaries，第一段是 0） ----
+
+// 段的文字 → { text, boundaries }
+export function join_sections(texts) {
+  var boundaries = [];
+  var text = '';
+  texts.forEach((t, i) => {
+    if (i > 0)
+      text += '\n';
+    boundaries.push(text.length);
+    text += t;
+  });
+  return { text, boundaries };
+}
+
+// { text, boundaries } → 每段的文字（不含段和段之間的換行）
+export function split_sections(text, boundaries) {
+  return boundaries.map((start, i) => text.slice(start, i + 1 < boundaries.length ? boundaries[i + 1] - 1 : text.length));
+}
+
+// 編輯區的內容從 before 變成 after（caret：改完之後游標的位置）→ 新的段開頭位置；
+// 改動刪到段和段之間的換行（段落標記）時傳回 null（不允許，呼叫的人要把內容改回去）。
+// 改動的範圍用頭尾相同的字找；同樣的字連在一起（例如在換行旁邊再按換行）時，用游標決定改動是從哪裡開始
+export function apply_edit(before, after, caret, boundaries) {
+  var min = Math.min(before.length, after.length);
+  var p = 0;
+  while (p < min && before[p] == after[p])
+    p++;
+  var s = 0;
+  while (s < min - p && before[before.length - 1 - s] == after[after.length - 1 - s])
+    s++;
+  var removed = before.length - s - p;
+  var inserted = after.length - s - p;
+  // 往前挪到游標的位置（挪過的那幾個字前後都一樣，改動等價）
+  var start = Math.min(p, Math.max(0, caret - inserted));
+  if (before.slice(start + removed) != after.slice(start + inserted))
+    start = p;
+  if (boundaries.some((b, i) => i > 0 && b - 1 >= start && b - 1 < start + removed))
+    return null;
+  return boundaries.map((b, i) => (i > 0 && b > start ? b + inserted - removed : b));
+}
