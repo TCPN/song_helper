@@ -1,26 +1,39 @@
 // 歌詞檢視：一首歌的另一種檢視方式（網址 view=lyrics）。列出各段歌詞（前面標段名），
-// 用一般的文字選取選歌詞，複製時整理成純文字（不含段名，換段落或換段時空一行）；「檢視」選單的「檢視歌譜」／「檢視歌詞」切換
+// 用一般的文字選取選歌詞，複製時整理成純文字（不含段名，換段落或換段時空一行；有選到歌名時放在最前面，後面空一行）；「檢視」選單的「檢視歌譜」／「檢視歌詞」切換
 import { state } from './state.js';
-import { song_slide_lyrics, lyrics_messages, lines_text, strip_spaces, map_lines, UNNAMED } from './slide-lyrics.js';
+import { song_slide_lyrics, lyrics_messages, lines_text, map_lines, UNNAMED, SPACE_MODES, normalize_space_mode } from './slide-lyrics.js';
 import { update_hash } from './route.js';
-import { click_on_enter } from './dom.js';
+import { click_on_enter, message_icon, setup_dropdown, toggle_menu } from './dom.js';
+import { setup_lyrics_editor, open_lyrics_editor, close_lyrics_editor, load_local_layout, editing_song_id } from './lyrics-editor.js';
 
 const CONTAINER = '#score_popup_container';
 
 // 目前列出的段（每一行的 data-s／data-p／data-l 是在這裡的位置）
 var shown_sections = [];
+// 目前列出的歌詞（js/slide-lyrics.js 的 song_slide_lyrics，沒去除空格）：編輯排版從這裡開始
+var shown_lyrics = null;
 // 列出的是哪首歌的哪份歌詞；資料沒變時不重畫，選取的文字留著
 var shown_key = null;
 
-// 「去除空格」開著沒有：記在 localStorage，下次沿用（不放進網址）
-const STRIP_SPACES_KEY = 'lyrics_strip_spaces';
-var strip = false;
+// 空格的顯示方式（hide／half／full，js/slide-lyrics.js 的 SPACE_MODES）：記在 localStorage，下次沿用（不放進網址）。
+// 舊版的「去除空格」開關（lyrics_strip_spaces = '1'）當成隱藏空格
+const SPACE_MODE_KEY = 'lyrics_space_mode';
+const OLD_STRIP_KEY = 'lyrics_strip_spaces';
+const SPACE_LABELS = { hide: '隱藏', half: '半形', full: '全形' };
+var space_mode = 'half';
 // 無痕模式等情況 localStorage 可能無法使用，讀不到就用預設值、存不了就算了
-function load_strip() {
-  try { return localStorage.getItem(STRIP_SPACES_KEY) == '1'; } catch (e) { return false; }
+function load_space_mode() {
+  try {
+    var saved = localStorage.getItem(SPACE_MODE_KEY);
+    if (saved === null && localStorage.getItem(OLD_STRIP_KEY) == '1')
+      saved = 'hide';
+    return normalize_space_mode(saved);
+  } catch (e) {
+    return normalize_space_mode(null);
+  }
 }
-function save_strip() {
-  try { localStorage.setItem(STRIP_SPACES_KEY, strip ? '1' : '0'); } catch (e) {}
+function save_space_mode() {
+  try { localStorage.setItem(SPACE_MODE_KEY, space_mode); } catch (e) {}
 }
 
 export function is_lyrics_mode() {
@@ -31,6 +44,9 @@ export function is_lyrics_mode() {
 export function set_view_mode(mode) {
   state.viewMode = mode == 'lyrics' ? 'lyrics' : 'score';
   var lyrics = is_lyrics_mode();
+  // 回到歌譜檢視時不再編輯（沒存的修改不留）
+  if (!lyrics)
+    close_lyrics_editor();
   document.querySelector(CONTAINER).classList.toggle('lyrics-mode', lyrics);
   document.querySelector('#lyrics_view').classList.toggle('hide', !lyrics);
   for (const item of document.querySelectorAll('#view-menu [data-view-mode]')) {
@@ -45,13 +61,18 @@ export function refresh_lyrics() {
   var song = state.displayingSong;
   if (!is_lyrics_mode() || !song)
     return;
-  var key = JSON.stringify([song.id, song.name, song.slides, song.abc, strip]);
+  // 換歌時不再編輯上一首
+  if (editing_song_id() !== null && editing_song_id() != song.id)
+    close_lyrics_editor();
+  var local = load_local_layout(song.id);
+  var key = JSON.stringify([song.id, song.name, song.slides, song.abc, space_mode, local]);
   if (key == shown_key)
     return;
   shown_key = key;
-  var lyrics = song_slide_lyrics(song);
-  // 去除空格時畫面上和複製出來的都是去掉空格的字
-  shown_sections = strip ? map_lines(lyrics.sections, strip_spaces) : lyrics.sections;
+  var lyrics = song_slide_lyrics(song, local);
+  shown_lyrics = lyrics;
+  // 畫面上和複製出來的都照空格的顯示方式
+  shown_sections = map_lines(lyrics.sections, SPACE_MODES[space_mode]);
   document.querySelector('#lyrics_title').textContent = song.name || '';
   document.querySelector('#lyrics_messages').replaceChildren(...lyrics_messages(lyrics).map(({ type, text }) => {
     var li = document.createElement('li');
@@ -62,31 +83,17 @@ export function refresh_lyrics() {
   document.querySelector('#lyrics_sections').replaceChildren(...shown_sections.map(section_element));
   set_status('');
   update_checks();
+  var edit = document.querySelector('#lyrics_edit');
+  edit.classList.toggle('disabled', !lyrics.sections.length);
+  edit.setAttribute('aria-disabled', !lyrics.sections.length);
 }
 
-// 訊息前面的 icon：warning 是黃色三角形裡的驚嘆號，info 是淺灰圓形裡的藍色 i
-const ICON_PATHS = {
-  warning: [['path', { d: 'M8 1.5 15 14.5H1Z', fill: '#f2c200', stroke: '#c99a00', 'stroke-width': 1, 'stroke-linejoin': 'round' }],
-    ['path', { d: 'M8 6v4', stroke: '#000', 'stroke-width': 1.6, 'stroke-linecap': 'round' }],
-    ['circle', { cx: 8, cy: 12.3, r: 0.9, fill: '#000' }]],
-  info: [['circle', { cx: 8, cy: 8, r: 7, fill: '#e3e3e3' }],
-    ['circle', { cx: 8, cy: 4.6, r: 1, fill: '#2a6fc9' }],
-    ['path', { d: 'M8 7v5', stroke: '#2a6fc9', 'stroke-width': 1.8, 'stroke-linecap': 'round' }]],
-};
-
-function message_icon(type) {
-  var NS = 'http://www.w3.org/2000/svg';
-  var svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 16 16');
-  svg.setAttribute('class', 'lyrics-message-icon');
-  svg.setAttribute('aria-hidden', 'true');
-  for (const [tag, attrs] of ICON_PATHS[type]) {
-    var shape = document.createElementNS(NS, tag);
-    for (const [k, v] of Object.entries(attrs))
-      shape.setAttribute(k, v);
-    svg.appendChild(shape);
-  }
-  return svg;
+// 「編輯排版」：用目前列出的段（有暫存就是暫存的）開編輯器，和原本（格子或譜上）的字比對
+function edit_layout() {
+  var song = state.displayingSong;
+  if (!shown_lyrics || !song || !shown_lyrics.sections.length)
+    return;
+  open_lyrics_editor(song.id, shown_lyrics.sections, shown_lyrics.source_sections || shown_lyrics.sections);
 }
 
 // 關閉譜面時：回到歌譜檢視，下次打開重新列出
@@ -128,36 +135,63 @@ function line_elements(section) {
   return [...document.querySelectorAll(`#lyrics_sections .lyrics-line${scope}`)];
 }
 
+// 目前的選取範圍；沒有選取時是 null
+function selected_range() {
+  var selection = document.getSelection();
+  if (!selection || selection.rangeCount == 0 || selection.isCollapsed)
+    return null;
+  return selection.getRangeAt(0);
+}
+
+// 選取範圍在 element 裡選到的文字（去掉前後空白）；沒選到時是 ''
+function selected_part(range, element) {
+  if (!range || !range.intersectsNode(element))
+    return '';
+  var part = document.createRange();
+  part.selectNodeContents(element);
+  if (range.compareBoundaryPoints(Range.START_TO_START, part) > 0)
+    part.setStart(range.startContainer, range.startOffset);
+  if (range.compareBoundaryPoints(Range.END_TO_END, part) < 0)
+    part.setEnd(range.endContainer, range.endOffset);
+  return part.toString().trim();
+}
+
 // 目前選取的文字在每一行選到的部分：Map('段.段落.行' → 文字)；沒有選到歌詞時是空的
 function selected_parts() {
   var parts = new Map();
-  var selection = document.getSelection();
-  if (!selection || selection.rangeCount == 0 || selection.isCollapsed)
+  var range = selected_range();
+  if (!range)
     return parts;
-  var range = selection.getRangeAt(0);
   for (const line of line_elements()) {
-    if (!range.intersectsNode(line))
-      continue;
-    var part = document.createRange();
-    part.selectNodeContents(line);
-    if (range.compareBoundaryPoints(Range.START_TO_START, part) > 0)
-      part.setStart(range.startContainer, range.startOffset);
-    if (range.compareBoundaryPoints(Range.END_TO_END, part) < 0)
-      part.setEnd(range.endContainer, range.endOffset);
-    var text = part.toString().trim();
+    var text = selected_part(range, line);
     if (text)
       parts.set(`${line.dataset.s}.${line.dataset.p}.${line.dataset.l}`, text);
   }
   return parts;
 }
 
-// 選取的歌詞 → 複製用的純文字（js/slide-lyrics.js 的 lines_text：只選到一行的一部分時只放那部分）
+// 選取的歌名和歌詞 → 複製用的純文字（js/slide-lyrics.js 的 lines_text：只選到一行的一部分時只放那部分）；
+// 有選到歌名時放在最前面，和歌詞之間空一行。count 是選到的歌詞行數，title 是有沒有選到歌名
 function selected_text() {
+  var title = selected_part(selected_range(), document.querySelector('#lyrics_title'));
   var parts = selected_parts();
-  return { count: parts.size, text: lines_text(shown_sections, (s, p, l) => parts.get(`${s}.${p}.${l}`) || false) };
+  var lyrics = lines_text(shown_sections, (s, p, l) => parts.get(`${s}.${p}.${l}`) || false);
+  return { count: parts.size, title: !!title, text: [title, lyrics].filter(Boolean).join('\n\n') };
 }
 
-// 選取從 first 這一行的開頭到 last 這一行的結尾；沒有行時取消選取
+function copied_status({ count, title }) {
+  var lines = count ? `${count} 行` : '';
+  return '已複製' + (title ? (lines ? '歌名和 ' + lines : '歌名') : ' ' + lines);
+}
+
+// 全選：有歌名時從歌名開始，選到最後一行的結尾
+function select_all() {
+  var lines = line_elements();
+  var title = document.querySelector('#lyrics_title');
+  select_lines(title.textContent ? title : lines[0], lines[lines.length - 1] || title);
+}
+
+// 選取從 first 的開頭到 last 的結尾；沒有 first 時取消選取
 function select_lines(first, last) {
   var selection = document.getSelection();
   selection.removeAllRanges();
@@ -169,10 +203,12 @@ function select_lines(first, last) {
   selection.addRange(range);
 }
 
-function update_strip_button() {
-  var button = document.querySelector('#lyrics_strip_spaces');
-  button.classList.toggle('on', strip);
-  button.setAttribute('aria-checked', strip);
+function update_space_menu() {
+  document.querySelector('#lyrics_space_label').textContent = SPACE_LABELS[space_mode];
+  for (const item of document.querySelectorAll('#lyrics_space_menu [data-space-mode]')) {
+    item.classList.toggle('selected', item.dataset.spaceMode == space_mode);
+    item.setAttribute('aria-checked', item.dataset.spaceMode == space_mode);
+  }
 }
 
 function set_status(text) {
@@ -181,19 +217,19 @@ function set_status(text) {
 
 // 有選取歌詞時才能複製
 function update_checks() {
-  var none = selected_parts().size == 0;
+  var none = !selected_text().text;
   var copy = document.querySelector('#lyrics_copy');
   copy.classList.toggle('disabled', none);
   copy.setAttribute('aria-disabled', none);
 }
 
 async function copy_selected() {
-  var { count, text } = selected_text();
+  var { count, title, text } = selected_text();
   if (!text)
     return;
   try {
     await navigator.clipboard.writeText(text);
-    set_status(`已複製 ${count} 行`);
+    set_status(copied_status({ count, title }));
   } catch (e) {
     // 沒有權限或不是 https（學校網頁用 http 開時）時，改用 execCommand 複製目前選取的文字：
     // 會觸發下面的 copy 事件，一樣整理成純文字，選取也留著
@@ -229,14 +265,17 @@ export function setup_lyrics_view() {
     var whole = lines.length > 0 && parts.size == lines.length && lines.every((l) => parts.get(`${l.dataset.s}.${l.dataset.p}.${l.dataset.l}`) == l.textContent.trim());
     select_lines(whole ? null : lines[0], lines[lines.length - 1]);
   });
-  // 用 Ctrl+C（或手機的「複製」）複製選取的歌詞時，也整理成純文字：不含段名，換段落或換段時空一行
-  sections.addEventListener('copy', (event)=>{
-    var { count, text } = selected_text();
-    if (!text)
+  // 用 Ctrl+C（或手機的「複製」）複製選取的歌詞時，也整理成純文字：不含段名，換段落或換段時空一行。
+  // copy 事件是從選取開頭的元素發出的，選取從歌名開始時不會經過 #lyrics_sections，所以註冊在整個歌詞檢視上
+  document.querySelector('#lyrics_view').addEventListener('copy', (event)=>{
+    if (event.target.closest && event.target.closest('#lyrics_editor'))
       return;
-    event.clipboardData.setData('text/plain', text);
+    var copied = selected_text();
+    if (!copied.text)
+      return;
+    event.clipboardData.setData('text/plain', copied.text);
     event.preventDefault();
-    set_status(`已複製 ${count} 行`);
+    set_status(copied_status(copied));
   });
   document.addEventListener('selectionchange', ()=>{
     if (!is_lyrics_mode())
@@ -244,11 +283,29 @@ export function setup_lyrics_view() {
     set_status('');
     update_checks();
   });
-  strip = load_strip();
-  update_strip_button();
-  var buttons = [['#lyrics_select_all', ()=>{ var lines = line_elements(); select_lines(lines[0], lines[lines.length - 1]); }],
-    ['#lyrics_strip_spaces', ()=>{ strip = !strip; save_strip(); update_strip_button(); refresh_lyrics(); }],
-    ['#lyrics_copy', copy_selected]];
+  // 編輯器存檔或關閉後重新列出（暫存的排版可能變了）
+  setup_lyrics_editor({ changed: refresh_lyrics });
+  space_mode = load_space_mode();
+  update_space_menu();
+  var space_button = document.querySelector('#lyrics_space_button');
+  var space_menu = document.querySelector('#lyrics_space_menu');
+  setup_dropdown(space_button, space_menu);
+  // 按選單時不要把選取的文字取消掉
+  for (const target of [space_button, space_menu])
+    target.addEventListener('mousedown', (event)=>{ event.preventDefault(); });
+  for (const item of space_menu.querySelectorAll('[data-space-mode]')) {
+    item.addEventListener('click', ()=>{
+      space_mode = normalize_space_mode(item.dataset.spaceMode);
+      save_space_mode();
+      update_space_menu();
+      toggle_menu(space_button, space_menu);
+      refresh_lyrics();
+    });
+    click_on_enter(item);
+  }
+  var buttons = [['#lyrics_select_all', select_all],
+    ['#lyrics_copy', copy_selected],
+    ['#lyrics_edit', edit_layout]];
   for (const [id, action] of buttons) {
     var button = document.querySelector(id);
     // 按按鈕時不要把選取的文字取消掉

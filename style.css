@@ -864,7 +864,7 @@ table#song_list a#wish_link {
 	}
 
 	/* 歌詞檢視：只印歌名和歌詞，不印全選／複製等按鈕和訊息，也不印看不見的譜紙 */
-	.lyrics-mode #score_page, .lyrics-actions, .lyrics-messages {
+	.lyrics-mode #score_page, .lyrics-actions, .lyrics-messages, .lyrics-editor-bar, .lyrics-editor-warnings, .lyrics-editor-hint {
 		display: none !important;
 	}
 
@@ -1131,8 +1131,14 @@ button.popup-window-close:hover {
 	text-align: right;
 }
 
+/* 按鈕列的按鈕（文字、icon、選單按鈕）一樣高 */
 .lyrics-button {
-	padding: 0.3em 0.8em;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	height: 1.9em;
+	padding: 0 0.8em;
 	border-radius: 0.3em;
 	background: #0001;
 	cursor: pointer;
@@ -1238,6 +1244,220 @@ button.popup-window-close:hover {
 
 .lyrics-actions {
 	user-select: none;
+}
+
+/* 空格的顯示方式選單：在按鈕正下方，和工具列的選單一樣是深色；選中的項目前面打勾，下面一行小字說明 */
+.lyrics-menu-group {
+	position: relative;
+}
+
+.lyrics-menu-group {
+	display: inline-flex;
+}
+
+/* 下拉的 icon（往下的箭頭）：按鈕是 flex，字之間的空白會被吃掉，用 margin 隔開 */
+.lyrics-caret {
+	width: 0.75em;
+	height: 0.75em;
+	margin-left: 0.35em;
+}
+
+/* 底色和按鈕相近的淺灰（按鈕是半透明的 #0001，疊在白底上約 #f0f0f0），深色字 */
+.lyrics-menu {
+	top: calc(100% + 0.3em);
+	left: 0;
+	z-index: 2;
+	color: #000;
+	background: #f0f0f0;
+	box-shadow: 0 1px 4px #0003;
+	white-space: nowrap;
+	border-radius: 0.3em;
+}
+
+.lyrics-menu .menu-item:hover {
+	box-shadow: none;
+	background: #0001;
+}
+
+.lyrics-menu.align-right {
+	left: auto;
+	right: 0;
+}
+
+.lyrics-menu .menu-item {
+	position: relative;
+	padding: 0.35em 1em 0.35em 2em;
+	cursor: pointer;
+}
+
+.lyrics-menu .menu-item small {
+	display: block;
+	font-size: 0.75em;
+	color: #777;
+}
+
+.lyrics-menu .menu-item.selected::before {
+	content: '✓';
+	position: absolute;
+	left: 0.75em;
+}
+
+/* icon 按鈕（編輯排版、復原、重做、存檔、關閉）：和文字按鈕一樣高，icon 1.2em */
+.lyrics-icon-button {
+	padding: 0 0.5em;
+}
+
+.lyrics-icon-button svg {
+	width: 1.2em;
+	height: 1.2em;
+}
+
+/* 歌詞排版編輯（js/lyrics-editor.js）：打開時蓋掉複製用的按鈕列、歌詞和訊息（歌名留著） */
+#lyrics_editor.hide, #lyrics_view:not(.editing) #lyrics_editor_bar, .editing .lyrics-actions, .editing #lyrics_sections, .editing #lyrics_messages {
+	display: none;
+}
+
+.lyrics-editor-bar {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding: 0.6em 0;
+	background: #fff;
+	border-bottom: 1px solid #0002;
+	user-select: none;
+}
+
+.lyrics-editor-warnings {
+	list-style: none;
+	margin: 0.6em 0 0;
+	padding: 0.4em 0.6em;
+	font-size: 0.85em;
+	background: #fff6d0;
+	border: 1px solid #e8cf6a;
+	border-radius: 0.3em;
+	user-select: none;
+}
+
+.lyrics-editor-warnings li + li {
+	margin-top: 0.3em;
+}
+
+.lyrics-editor-warnings:empty {
+	display: none;
+}
+
+/* 文字變更的警告：段名用段名的樣式，word diff 刪掉的字紅底刪除線、加上的字綠底 */
+.lyrics-diff-name {
+	font-family: ui-monospace, Menlo, Consolas, monospace;
+	font-size: 0.85em;
+	border: 1px solid #c9a400;
+	border-radius: 4px;
+	padding: 0 0.3em;
+}
+
+.lyrics-diff del {
+	background: #ffd4d4;
+	color: #a00;
+	text-decoration: line-through;
+}
+
+.lyrics-diff ins {
+	background: #c8f0c8;
+	color: #060;
+	text-decoration: none;
+}
+
+.lyrics-editor-hint {
+	margin: 0.6em 0 0;
+	font-size: 0.8em;
+	color: #888;
+	user-select: none;
+}
+
+.lyrics-editor-area {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.4em;
+	margin-top: 0.6em;
+}
+
+/* 段名浮在文字區左邊，對齊那段的第一行（js 量位置）；不能選取，點了游標移到那段開頭 */
+.lyrics-editor-gutter {
+	position: relative;
+	flex: none;
+	align-self: stretch;
+}
+
+.lyrics-editor-name {
+	position: absolute;
+	right: 0;
+	margin: 0;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.lyrics-editor-name.changed {
+	border-color: #e0b400;
+	background: #fff6d0;
+	color: #806600;
+}
+
+.lyrics-editor-box {
+	position: relative;
+	flex: 1;
+	min-width: 0;
+	background: #fff;
+	border-radius: 0.3em;
+}
+
+/* 段和段之間的線、有變動的段的底色：畫在文字區後面（文字區是透明的） */
+#lyrics_editor_marks {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.lyrics-editor-divider {
+	position: absolute;
+	left: 0;
+	right: 0;
+	border-top: 1px dashed #bbb;
+}
+
+.lyrics-editor-changed {
+	position: absolute;
+	left: 1px;
+	right: 1px;
+	background: #fff3c4;
+}
+
+/* 文字區：和歌詞檢視一樣的字和行高，高度跟著內容（js 的 layout），不能拉大小 */
+.lyrics-editor-text {
+	position: relative;
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	font: inherit;
+	line-height: 1.8;
+	word-spacing: 0.5em;
+	padding: 0.2em 0.4em;
+	border: 1px solid #ccc;
+	border-radius: 0.3em;
+	resize: none;
+	overflow: hidden;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+	color: inherit;
+	background: transparent;
+}
+
+.lyrics-editor-text:focus {
+	outline: none;
+	border-color: #6cb4f0;
+	box-shadow: 0 0 0 2px #6cb4f055;
 }
 
 /* 只有歌詞符合搜尋時，歌名下面的那一句歌詞（#44） */

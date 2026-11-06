@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parse_slide_cell, w_line_text, w_slots, music_line_marks, sections_from_abc, song_slide_lyrics, lyrics_messages, lines_text, has_slide_lyrics, strip_spaces, map_lines } from '../../js/slide-lyrics.js';
+import { parse_slide_cell, w_line_text, w_slots, music_line_marks, sections_from_abc, song_slide_lyrics, lyrics_messages, lines_text, has_slide_lyrics, strip_spaces, map_lines, half_width_spaces, full_width_spaces, SPACE_MODES, normalize_space_mode } from '../../js/slide-lyrics.js';
 
 const section = (name, paragraphs, source = null) => ({ name, source, paragraphs });
 
@@ -239,4 +239,18 @@ test('map_lines：每一行套用函式，段名與段落結構不變', () => {
 test('sections_from_abc：w: 行尾的 \\ 是續行，下一行（有沒有 w: 都可以）接在後面，\\ 不是歌詞', () => {
   const abc = 'X:1\nK:C\nCDEF|GABc|\nw:一 二 三 四 \\\n五 六 七 八\nc4|]\nw:九 \\\nw:十\n';
   assert.deepEqual(sections_from_abc(abc), [section('Verse', [['一二三四五六七八', '九十']])]);
+});
+
+test('half_width_spaces／full_width_spaces：空格換成半形；中文字旁邊的空格換成全形，英文之間留半形', () => {
+  assert.equal(half_width_spaces('主　啊 我要'), '主 啊 我要');
+  assert.equal(full_width_spaces('主 啊　我要  讚美'), '主\u3000啊\u3000我要\u3000\u3000讚美');
+  assert.equal(full_width_spaces('Amazing grace 奇異 恩典'), 'Amazing grace\u3000奇異\u3000恩典');
+  assert.equal(full_width_spaces('do\u3000re mi'), 'do re mi');
+});
+
+test('SPACE_MODES／normalize_space_mode：三種顯示方式，不認得的值用半形', () => {
+  assert.equal(SPACE_MODES.hide('第一句 第二句'), '第一句第二句');
+  assert.equal(normalize_space_mode('full'), 'full');
+  assert.equal(normalize_space_mode('x'), 'half');
+  assert.equal(normalize_space_mode(null), 'half');
 });

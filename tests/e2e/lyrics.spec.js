@@ -181,6 +181,34 @@ test.describe('歌詞檢視', () => {
     await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 2 行');
   });
 
+  test('選取從歌名開始時，用 Ctrl+C 複製也整理成純文字（換段落或換段空一行）', async ({ app }) => {
+    await app.goto('#song_id=11&view=lyrics');
+    // 從歌名的第 2 個字選到第 3 行
+    await app.page.evaluate(() => {
+      const title = document.querySelector('#lyrics_title').firstChild;
+      const end = document.querySelectorAll('#lyrics_sections .lyrics-line')[2].firstChild;
+      const range = document.createRange();
+      range.setStart(title, 1);
+      range.setEnd(end, end.length);
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+    });
+    await expect(app.page.locator('#lyrics_copy')).toHaveAttribute('aria-disabled', 'false');
+    await app.page.keyboard.press('ControlOrMeta+c');
+    expect(await clipboard(app)).toBe('分段的歌\n\n一二三四\n甲乙丙丁\n\n五六七八');
+    await expect(app.page.locator('#lyrics_status')).toHaveText('已複製歌名和 3 行');
+    // 只選歌名也能複製
+    await app.page.evaluate(() => {
+      const range = document.createRange();
+      range.selectNodeContents(document.querySelector('#lyrics_title'));
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+    });
+    await app.page.locator('#lyrics_copy').click();
+    expect(await clipboard(app)).toBe('沒分段的歌');
+    await expect(app.page.locator('#lyrics_status')).toHaveText('已複製歌名');
+  });
+
   test('沒有勾選框；段名不能被選取。點段名選取整段，已經選取整段時取消；全選（沒有全不選）', async ({ app }) => {
     await app.goto('#song_id=11&view=lyrics');
     await expect(app.page.locator('#lyrics_view input')).toHaveCount(0);
@@ -194,10 +222,12 @@ test.describe('歌詞檢視', () => {
     await names(app).nth(0).click();
     expect(await selection(app)).toMatch(/^一二三四\s+甲乙丙丁$/);
 
+    // 全選連歌名一起選，複製時歌名放最前面、後面空一行
     await app.page.locator('#lyrics_select_all').click();
+    expect(await app.page.evaluate(() => getSelection().containsNode(document.querySelector('#lyrics_title'), true))).toBe(true);
     await app.page.locator('#lyrics_copy').click();
-    await expect(app.page.locator('#lyrics_status')).toHaveText('已複製 4 行');
-    expect(await clipboard(app)).toBe('一二三四\n甲乙丙丁\n\n五六七八\n子丑寅卯');
+    await expect(app.page.locator('#lyrics_status')).toHaveText('已複製歌名和 4 行');
+    expect(await clipboard(app)).toBe('沒分段的歌\n\n一二三四\n甲乙丙丁\n\n五六七八\n子丑寅卯');
 
     await expect(app.page.locator('#lyrics_select_none')).toHaveCount(0);
     await names(app).nth(1).click();
@@ -365,26 +395,61 @@ test.describe('歌詞檢視', () => {
     await expect(info_rows(app).nth(6).locator('td')).toHaveText(['歌詞:', '無']);
   });
 
-  test('「去除空格」開關：拿掉中文字旁邊的空格，複製出來也是；下次打開沿用；英文的空格留著', async ({ app }) => {
+  test('「空格」選單：隱藏空格、半形空格、全形空格（顯示和複製都是）；預設半形，下次打開沿用', async ({ app }) => {
     await app.goto('#song_id=12&view=lyrics');
-    const button = app.page.locator('#lyrics_strip_spaces');
-    await expect(button).toHaveAttribute('aria-checked', 'false');
+    const button = app.page.locator('#lyrics_space_button');
+    const menu = app.page.locator('#lyrics_space_menu');
+    const item = (mode) => menu.locator(`[data-space-mode="${mode}"]`);
+    async function choose(mode) {
+      await button.click();
+      await expect(menu).toBeVisible();
+      await item(mode).click();
+      await expect(menu).toBeHidden();
+    }
+    await expect(button).toHaveText('空格：半形');
+    // 下拉的 icon 是畫的（svg），不是文字
+    await expect(button.locator('svg.lyrics-caret')).toBeVisible();
+    // 和旁邊的按鈕一樣高
+    const heights = await app.page.locator('#lyrics_view .lyrics-actions .lyrics-button').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
+    expect(new Set(heights).size).toBe(1);
     await expect(lines(app).first()).toHaveText('第一句 第二句');
     await button.click();
-    await expect(button).toHaveAttribute('aria-checked', 'true');
+    // 選單的底色是和按鈕相近的淺灰
+    expect(await menu.evaluate((m) => getComputedStyle(m).backgroundColor)).toBe('rgb(240, 240, 240)');
+    await button.click();
+    await button.click();
+    await expect(menu.locator('.menu-item')).toHaveText(['隱藏空格不顯示空格', '半形空格空格顯示成半形空格', '全形空格空格顯示成全形空格']);
+    await expect(item('half')).toHaveAttribute('aria-checked', 'true');
+    await item('hide').click();
+    await expect(button).toHaveText('空格：隱藏');
     await expect(lines(app).first()).toHaveText('第一句第二句');
     await app.page.locator('#lyrics_select_all').click();
     await app.page.locator('#lyrics_copy').click();
-    expect(await clipboard(app)).toBe('第一句第二句\n第三句\n\n第四句\n\n副歌一句');
-    // 換歌、重新載入都沿用
+    expect(await clipboard(app)).toBe('有投影片欄的歌\n\n第一句第二句\n第三句\n\n第四句\n\n副歌一句');
+
+    await choose('full');
+    await expect(button).toHaveText('空格：全形');
+    await expect(lines(app).first()).toHaveText('第一句　第二句');
+    await app.page.locator('#lyrics_select_all').click();
+    await app.page.locator('#lyrics_copy').click();
+    expect(await clipboard(app)).toBe('有投影片欄的歌\n\n第一句　第二句\n第三句\n\n第四句\n\n副歌一句');
+    // 英文之間的空格留半形
     await app.goto('#song_id=1&view=lyrics');
-    await expect(button).toHaveAttribute('aria-checked', 'true');
     await expect(lines(app).first()).toHaveText('do re mi fa sol fa mi re do');
+    // 重新載入沿用
     await app.page.reload();
     await app.goto('#song_id=12&view=lyrics');
-    await expect(lines(app).first()).toHaveText('第一句第二句');
-    await button.click();
+    await expect(button).toHaveText('空格：全形');
+    await expect(lines(app).first()).toHaveText('第一句　第二句');
+    await choose('half');
     await expect(lines(app).first()).toHaveText('第一句 第二句');
+  });
+
+  test('舊版「去除空格」開著（localStorage lyrics_strip_spaces = 1）時，當成隱藏空格', async ({ app }) => {
+    await app.page.addInitScript(() => { localStorage.setItem('lyrics_strip_spaces', '1'); });
+    await app.goto('#song_id=12&view=lyrics');
+    await expect(app.page.locator('#lyrics_space_button')).toHaveText('空格：隱藏');
+    await expect(lines(app).first()).toHaveText('第一句第二句');
   });
 
   test('歌曲列表的 T 按鈕 hover 時不變色', async ({ app }) => {
