@@ -179,6 +179,25 @@ test.describe('歌詞排版編輯', () => {
     await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
   });
 
+  test('在段落之間的空行上用輸入法打字：組字中不打斷，組字結束後改回去', async ({ app }) => {
+    await open_editor(app, 12);
+    await caret(app, '第四句\n');
+    const cdp = await app.page.context().newCDPSession(app.page);
+    for (const text of ['ㄒ', 'ㄒㄧ'])
+      await cdp.send('Input.imeSetComposition', { text, selectionStart: text.length, selectionEnd: text.length });
+    // 組字中沒有被改回去
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\nㄒㄧ\n副歌一句');
+    await cdp.send('Input.insertText', { text: '下' });
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌一句');
+    await expect(status(app)).toHaveText('段落之間的空行不能修改');
+    await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
+    // 之後照常編輯
+    await caret(app, '副歌');
+    await app.page.keyboard.press('Enter');
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌\n一句');
+    await expect(names(app)).toHaveText(['主歌', '副歌']);
+  });
+
   test('存檔存在 localStorage（「投影片」欄格式），關閉後歌詞檢視用暫存的排版並顯示訊息；再打開從暫存開始', async ({ app }) => {
     await open_editor(app, 10);
     await caret(app, '一二三四');

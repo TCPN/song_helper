@@ -38,7 +38,7 @@ function save_local_layout(song_id, text) {
   }
 }
 
-// 編輯中：{ song_id, sections, source_cell, original_texts, compare_whole, saved, history, boundaries, last_value, before_input }
+// 編輯中：{ song_id, sections, source_cell, original_texts, compare_whole, saved, history, boundaries, last_value, before_input, composition_start }
 // 復原紀錄的每一步是 { text, boundaries }；boundaries 是每段開頭在 text 裡的位置
 var editing = null;
 var on_change = () => {};
@@ -274,10 +274,11 @@ function on_input(event) {
   var area = textarea();
   var moved = apply_edit(editing.last_value, area.value, area.selectionEnd, editing.boundaries);
   if (!moved) {
+    // 組字中不能改回去（會打斷輸入法），等組字結束再檢查
+    if (event.isComposing)
+      return;
     var before = editing.before_input || { start: area.selectionEnd, end: area.selectionEnd };
-    area.value = editing.last_value;
-    area.setSelectionRange(before.start, before.end);
-    set_status('段落之間的空行不能修改');
+    revert(editing.last_value, editing.boundaries, before);
     return;
   }
   editing.boundaries = moved;
@@ -288,8 +289,36 @@ function on_input(event) {
   record(merge_key(event));
 }
 
+function revert(text, boundaries, selection) {
+  var area = textarea();
+  area.value = text;
+  editing.boundaries = boundaries.slice();
+  editing.last_value = text;
+  area.setSelectionRange(selection.start, selection.end);
+  layout();
+  set_status('段落之間的空行不能修改');
+}
+
+// 組字開始時的內容：組字結果動到段落之間的空行時改回這裡
+function on_composition_start() {
+  var area = textarea();
+  editing.composition_start = { text: area.value, boundaries: editing.boundaries.slice(),
+    selection: { start: area.selectionStart, end: area.selectionEnd } };
+}
+
 function on_composition_end() {
-  record('type:' + section_at(textarea().selectionEnd));
+  var area = textarea();
+  var moved = apply_edit(editing.last_value, area.value, area.selectionEnd, editing.boundaries);
+  if (!moved) {
+    var start = editing.composition_start || { text: editing.last_value, boundaries: editing.boundaries,
+      selection: { start: area.selectionEnd, end: area.selectionEnd } };
+    revert(start.text, start.boundaries, start.selection);
+    return;
+  }
+  editing.boundaries = moved;
+  editing.last_value = area.value;
+  layout();
+  record('type:' + section_at(area.selectionEnd));
 }
 
 // 復原／重做：放回那一步的內容，游標放在第一個不一樣的地方
@@ -367,6 +396,7 @@ export function setup_lyrics_editor({ changed } = {}) {
   on_change = changed || (() => {});
   var area = textarea();
   area.addEventListener('input', on_input);
+  area.addEventListener('compositionstart', on_composition_start);
   area.addEventListener('compositionend', on_composition_end);
   area.addEventListener('beforeinput', (event) => {
     // 瀏覽器自己的復原／重做（選單、手機搖一搖等）改走我們的紀錄
