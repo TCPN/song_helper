@@ -54,18 +54,22 @@ test.describe('歌詞排版編輯', () => {
     await expect(app.page.locator('#lyrics_sections')).toBeHidden();
     await expect(app.page.locator('#lyrics_title')).toHaveText('有投影片欄的歌');
     await expect(app.page.locator('#lyrics_editor textarea')).toHaveCount(1);
-    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n副歌一句');
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌一句');
     await expect(names(app)).toHaveText(['主歌', '副歌']);
     expect(await names(app).first().evaluate((n) => getComputedStyle(n).userSelect)).toBe('none');
-    // 段名在文字區左邊，對齊各段的第一行（主歌第 1 行、副歌第 5 行）
+    // 段名在文字區左邊，對齊各段的第一行（主歌第 1 行、副歌第 6 行：段和段之間空一行）
     const box = await area(app).boundingBox();
     const name_box = await names(app).nth(1).boundingBox();
     expect(name_box.x + name_box.width).toBeLessThanOrEqual(box.x);
     const line = await area(app).evaluate((t) => parseFloat(getComputedStyle(t).lineHeight));
     const [a, b] = await name_tops(app);
-    expect(Math.abs(b - a - 4 * line)).toBeLessThan(2);
-    // 段和段之間一條線
-    await expect(app.page.locator('#lyrics_editor_marks .lyrics-editor-divider')).toHaveCount(1);
+    expect(Math.abs(b - a - 5 * line)).toBeLessThan(2);
+    // 段和段之間一條線，在中間那個空行的中間
+    const divider = app.page.locator('#lyrics_editor_marks .lyrics-editor-divider');
+    await expect(divider).toHaveCount(1);
+    const divider_y = (await divider.boundingBox()).y;
+    const second_line_top = b + (await names(app).nth(1).boundingBox()).height / 2 - line / 2;
+    expect(Math.abs(divider_y - (second_line_top - line / 2))).toBeLessThan(2);
     for (const id of ['undo', 'redo', 'save', 'editor_close'])
       await expect(button(app, id)).toBeVisible();
     for (const id of ['undo', 'redo', 'save'])
@@ -80,7 +84,7 @@ test.describe('歌詞排版編輯', () => {
     const [, before] = await name_tops(app);
     await caret(app, '第一句');
     await app.page.keyboard.press('Enter');
-    await expect(area(app)).toHaveValue('第一句\n 第二句\n第三句\n\n第四句\n副歌一句');
+    await expect(area(app)).toHaveValue('第一句\n 第二句\n第三句\n\n第四句\n\n副歌一句');
     const [, after] = await name_tops(app);
     expect(Math.abs(after - before - line)).toBeLessThan(2);
   });
@@ -89,18 +93,18 @@ test.describe('歌詞排版編輯', () => {
     await open_editor(app, 12);
     await caret(app, '副歌一句', true);
     await app.page.keyboard.press('Backspace');
-    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n副歌一句');
-    await expect(status(app)).toHaveText('段落標記不能刪除');
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌一句');
+    await expect(status(app)).toHaveText('段落之間的空行不能修改');
     await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
     // 全選後刪除
     await area(app).focus();
     await app.page.keyboard.press('ControlOrMeta+a');
     await app.page.keyboard.press('Delete');
-    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n副歌一句');
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌一句');
     // 段內的空行可以刪
     await caret(app, '第四句', true);
     await app.page.keyboard.press('Backspace');
-    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n第四句\n副歌一句');
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n第四句\n\n副歌一句');
     await expect(names(app)).toHaveText(['主歌', '副歌']);
   });
 
@@ -110,19 +114,24 @@ test.describe('歌詞排版編輯', () => {
     await caret(app, '一二三四');
     await app.page.keyboard.press('Enter');
     await app.page.keyboard.press('Space');
-    await expect(area(app)).toHaveValue('一二三四\n 五六七八\n甲乙丙丁戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四\n 五六七八\n\n甲乙丙丁戊己庚辛\n\n副');
     await expect(warnings(app)).toHaveCount(0);
 
     await caret(app, '甲乙');
     await app.page.keyboard.press('Backspace');
-    await expect(warnings(app)).toHaveText(['「A2」的文字和原本不一樣：刪掉「乙」（…甲▲丙丁戊…）']);
+    await expect(warnings(app)).toHaveText(['文字變更：A2 甲乙丙丁戊己…']);
+    // word diff：刪掉的字是 <del>（紅底刪除線），加上的字是 <ins>（綠底）
+    await expect(warnings(app).locator('del')).toHaveText('乙');
+    await expect(warnings(app).locator('ins')).toHaveCount(0);
+    expect(await warnings(app).locator('del').evaluate((d) => getComputedStyle(d).textDecorationLine)).toBe('line-through');
     await expect(names(app).nth(1)).toHaveClass(/changed/);
     await expect(names(app).nth(0)).not.toHaveClass(/changed/);
     await expect(app.page.locator('#lyrics_editor_marks .lyrics-editor-changed')).toHaveCount(1);
     await app.page.keyboard.type('乙');
     await expect(warnings(app)).toHaveCount(0);
     await app.page.keyboard.type('啊');
-    await expect(warnings(app)).toHaveText(['「A2」的文字和原本不一樣：加了「啊」（…甲乙▲丙丁戊…）']);
+    await expect(warnings(app)).toHaveText(['文字變更：A2 甲乙啊丙丁戊己…']);
+    await expect(warnings(app).locator('ins')).toHaveText('啊');
   });
 
   test('復原、重做：一步一步回去；換行和空格各是一步，連續打字合成一步；Ctrl+Z／Ctrl+Shift+Z 也可以', async ({ app }) => {
@@ -132,21 +141,21 @@ test.describe('歌詞排版編輯', () => {
     await caret(app, '甲乙丙丁');
     await app.page.keyboard.press('Space');
     await app.page.keyboard.type('xyz');
-    await expect(area(app)).toHaveValue('一二三四\n五六七八\n甲乙丙丁 xyz戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四\n五六七八\n\n甲乙丙丁 xyz戊己庚辛\n\n副');
 
     await button(app, 'undo').click();
-    await expect(area(app)).toHaveValue('一二三四\n五六七八\n甲乙丙丁 戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四\n五六七八\n\n甲乙丙丁 戊己庚辛\n\n副');
     await button(app, 'undo').click();
-    await expect(area(app)).toHaveValue('一二三四\n五六七八\n甲乙丙丁戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四\n五六七八\n\n甲乙丙丁戊己庚辛\n\n副');
     await app.page.keyboard.press('ControlOrMeta+z');
-    await expect(area(app)).toHaveValue('一二三四五六七八\n甲乙丙丁戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四五六七八\n\n甲乙丙丁戊己庚辛\n\n副');
     await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
     await expect(button(app, 'save')).toHaveAttribute('aria-disabled', 'true');
 
     await button(app, 'redo').click();
-    await expect(area(app)).toHaveValue('一二三四\n五六七八\n甲乙丙丁戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四\n五六七八\n\n甲乙丙丁戊己庚辛\n\n副');
     await app.page.keyboard.press('ControlOrMeta+Shift+z');
-    await expect(area(app)).toHaveValue('一二三四\n五六七八\n甲乙丙丁 戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四\n五六七八\n\n甲乙丙丁 戊己庚辛\n\n副');
     // 復原後段名的位置也回來；之後再改就不能重做
     await caret(app, '副', true);
     await app.page.keyboard.press('Space');
@@ -159,14 +168,14 @@ test.describe('歌詞排版編輯', () => {
     const cdp = await app.page.context().newCDPSession(app.page);
     for (const text of ['ㄒ', 'ㄒㄧ', 'ㄒㄧㄚ'])
       await cdp.send('Input.imeSetComposition', { text, selectionStart: text.length, selectionEnd: text.length });
-    await expect(area(app)).toHaveValue('一二三四五六七八\n甲乙ㄒㄧㄚ丙丁戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四五六七八\n\n甲乙ㄒㄧㄚ丙丁戊己庚辛\n\n副');
     await expect(warnings(app)).toHaveCount(0);
     await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
     await cdp.send('Input.insertText', { text: '下' });
-    await expect(area(app)).toHaveValue('一二三四五六七八\n甲乙下丙丁戊己庚辛\n副');
-    await expect(warnings(app)).toHaveText(['「A2」的文字和原本不一樣：加了「下」（…甲乙▲丙丁戊…）']);
+    await expect(area(app)).toHaveValue('一二三四五六七八\n\n甲乙下丙丁戊己庚辛\n\n副');
+    await expect(warnings(app)).toHaveText(['文字變更：A2 甲乙下丙丁戊己…']);
     await button(app, 'undo').click();
-    await expect(area(app)).toHaveValue('一二三四五六七八\n甲乙丙丁戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四五六七八\n\n甲乙丙丁戊己庚辛\n\n副');
     await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
   });
 
@@ -192,7 +201,7 @@ test.describe('歌詞排版編輯', () => {
     await app.page.reload();
     await expect(view_lines(app)).toHaveText(['一二三四', '五六七八', '甲乙丙丁', '戊己庚辛', '副']);
     await button(app, 'edit').click();
-    await expect(area(app)).toHaveValue('一二三四\n五六七八\n甲乙丙丁\n\n戊己庚辛\n副');
+    await expect(area(app)).toHaveValue('一二三四\n五六七八\n\n甲乙丙丁\n\n戊己庚辛\n\n副');
     await expect(names(app)).toHaveText(['A1', 'A2', 'B']);
     await expect(warnings(app)).toHaveCount(0);
   });
@@ -219,7 +228,7 @@ test.describe('歌詞排版編輯', () => {
     await button(app, 'editor_close').click();
     await expect(view_messages(app)).toHaveText(['使用這台裝置暫存的排版（還沒存回試算表）', '暫存的排版和目前的歌詞文字不一樣']);
     await button(app, 'edit').click();
-    await expect(warnings(app)).toHaveText(['「副歌」的文字和原本不一樣：加了「！」（…歌一句▲）']);
+    await expect(warnings(app)).toHaveText(['文字變更：副歌 副歌一句！']);
   });
 
   test('沒存檔就關閉要先確認；關掉後不留修改', async ({ app }) => {

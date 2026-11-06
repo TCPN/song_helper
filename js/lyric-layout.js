@@ -51,16 +51,6 @@ export function text_change(original, edited, context = 3) {
   };
 }
 
-// 一個變動 → 警告訊息裡的一句話，例如：刪掉「甘」、加了「啊」、「甜」改成「田」（前後的字放在「…」旁邊看位置）
-export function describe_change(change) {
-  var where = (text) => (change.before ? '…' + change.before : '') + text + (change.after ? change.after + '…' : '');
-  if (!change.added)
-    return `刪掉「${change.removed}」（${where('▲')}）`;
-  if (!change.removed)
-    return `加了「${change.added}」（${where('▲')}）`;
-  return `「${change.removed}」改成「${change.added}」（${where('▲')}）`;
-}
-
 // 每一段原本的文字和編輯後的文字 → 有變動的段：[{ index, change }]
 export function layout_changes(original_texts, edited_texts) {
   var changes = [];
@@ -129,7 +119,10 @@ export function history_redo(history) {
   return history.stack[++history.index];
 }
 
-// ---- 整首一個編輯區：各段的文字接在一起（段和段之間一個換行），段的開頭記成位置（boundaries，第一段是 0） ----
+// ---- 整首一個編輯區：各段的文字接在一起，段和段之間空一行（SEPARATOR），段的開頭記成位置（boundaries，第一段是 0） ----
+// 段和段之間的空行是段落標記：不能刪、也不能在裡面打字
+
+export const SEPARATOR = '\n\n';
 
 // 段的文字 → { text, boundaries }
 export function join_sections(texts) {
@@ -137,20 +130,21 @@ export function join_sections(texts) {
   var text = '';
   texts.forEach((t, i) => {
     if (i > 0)
-      text += '\n';
+      text += SEPARATOR;
     boundaries.push(text.length);
     text += t;
   });
   return { text, boundaries };
 }
 
-// { text, boundaries } → 每段的文字（不含段和段之間的換行）
+// { text, boundaries } → 每段的文字（不含段和段之間的空行）
 export function split_sections(text, boundaries) {
-  return boundaries.map((start, i) => text.slice(start, i + 1 < boundaries.length ? boundaries[i + 1] - 1 : text.length));
+  return boundaries.map((start, i) =>
+    text.slice(start, i + 1 < boundaries.length ? boundaries[i + 1] - SEPARATOR.length : text.length));
 }
 
 // 編輯區的內容從 before 變成 after（caret：改完之後游標的位置）→ 新的段開頭位置；
-// 改動刪到段和段之間的換行（段落標記）時傳回 null（不允許，呼叫的人要把內容改回去）。
+// 改動刪到或打字在段和段之間的空行（段落標記）時傳回 null（不允許，呼叫的人要把內容改回去）。
 // 改動的範圍用頭尾相同的字找；同樣的字連在一起（例如在換行旁邊再按換行）時，用游標決定改動是從哪裡開始
 export function apply_edit(before, after, caret, boundaries) {
   var min = Math.min(before.length, after.length);
@@ -166,7 +160,88 @@ export function apply_edit(before, after, caret, boundaries) {
   var start = Math.min(p, Math.max(0, caret - inserted));
   if (before.slice(start + removed) != after.slice(start + inserted))
     start = p;
-  if (boundaries.some((b, i) => i > 0 && b - 1 >= start && b - 1 < start + removed))
+  var added = after.slice(start, start + inserted);
+  var gap = SEPARATOR.length;
+  var moved = [];
+  for (const [i, b] of boundaries.entries()) {
+    if (i == 0) {
+      moved.push(0);
+      continue;
+    }
+    // 刪到空行
+    if (removed && start < b && start + removed > b - gap)
+      return null;
+    var shift = b > start;
+    // 打字在兩個換行中間：前後有換行時等於加在上一段的最後（結尾是換行）或下一段的開頭（開頭是換行），不然不允許
+    if (start > b - gap && start < b) {
+      if (added.endsWith('\n'))
+        shift = true;
+      else if (added.startsWith('\n'))
+        shift = false;
+      else
+        return null;
+    }
+    moved.push(shift ? b + inserted - removed : b);
+  }
+  // 保險：每個段的開頭前面都還是空行
+  if (moved.some((b, i) => i > 0 && after.slice(b - gap, b) != SEPARATOR))
     return null;
-  return boundaries.map((b, i) => (i > 0 && b > start ? b + inserted - removed : b));
+  return moved;
+}
+
+// ---- 文字變更的顯示（word diff）：英數連在一起算一個詞，其他（中文、標點）一個字一個；空白不算 ----
+
+export function diff_tokens(text) {
+  return String(text).match(/[A-Za-z0-9À-ɏ']+|\S/g) || [];
+}
+
+// 兩段文字 → [{ type: 'same' | 'removed' | 'added', text }]（最長共同子序列；換掉的地方先列刪掉的再列加上的；相鄰同類合併，詞和詞之間依需要加空格）
+export function word_diff(original, edited) {
+  var a = diff_tokens(original);
+  var b = diff_tokens(edited);
+  var n = a.length, m = b.length;
+  var lcs = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (var i = n - 1; i >= 0; i--)
+    for (var j = m - 1; j >= 0; j--)
+      lcs[i][j] = a[i] == b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+  var parts = [];
+  var push = (type, token) => {
+    var last = parts[parts.length - 1];
+    if (last && last.type == type)
+      last.tokens.push(token);
+    else
+      parts.push({ type, tokens: [token] });
+  };
+  i = 0; j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && a[i] == b[j]) {
+      push('same', a[i]); i++; j++;
+    } else if (j < m && (i == n || lcs[i][j + 1] > lcs[i + 1][j])) {
+      push('added', b[j]); j++;
+    } else {
+      push('removed', a[i]); i++;
+    }
+  }
+  return parts.map(({ type, tokens }) => ({ type, text: join_tokens(tokens) }));
+}
+
+// 詞接回來：兩個英數詞之間空一格，其他直接相連
+function join_tokens(tokens) {
+  var word = /^[A-Za-z0-9À-ɏ']/;
+  return tokens.reduce((text, t) => text + (text && word.test(text[text.length - 1]) && word.test(t) ? ' ' : '') + t, '');
+}
+
+// 沒變的部分太長時只留靠近變動的幾個字（前後各 context 個字），中間用「…」
+export function trim_diff(parts, context = 4) {
+  return parts.map((part, k) => {
+    if (part.type != 'same')
+      return part;
+    var chars = [...part.text];
+    var keep_start = k > 0 ? context : 0; // 前面有變動：留開頭幾個字
+    var keep_end = k < parts.length - 1 ? context : 0; // 後面有變動：留結尾幾個字
+    if (chars.length <= keep_start + keep_end + 1)
+      return part;
+    var text = (keep_start ? chars.slice(0, keep_start).join('') : '') + '…' + (keep_end ? chars.slice(-keep_end).join('') : '');
+    return { type: 'same', text };
+  });
 }

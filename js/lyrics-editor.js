@@ -1,14 +1,14 @@
 // 歌詞排版編輯：在歌詞檢視裡按「編輯排版」（鉛筆）打開，蓋在歌詞上面。
-// 整首一個文字區（<textarea>），段和段之間是一個換行；段名浮在文字區左邊（對齊那段的第一行），段和段之間畫一條線，
-// 所以段名不能選取、也刪不掉；刪到段和段之間的換行時改回去（段落標記不能刪）。文字區裡可以加減空格與換行，
+// 整首一個文字區（<textarea>），段和段之間空一行；段名浮在文字區左邊（對齊那段的第一行），空行中間畫一條線，
+// 所以段名不能選取、也刪不掉；刪到段和段之間的空行、或在空行上打字時改回去（段落標記不能改）。文字區裡可以加減空格與換行，
 // 空一行是段內分段（投影片換頁）。隨時把去掉空白後的字和原本的歌詞（「投影片」欄或從譜上抽出的）比對，不一樣時顯示警告。
 // 復原／重做用自己的紀錄（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是），存檔存在這台裝置的 localStorage
 // （「投影片」欄的格式，之後可以直接貼回試算表）。編輯狀態不放進網址。
 import { click_on_enter, message_icon } from './dom.js';
 import { UNNAMED } from './slide-lyrics.js';
-import { section_to_text, sections_to_cell, apply_texts, layout_changes, describe_change, parse_saved_layouts,
+import { section_to_text, sections_to_cell, apply_texts, layout_changes, word_diff, trim_diff, parse_saved_layouts,
   create_history, history_record, history_undo, history_redo, can_undo, can_redo,
-  join_sections, split_sections, apply_edit } from './lyric-layout.js';
+  join_sections, split_sections, apply_edit, SEPARATOR } from './lyric-layout.js';
 
 // localStorage：{ 歌號: 「投影片」欄格式的文字 }
 const STORAGE_KEY = 'lyrics_layout';
@@ -122,7 +122,8 @@ function place_marks() {
   var changed = changed_sections();
   $('#lyrics_editor_marks').replaceChildren(...tops.flatMap((top, i) => {
     var marks = [];
-    var end = i + 1 < tops.length ? tops[i + 1] : bottom;
+    // 這段到下一段的空行之前（最後一段到文字區底）
+    var end = i + 1 < tops.length ? tops[i + 1] - line : bottom;
     if (changed.has(i)) {
       var band = document.createElement('div');
       band.className = 'lyrics-editor-changed';
@@ -132,7 +133,8 @@ function place_marks() {
     if (i > 0) {
       var divider = document.createElement('div');
       divider.className = 'lyrics-editor-divider';
-      divider.style.top = top + 'px';
+      // 對齊上面那個空行的中間
+      divider.style.top = Math.round(top - line / 2) + 'px';
       marks.push(divider);
     }
     return marks;
@@ -211,11 +213,25 @@ function update() {
   var changed = changed_sections();
   for (const name of document.querySelectorAll('#lyrics_editor_gutter .lyrics-editor-name'))
     name.classList.toggle('changed', changed.has(Number(name.dataset.s)));
-  $('#lyrics_editor_warnings').replaceChildren(...found.map(({ index, change }) => {
+  $('#lyrics_editor_warnings').replaceChildren(...found.map(({ index }) => {
     var li = document.createElement('li');
     li.className = 'lyrics-message warning';
-    var where = editing.compare_whole ? '歌詞' : `「${editing.sections[index].name || UNNAMED}」`;
-    li.append(message_icon('warning'), `${where}的文字和原本不一樣：${describe_change(change)}`);
+    var where = editing.compare_whole ? '整首' : editing.sections[index].name || UNNAMED;
+    var name = document.createElement('span');
+    name.className = 'lyrics-diff-name';
+    name.textContent = where;
+    // word diff：刪掉的字紅底加刪除線，加上的字綠底；沒變的太長只留靠近變動的幾個字
+    var texts = editing.compare_whole ? [current_texts().join('\n')] : current_texts();
+    var diff = document.createElement('span');
+    diff.className = 'lyrics-diff';
+    diff.append(...trim_diff(word_diff(editing.original_texts[index], texts[index])).map(({ type, text }) => {
+      if (type == 'same')
+        return text;
+      var mark = document.createElement(type == 'added' ? 'ins' : 'del');
+      mark.textContent = text;
+      return mark;
+    }));
+    li.append(message_icon('warning'), '文字變更：', name, ' ', diff);
     return li;
   }));
   place_marks();
@@ -261,7 +277,7 @@ function on_input(event) {
     var before = editing.before_input || { start: area.selectionEnd, end: area.selectionEnd };
     area.value = editing.last_value;
     area.setSelectionRange(before.start, before.end);
-    set_status('段落標記不能刪除');
+    set_status('段落之間的空行不能修改');
     return;
   }
   editing.boundaries = moved;

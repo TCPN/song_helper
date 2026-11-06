@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { section_to_text, text_to_paragraphs, sections_to_cell, strip_whitespace, text_change, describe_change,
+import { section_to_text, text_to_paragraphs, sections_to_cell, strip_whitespace, text_change,
   layout_changes, apply_texts, parse_saved_layouts, create_history, history_record, history_undo, history_redo,
   can_undo, can_redo } from '../../js/lyric-layout.js';
 import { parse_slide_cell, song_slide_lyrics, lyrics_messages } from '../../js/slide-lyrics.js';
@@ -26,12 +26,6 @@ test('strip_whitespace／text_change：只看去掉空白（含全形空白、�
   assert.deepEqual(text_change('甲乙丙丁戊', '甲丙丁戊'), { removed: '乙', added: '', before: '甲', after: '丙丁戊' });
   assert.deepEqual(text_change('甲乙丙', '甲乙丙！'), { removed: '', added: '！', before: '甲乙丙', after: '' });
   assert.deepEqual(text_change('一二三四五六', '一二X四五六', 2), { removed: '三', added: 'X', before: '一二', after: '四五' });
-});
-
-test('describe_change：刪掉／加了／改成，▲ 標出位置', () => {
-  assert.equal(describe_change({ removed: '乙', added: '', before: '甲', after: '丙' }), '刪掉「乙」（…甲▲丙…）');
-  assert.equal(describe_change({ removed: '', added: '啊', before: '', after: '一二' }), '加了「啊」（▲一二…）');
-  assert.equal(describe_change({ removed: '甜', added: '田', before: '甘', after: '' }), '「甜」改成「田」（…甘▲）');
 });
 
 test('layout_changes：只列出有變動的段', () => {
@@ -89,33 +83,54 @@ test('song_slide_lyrics：有本機暫存時用暫存的段，記下原本的段
   assert.equal(song_slide_lyrics(song, '  ').from, 'abc');
 });
 
-import { join_sections, split_sections, apply_edit } from '../../js/lyric-layout.js';
+import { join_sections, split_sections, apply_edit, word_diff, trim_diff, diff_tokens } from '../../js/lyric-layout.js';
 
-test('join_sections／split_sections：段和段之間一個換行，記下每段開頭的位置', () => {
+test('join_sections／split_sections：段和段之間空一行，記下每段開頭的位置', () => {
   const joined = join_sections(['一\n二', '', '三']);
-  assert.deepEqual(joined, { text: '一\n二\n\n三', boundaries: [0, 4, 5] });
+  assert.deepEqual(joined, { text: '一\n二\n\n\n\n三', boundaries: [0, 5, 7] });
   assert.deepEqual(split_sections(joined.text, joined.boundaries), ['一\n二', '', '三']);
 });
 
 test('apply_edit：前面的段改動時，後面的段開頭跟著移動', () => {
-  // 'ab' | 'cd'：text 'ab\ncd'，第二段從 3 開始
-  assert.deepEqual(apply_edit('ab\ncd', 'a b\ncd', 2, [0, 3]), [0, 4]);
-  assert.deepEqual(apply_edit('ab\ncd', 'ab\nc d', 5, [0, 3]), [0, 3]);
-  // 在第一段最後按換行（游標在 3）：新的換行屬於第一段
-  assert.deepEqual(apply_edit('ab\ncd', 'ab\n\ncd', 3, [0, 3]), [0, 4]);
-  // 在第二段開頭按換行（游標在 4）：屬於第二段，開頭不動
-  assert.deepEqual(apply_edit('ab\ncd', 'ab\n\ncd', 4, [0, 3]), [0, 3]);
+  // 'ab' | 'cd'：text 'ab\n\ncd'，第二段從 4 開始
+  assert.deepEqual(apply_edit('ab\n\ncd', 'a b\n\ncd', 2, [0, 4]), [0, 5]);
+  assert.deepEqual(apply_edit('ab\n\ncd', 'ab\n\nc d', 6, [0, 4]), [0, 4]);
+  // 在第一段最後按換行（改完游標在 3）：屬於第一段
+  assert.deepEqual(apply_edit('ab\n\ncd', 'ab\n\n\ncd', 3, [0, 4]), [0, 5]);
+  // 在空行上按換行（游標在 4）：當成加在第一段最後
+  assert.deepEqual(apply_edit('ab\n\ncd', 'ab\n\n\ncd', 4, [0, 4]), [0, 5]);
+  // 在第二段開頭按換行（游標在 5）：屬於第二段，開頭不動
+  assert.deepEqual(apply_edit('ab\n\ncd', 'ab\n\n\ncd', 5, [0, 4]), [0, 4]);
+  // 在第一段最後、第二段開頭打字
+  assert.deepEqual(apply_edit('ab\n\ncd', 'abX\n\ncd', 3, [0, 4]), [0, 5]);
+  assert.deepEqual(apply_edit('ab\n\ncd', 'ab\n\nXcd', 5, [0, 4]), [0, 4]);
   // 刪掉第二段開頭的字可以
-  assert.deepEqual(apply_edit('ab\ncd', 'ab\nd', 3, [0, 3]), [0, 3]);
+  assert.deepEqual(apply_edit('ab\n\ncd', 'ab\n\nd', 4, [0, 4]), [0, 4]);
 });
 
-test('apply_edit：刪到段和段之間的換行（段落標記）不允許', () => {
-  // 在第二段開頭按 Backspace
-  assert.equal(apply_edit('ab\ncd', 'abcd', 2, [0, 3]), null);
-  // 選取跨過兩段後打字
-  assert.equal(apply_edit('ab\ncd', 'aXd', 2, [0, 3]), null);
-  // 全選刪掉
-  assert.equal(apply_edit('ab\ncd', '', 0, [0, 3]), null);
-  // 段內的換行可以刪
-  assert.deepEqual(apply_edit('a\nb\ncd', 'ab\ncd', 1, [0, 4]), [0, 3]);
+test('apply_edit：刪到段和段之間的空行、在空行上打字都不允許', () => {
+  // 在第二段開頭按 Backspace、在第一段最後按 Delete
+  assert.equal(apply_edit('ab\n\ncd', 'ab\ncd', 3, [0, 4]), null);
+  assert.equal(apply_edit('ab\n\ncd', 'ab\ncd', 2, [0, 4]), null);
+  // 在空行上打字
+  assert.equal(apply_edit('ab\n\ncd', 'ab\nX\ncd', 4, [0, 4]), null);
+  // 選取跨過兩段後打字、全選刪掉
+  assert.equal(apply_edit('ab\n\ncd', 'aXd', 2, [0, 4]), null);
+  assert.equal(apply_edit('ab\n\ncd', '', 0, [0, 4]), null);
+  // 段內的空行可以刪
+  assert.deepEqual(apply_edit('a\n\nb\n\ncd', 'a\nb\n\ncd', 2, [0, 6]), [0, 5]);
+});
+
+test('diff_tokens：英數連在一起算一個詞，其他一個字一個，空白不算', () => {
+  assert.deepEqual(diff_tokens('Amazing grace 奇異 恩典！'), ['Amazing', 'grace', '奇', '異', '恩', '典', '！']);
+});
+
+test('word_diff／trim_diff：標出刪掉與加上的詞，沒變的太長只留靠近變動的字', () => {
+  assert.deepEqual(word_diff('甲乙丙丁', '甲丙丁戊'), [
+    { type: 'same', text: '甲' }, { type: 'removed', text: '乙' }, { type: 'same', text: '丙丁' }, { type: 'added', text: '戊' }]);
+  assert.deepEqual(word_diff('how sweet the sound', 'how great the sound'), [
+    { type: 'same', text: 'how' }, { type: 'removed', text: 'sweet' }, { type: 'added', text: 'great' }, { type: 'same', text: 'the sound' }]);
+  assert.deepEqual(word_diff('一 二', '一二'), [{ type: 'same', text: '一二' }]);
+  assert.deepEqual(trim_diff([{ type: 'same', text: '一二三四五六七八' }, { type: 'removed', text: '九' }, { type: 'same', text: '十甲乙丙丁戊' }], 2), [
+    { type: 'same', text: '…七八' }, { type: 'removed', text: '九' }, { type: 'same', text: '十甲…' }]);
 });

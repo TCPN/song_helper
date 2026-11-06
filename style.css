@@ -1291,6 +1291,27 @@ button.popup-window-close:hover {
 	display: none;
 }
 
+/* 文字變更的警告：段名用段名的樣式，word diff 刪掉的字紅底刪除線、加上的字綠底 */
+.lyrics-diff-name {
+	font-family: ui-monospace, Menlo, Consolas, monospace;
+	font-size: 0.85em;
+	border: 1px solid #c9a400;
+	border-radius: 4px;
+	padding: 0 0.3em;
+}
+
+.lyrics-diff del {
+	background: #ffd4d4;
+	color: #a00;
+	text-decoration: line-through;
+}
+
+.lyrics-diff ins {
+	background: #c8f0c8;
+	color: #060;
+	text-decoration: none;
+}
+
 .lyrics-editor-hint {
 	margin: 0.6em 0 0;
 	font-size: 0.8em;
