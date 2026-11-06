@@ -365,26 +365,52 @@ test.describe('歌詞檢視', () => {
     await expect(info_rows(app).nth(6).locator('td')).toHaveText(['歌詞:', '無']);
   });
 
-  test('「去除空格」開關：拿掉中文字旁邊的空格，複製出來也是；下次打開沿用；英文的空格留著', async ({ app }) => {
+  test('「空格」選單：隱藏空格、半形空格、全形空格（顯示和複製都是）；預設半形，下次打開沿用', async ({ app }) => {
     await app.goto('#song_id=12&view=lyrics');
-    const button = app.page.locator('#lyrics_strip_spaces');
-    await expect(button).toHaveAttribute('aria-checked', 'false');
+    const button = app.page.locator('#lyrics_space_button');
+    const menu = app.page.locator('#lyrics_space_menu');
+    const item = (mode) => menu.locator(`[data-space-mode="${mode}"]`);
+    async function choose(mode) {
+      await button.click();
+      await expect(menu).toBeVisible();
+      await item(mode).click();
+      await expect(menu).toBeHidden();
+    }
+    await expect(button).toHaveText('空格：半形 ▾');
     await expect(lines(app).first()).toHaveText('第一句 第二句');
     await button.click();
-    await expect(button).toHaveAttribute('aria-checked', 'true');
+    await expect(menu.locator('.menu-item')).toHaveText(['隱藏空格不顯示空格', '半形空格空格顯示成半形空格', '全形空格空格顯示成全形空格']);
+    await expect(item('half')).toHaveAttribute('aria-checked', 'true');
+    await item('hide').click();
+    await expect(button).toHaveText('空格：隱藏 ▾');
     await expect(lines(app).first()).toHaveText('第一句第二句');
     await app.page.locator('#lyrics_select_all').click();
     await app.page.locator('#lyrics_copy').click();
     expect(await clipboard(app)).toBe('第一句第二句\n第三句\n\n第四句\n\n副歌一句');
-    // 換歌、重新載入都沿用
+
+    await choose('full');
+    await expect(button).toHaveText('空格：全形 ▾');
+    await expect(lines(app).first()).toHaveText('第一句　第二句');
+    await app.page.locator('#lyrics_select_all').click();
+    await app.page.locator('#lyrics_copy').click();
+    expect(await clipboard(app)).toBe('第一句　第二句\n第三句\n\n第四句\n\n副歌一句');
+    // 英文之間的空格留半形
     await app.goto('#song_id=1&view=lyrics');
-    await expect(button).toHaveAttribute('aria-checked', 'true');
     await expect(lines(app).first()).toHaveText('do re mi fa sol fa mi re do');
+    // 重新載入沿用
     await app.page.reload();
     await app.goto('#song_id=12&view=lyrics');
-    await expect(lines(app).first()).toHaveText('第一句第二句');
-    await button.click();
+    await expect(button).toHaveText('空格：全形 ▾');
+    await expect(lines(app).first()).toHaveText('第一句　第二句');
+    await choose('half');
     await expect(lines(app).first()).toHaveText('第一句 第二句');
+  });
+
+  test('舊版「去除空格」開著（localStorage lyrics_strip_spaces = 1）時，當成隱藏空格', async ({ app }) => {
+    await app.page.addInitScript(() => { localStorage.setItem('lyrics_strip_spaces', '1'); });
+    await app.goto('#song_id=12&view=lyrics');
+    await expect(app.page.locator('#lyrics_space_button')).toHaveText('空格：隱藏 ▾');
+    await expect(lines(app).first()).toHaveText('第一句第二句');
   });
 
   test('歌曲列表的 T 按鈕 hover 時不變色', async ({ app }) => {

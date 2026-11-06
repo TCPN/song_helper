@@ -47,8 +47,9 @@ test.describe('歌詞排版編輯', () => {
 
   test('鉛筆在按鈕列第三個；打開後整首一個文字區，段名浮在左邊、不能選取；複製的按鈕列和歌詞藏起來', async ({ app }) => {
     await app.goto('#song_id=12&view=lyrics');
-    await expect(app.page.locator('#lyrics_view .lyrics-actions > .lyrics-button')).toHaveText(['全選', '去除空格', '', '複製']);
-    await expect(app.page.locator('#lyrics_view .lyrics-actions > .lyrics-button').nth(2)).toHaveId('lyrics_edit');
+    await expect(app.page.locator('#lyrics_view .lyrics-actions > *').nth(0)).toHaveId('lyrics_select_all');
+    await expect(app.page.locator('#lyrics_view .lyrics-actions > *').nth(1)).toHaveId('lyrics_space_group');
+    await expect(app.page.locator('#lyrics_view .lyrics-actions > *').nth(2)).toHaveId('lyrics_edit');
     await button(app, 'edit').click();
     await expect(app.page.locator('#lyrics_view .lyrics-actions')).toBeHidden();
     await expect(app.page.locator('#lyrics_sections')).toBeHidden();
@@ -196,6 +197,29 @@ test.describe('歌詞排版編輯', () => {
     await app.page.keyboard.press('Enter');
     await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌\n一句');
     await expect(names(app)).toHaveText(['主歌', '副歌']);
+  });
+
+  test('全形空白一律換成半形：打字時馬上換，游標不動；存檔也是半形', async ({ app }) => {
+    await open_editor(app, 12);
+    await caret(app, '副歌');
+    await app.page.keyboard.insertText('\u3000');
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌 一句');
+    expect(await area(app).evaluate((t) => t.value.slice(t.selectionStart))).toBe('一句');
+    // 貼上多個全形空白
+    await caret(app, '第三');
+    await app.page.keyboard.insertText('\u3000\u3000');
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三  句\n\n第四句\n\n副歌 一句');
+    await expect(warnings(app)).toHaveCount(0);
+    await button(app, 'save').click();
+    expect(await saved(app)).toEqual({ 12: '[主歌 = A1]\n第一句 第二句\n第三  句\n\n第四句\n\n[副歌]\n副歌 一句' });
+  });
+
+  test('原本的歌詞有全形空白：打開編輯時就換成半形', async ({ app }) => {
+    await app.page.addInitScript(() => {
+      localStorage.setItem('lyrics_layout', JSON.stringify({ 12: '[主歌 = A1]\n第一句\u3000第二句\n[副歌]\n副歌一句' }));
+    });
+    await open_editor(app, 12);
+    await expect(area(app)).toHaveValue('第一句 第二句\n\n副歌一句');
   });
 
   test('存檔存在 localStorage（「投影片」欄格式），關閉後歌詞檢視用暫存的排版並顯示訊息；再打開從暫存開始', async ({ app }) => {

@@ -5,7 +5,7 @@
 // 復原／重做用自己的紀錄（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是），存檔存在這台裝置的 localStorage
 // （「投影片」欄的格式，之後可以直接貼回試算表）。編輯狀態不放進網址。
 import { click_on_enter, message_icon } from './dom.js';
-import { UNNAMED } from './slide-lyrics.js';
+import { UNNAMED, half_width_spaces } from './slide-lyrics.js';
 import { section_to_text, sections_to_cell, apply_texts, layout_changes, word_diff, trim_diff, parse_saved_layouts,
   create_history, history_record, history_undo, history_redo, can_undo, can_redo,
   join_sections, split_sections, apply_edit, SEPARATOR } from './lyric-layout.js';
@@ -146,7 +146,8 @@ function place_marks() {
 
 // 打開編輯：sections 是現在顯示的段（有暫存就是暫存的），source_sections 是原本的段（比對文字用）
 export function open_lyrics_editor(song_id, sections, source_sections) {
-  var texts = sections.map(section_to_text);
+  // 空白一律用半形（全形空白換成半形，長度一樣，位置不變）
+  var texts = sections.map(section_to_text).map(half_width_spaces);
   var original = source_sections.map(section_to_text);
   // 暫存的段和原本的段對不起來（例如之後試算表的「投影片」欄改了段落）時，整首一起比
   var compare_whole = sections.length != source_sections.length || sections.some((s, i) => s.name !== source_sections[i].name);
@@ -287,11 +288,23 @@ function on_input(event) {
     return;
   }
   editing.boundaries = moved;
+  if (!event.isComposing)
+    use_half_width_spaces();
   editing.last_value = area.value;
   layout(event.isComposing);
   if (event.isComposing)
     return;
   record(merge_key(event));
+}
+
+// 打進來的全形空白換成半形（一個換一個，段的開頭和游標位置都不變）；組字中不換，以免打斷輸入法
+function use_half_width_spaces() {
+  var area = textarea();
+  if (!area.value.includes('\u3000'))
+    return;
+  var { selectionStart, selectionEnd } = area;
+  area.value = half_width_spaces(area.value);
+  area.setSelectionRange(selectionStart, selectionEnd);
 }
 
 function revert(text, boundaries, selection) {
@@ -321,6 +334,7 @@ function on_composition_end() {
     return;
   }
   editing.boundaries = moved;
+  use_half_width_spaces();
   editing.last_value = area.value;
   layout(false);
   record('type:' + section_at(area.selectionEnd));

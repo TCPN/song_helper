@@ -1240,6 +1240,43 @@ button.popup-window-close:hover {
 	user-select: none;
 }
 
+/* 空格的顯示方式選單：在按鈕正下方，和工具列的選單一樣是深色；選中的項目前面打勾，下面一行小字說明 */
+.lyrics-menu-group {
+	position: relative;
+}
+
+.lyrics-menu {
+	top: calc(100% + 0.3em);
+	left: 0;
+	z-index: 2;
+	color: #fff;
+	white-space: nowrap;
+	border-radius: 0.3em;
+}
+
+.lyrics-menu.align-right {
+	left: auto;
+	right: 0;
+}
+
+.lyrics-menu .menu-item {
+	position: relative;
+	padding: 0.35em 1em 0.35em 2em;
+	cursor: pointer;
+}
+
+.lyrics-menu .menu-item small {
+	display: block;
+	font-size: 0.75em;
+	color: #bbb;
+}
+
+.lyrics-menu .menu-item.selected::before {
+	content: '✓';
+	position: absolute;
+	left: 0.75em;
+}
+
 /* icon 按鈕（編輯排版、復原、重做、存檔、關閉）：和文字按鈕一樣高，icon 1.2em */
 .lyrics-icon-button {
 	display: inline-flex;

@@ -71,7 +71,15 @@
 				<div id="lyrics_view" class="hide">
 					<div class="lyrics-actions" role="toolbar" aria-label="複製歌詞">
 						<span id="lyrics_select_all" class="lyrics-button" role="button" tabindex="0">全選</span>
-						<span id="lyrics_strip_spaces" class="lyrics-button" role="switch" tabindex="0" aria-checked="false" title="拿掉中文字旁邊的空格（顯示和複製都是）">去除空格</span>
+						<!-- 空格的顯示方式（顯示和複製都是）：隱藏／半形／全形，記在 localStorage -->
+						<span id="lyrics_space_group" class="lyrics-menu-group">
+							<span id="lyrics_space_button" class="lyrics-button" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="lyrics_space_menu" title="空格的顯示方式（顯示和複製都是）">空格：<span id="lyrics_space_label">半形</span> ▾</span>
+							<div id="lyrics_space_menu" class="hide menu lyrics-menu" role="menu">
+								<span class="menu-item" data-space-mode="hide" role="menuitemradio" tabindex="0">隱藏空格<small>不顯示空格</small></span>
+								<span class="menu-item" data-space-mode="half" role="menuitemradio" tabindex="0">半形空格<small>空格顯示成半形空格</small></span>
+								<span class="menu-item" data-space-mode="full" role="menuitemradio" tabindex="0">全形空格<small>空格顯示成全形空格</small></span>
+							</div>
+						</span>
 						<span id="lyrics_edit" class="lyrics-button lyrics-icon-button" role="button" tabindex="0" title="編輯排版" aria-label="編輯排版"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16Z M13 7l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
 						<span id="lyrics_status" class="lyrics-status" aria-live="polite"></span>
 						<span id="lyrics_copy" class="lyrics-button primary" role="button" tabindex="0">複製</span>

@@ -374,6 +374,25 @@ export function strip_spaces(text) {
     CJK.test(all.charAt(at - 1)) || CJK.test(all.charAt(at + spaces.length)) ? '' : spaces);
 }
 
+// 「半形空格」：全形空白都換成半形
+export function half_width_spaces(text) {
+  return String(text).replace(/\u3000/g, ' ');
+}
+
+// 「全形空格」：中文字旁邊的空格都換成全形（一個換一個）；英文等兩個非中文字之間的空格留半形，不然看起來字距太開
+export function full_width_spaces(text) {
+  return String(text).replace(/[ \u3000]+/g, (spaces, at, all) =>
+    CJK.test(all.charAt(at - 1)) || CJK.test(all.charAt(at + spaces.length)) ? '\u3000'.repeat(spaces.length) : spaces.replace(/\u3000/g, ' '));
+}
+
+// 歌詞檢視的空格顯示方式（顯示和複製都是）：hide 隱藏空格、half 半形空格、full 全形空格
+export const SPACE_MODES = { hide: strip_spaces, half: half_width_spaces, full: full_width_spaces };
+export const DEFAULT_SPACE_MODE = 'half';
+
+export function normalize_space_mode(mode) {
+  return Object.prototype.hasOwnProperty.call(SPACE_MODES, mode) ? mode : DEFAULT_SPACE_MODE;
+}
+
 // 每一行都套上 fn 的段（{ name, paragraphs }，其他欄位照舊）
 export function map_lines(sections, fn) {
   return sections.map((section) => ({ ...section, paragraphs: section.paragraphs.map((paragraph) => paragraph.map(fn)) }));

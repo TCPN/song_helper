@@ -1,9 +1,9 @@
 // 歌詞檢視：一首歌的另一種檢視方式（網址 view=lyrics）。列出各段歌詞（前面標段名），
 // 用一般的文字選取選歌詞，複製時整理成純文字（不含段名，換段落或換段時空一行）；「檢視」選單的「檢視歌譜」／「檢視歌詞」切換
 import { state } from './state.js';
-import { song_slide_lyrics, lyrics_messages, lines_text, strip_spaces, map_lines, UNNAMED } from './slide-lyrics.js';
+import { song_slide_lyrics, lyrics_messages, lines_text, map_lines, UNNAMED, SPACE_MODES, normalize_space_mode } from './slide-lyrics.js';
 import { update_hash } from './route.js';
-import { click_on_enter, message_icon } from './dom.js';
+import { click_on_enter, message_icon, setup_dropdown, toggle_menu } from './dom.js';
 import { setup_lyrics_editor, open_lyrics_editor, close_lyrics_editor, load_local_layout, editing_song_id } from './lyrics-editor.js';
 
 const CONTAINER = '#score_popup_container';
@@ -15,15 +15,25 @@ var shown_lyrics = null;
 // 列出的是哪首歌的哪份歌詞；資料沒變時不重畫，選取的文字留著
 var shown_key = null;
 
-// 「去除空格」開著沒有：記在 localStorage，下次沿用（不放進網址）
-const STRIP_SPACES_KEY = 'lyrics_strip_spaces';
-var strip = false;
+// 空格的顯示方式（hide／half／full，js/slide-lyrics.js 的 SPACE_MODES）：記在 localStorage，下次沿用（不放進網址）。
+// 舊版的「去除空格」開關（lyrics_strip_spaces = '1'）當成隱藏空格
+const SPACE_MODE_KEY = 'lyrics_space_mode';
+const OLD_STRIP_KEY = 'lyrics_strip_spaces';
+const SPACE_LABELS = { hide: '隱藏', half: '半形', full: '全形' };
+var space_mode = 'half';
 // 無痕模式等情況 localStorage 可能無法使用，讀不到就用預設值、存不了就算了
-function load_strip() {
-  try { return localStorage.getItem(STRIP_SPACES_KEY) == '1'; } catch (e) { return false; }
+function load_space_mode() {
+  try {
+    var saved = localStorage.getItem(SPACE_MODE_KEY);
+    if (saved === null && localStorage.getItem(OLD_STRIP_KEY) == '1')
+      saved = 'hide';
+    return normalize_space_mode(saved);
+  } catch (e) {
+    return normalize_space_mode(null);
+  }
 }
-function save_strip() {
-  try { localStorage.setItem(STRIP_SPACES_KEY, strip ? '1' : '0'); } catch (e) {}
+function save_space_mode() {
+  try { localStorage.setItem(SPACE_MODE_KEY, space_mode); } catch (e) {}
 }
 
 export function is_lyrics_mode() {
@@ -55,14 +65,14 @@ export function refresh_lyrics() {
   if (editing_song_id() !== null && editing_song_id() != song.id)
     close_lyrics_editor();
   var local = load_local_layout(song.id);
-  var key = JSON.stringify([song.id, song.name, song.slides, song.abc, strip, local]);
+  var key = JSON.stringify([song.id, song.name, song.slides, song.abc, space_mode, local]);
   if (key == shown_key)
     return;
   shown_key = key;
   var lyrics = song_slide_lyrics(song, local);
   shown_lyrics = lyrics;
-  // 去除空格時畫面上和複製出來的都是去掉空格的字
-  shown_sections = strip ? map_lines(lyrics.sections, strip_spaces) : lyrics.sections;
+  // 畫面上和複製出來的都照空格的顯示方式
+  shown_sections = map_lines(lyrics.sections, SPACE_MODES[space_mode]);
   document.querySelector('#lyrics_title').textContent = song.name || '';
   document.querySelector('#lyrics_messages').replaceChildren(...lyrics_messages(lyrics).map(({ type, text }) => {
     var li = document.createElement('li');
@@ -166,10 +176,12 @@ function select_lines(first, last) {
   selection.addRange(range);
 }
 
-function update_strip_button() {
-  var button = document.querySelector('#lyrics_strip_spaces');
-  button.classList.toggle('on', strip);
-  button.setAttribute('aria-checked', strip);
+function update_space_menu() {
+  document.querySelector('#lyrics_space_label').textContent = SPACE_LABELS[space_mode];
+  for (const item of document.querySelectorAll('#lyrics_space_menu [data-space-mode]')) {
+    item.classList.toggle('selected', item.dataset.spaceMode == space_mode);
+    item.setAttribute('aria-checked', item.dataset.spaceMode == space_mode);
+  }
 }
 
 function set_status(text) {
@@ -243,10 +255,25 @@ export function setup_lyrics_view() {
   });
   // 編輯器存檔或關閉後重新列出（暫存的排版可能變了）
   setup_lyrics_editor({ changed: refresh_lyrics });
-  strip = load_strip();
-  update_strip_button();
+  space_mode = load_space_mode();
+  update_space_menu();
+  var space_button = document.querySelector('#lyrics_space_button');
+  var space_menu = document.querySelector('#lyrics_space_menu');
+  setup_dropdown(space_button, space_menu);
+  // 按選單時不要把選取的文字取消掉
+  for (const target of [space_button, space_menu])
+    target.addEventListener('mousedown', (event)=>{ event.preventDefault(); });
+  for (const item of space_menu.querySelectorAll('[data-space-mode]')) {
+    item.addEventListener('click', ()=>{
+      space_mode = normalize_space_mode(item.dataset.spaceMode);
+      save_space_mode();
+      update_space_menu();
+      toggle_menu(space_button, space_menu);
+      refresh_lyrics();
+    });
+    click_on_enter(item);
+  }
   var buttons = [['#lyrics_select_all', ()=>{ var lines = line_elements(); select_lines(lines[0], lines[lines.length - 1]); }],
-    ['#lyrics_strip_spaces', ()=>{ strip = !strip; save_strip(); update_strip_button(); refresh_lyrics(); }],
     ['#lyrics_copy', copy_selected],
     ['#lyrics_edit', edit_layout]];
   for (const [id, action] of buttons) {
