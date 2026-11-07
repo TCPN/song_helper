@@ -864,7 +864,7 @@ table#song_list a#wish_link {
 	}
 
 	/* 歌詞檢視：只印歌名和歌詞，不印全選／複製等按鈕和訊息，也不印看不見的譜紙 */
-	.lyrics-mode #score_page, .lyrics-actions, .lyrics-messages, .lyrics-editor-bar, .lyrics-editor-warnings, .lyrics-editor-hint {
+	.lyrics-mode #score_page, .lyrics-actions, .lyrics-messages, .lyrics-editor-bar, .lyrics-editor-warnings {
 		display: none !important;
 	}
 
@@ -1098,6 +1098,13 @@ button.popup-window-close:hover {
 }
 
 #lyrics_view {
+	/* 段名框的大小（見 .lyrics-name）：字級（倍數）、框高、框上下的空隙，都以歌詞的字級為單位。
+	   上空隙＋框高＋下空隙＋段和段之間的空隙 = 一行歌詞的高度（1.8em），排版編輯時段名才放得進段和段之間的空行 */
+	--lyrics-name-font: 0.68;
+	--lyrics-name-box: 0.95em;
+	--lyrics-name-above: 0.175em;
+	--lyrics-name-below: 0.175em;
+	--lyrics-name-area: calc(var(--lyrics-name-above) + var(--lyrics-name-box) + var(--lyrics-name-below));
 	box-sizing: border-box;
 	width: min(36em, 100% - 32px);
 	margin: 1em auto auto;
@@ -1206,26 +1213,35 @@ button.popup-window-close:hover {
 	display: none;
 }
 
-/* 段和段之間空 0.5em（最後一段後面不空） */
+/* 段和段之間的空隙：一行歌詞高（1.8em）扣掉段名占的高度（最後一段後面不空）。
+   flow-root：段名的 margin 不和段的 margin 重疊（高度才算得準，見 .lyrics-name） */
 .lyrics-section {
+	display: flow-root;
 	padding: 0;
 }
 
 .lyrics-section:not(:last-child) {
-	margin-bottom: 0.5em;
+	margin-bottom: calc(1.8em - var(--lyrics-name-area));
 }
 
 /* 段名：小字、淡色、不粗體，包一個圓角邊框；點了整段全選／取消。
-   左邊緣對齊歌詞的字（.lyrics-line 左邊有 0.4em 的 padding，段名的字是 0.6em，所以除以 0.6） */
+   左邊緣對齊歌詞的字（.lyrics-line 左邊有 0.4em 的 padding）。大小用 #lyrics_view 的 --lyrics-name-* 設定（以歌詞的字級為單位，
+   這裡的 em 是段名的字級，所以除以 --lyrics-name-font）。高度固定，加上段和段之間的空隙剛好是一行歌詞的高度，
+   排版編輯時段名放在段和段之間的空行裡，位置和這裡一樣（js/lyrics-editor.js） */
 .lyrics-name {
-	display: inline-block;
-	font-size: 0.6em;
+	display: block;
+	width: fit-content;
+	box-sizing: border-box;
+	height: calc(var(--lyrics-name-box) / var(--lyrics-name-font));
+	line-height: calc(var(--lyrics-name-box) / var(--lyrics-name-font) - 2px);
+	font-size: calc(var(--lyrics-name-font) * 1em);
 	color: #888;
 	border: 1px solid #bbb;
 	border-radius: 4px;
 	padding: 0 0.4em;
-	margin: 0.5em 0 0.5em calc(0.4em / 0.6);
+	margin: calc(var(--lyrics-name-above) / var(--lyrics-name-font)) 0 calc(var(--lyrics-name-below) / var(--lyrics-name-font)) calc(0.4em / var(--lyrics-name-font));
 	font-family: ui-monospace, Menlo, Consolas, monospace;
+	white-space: nowrap;
 	user-select: none;
 }
 
@@ -1330,9 +1346,10 @@ button.popup-window-close:hover {
 	user-select: none;
 }
 
+/* 和檢視時的訊息（.lyrics-messages）一樣放在歌詞後面，空一點距離 */
 .lyrics-editor-warnings {
 	list-style: none;
-	margin: 0.6em 0 0;
+	margin: 1.6em 0 0;
 	padding: 0.4em 0.6em;
 	font-size: 0.85em;
 	background: #fff6d0;
@@ -1370,33 +1387,21 @@ button.popup-window-close:hover {
 	text-decoration: none;
 }
 
-.lyrics-editor-hint {
-	margin: 0.6em 0 0;
-	font-size: 0.8em;
-	color: #888;
-	user-select: none;
-}
-
-.lyrics-editor-area {
-	display: flex;
-	align-items: flex-start;
-	gap: 0.4em;
-	margin-top: 0.6em;
-}
-
-/* 段名浮在文字區左邊，對齊那段的第一行（js 量位置）；不能選取，點了游標移到那段開頭 */
-.lyrics-editor-gutter {
-	position: relative;
-	flex: none;
-	align-self: stretch;
+/* 段名浮在文字區上面，在那段第一行上面（js 量位置，和檢視時的位置一樣）；不能選取，點了游標移到那段開頭。
+   白底：段和段之間的虛線從段名後面穿過 */
+.lyrics-editor-names {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
 }
 
 .lyrics-editor-name {
 	position: absolute;
-	right: 0;
-	margin: 0;
+	left: 0;
 	white-space: nowrap;
+	background: #fff;
 	cursor: pointer;
+	pointer-events: auto;
 }
 
 .lyrics-editor-name.changed {
@@ -1407,8 +1412,6 @@ button.popup-window-close:hover {
 
 .lyrics-editor-box {
 	position: relative;
-	flex: 1;
-	min-width: 0;
 	background: #fff;
 	border-radius: 0.3em;
 }
@@ -1434,7 +1437,8 @@ button.popup-window-close:hover {
 	background: #fff3c4;
 }
 
-/* 文字區：和歌詞檢視一樣的字和行高，高度跟著內容（js 的 layout），不能拉大小 */
+/* 文字區：和歌詞檢視一樣的字、行高和換行方式，字的位置也一樣（左邊 0.4em、上面留段名占的高度給第一段的段名，都扣掉 1px 的框），
+   高度跟著內容（js 的 layout），不能拉大小 */
 .lyrics-editor-text {
 	position: relative;
 	display: block;
@@ -1443,13 +1447,14 @@ button.popup-window-close:hover {
 	font: inherit;
 	line-height: 1.8;
 	word-spacing: 0.5em;
-	padding: 0.2em 0.4em;
+	padding: calc(var(--lyrics-name-area) - 1px) calc(0.4em - 1px) 0.2em;
+	margin: 0;
 	border: 1px solid #ccc;
 	border-radius: 0.3em;
 	resize: none;
 	overflow: hidden;
 	white-space: pre-wrap;
-	overflow-wrap: break-word;
+	overflow-wrap: anywhere;
 	color: inherit;
 	background: transparent;
 }
