@@ -19,7 +19,7 @@ test.use({ songs: [EDITOR_SONGS, { option: true }] });
 test.describe('歌詞排版編輯', () => {
   const editor = (app) => app.page.locator('#lyrics_editor');
   const area = (app) => app.page.locator('#lyrics_editor_text');
-  const names = (app) => app.page.locator('#lyrics_editor_gutter .lyrics-editor-name');
+  const names = (app) => app.page.locator('#lyrics_editor_names .lyrics-editor-name');
   const warnings = (app) => app.page.locator('#lyrics_editor_warnings li');
   const status = (app) => app.page.locator('#lyrics_editor_status');
   const button = (app, id) => app.page.locator('#lyrics_' + id);
@@ -45,7 +45,48 @@ test.describe('歌詞排版編輯', () => {
   // 段名的中線和文字區裡那段第一行的中線差多少 px（段名對齊那段的第一行）
   const name_tops = (app) => names(app).evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
 
-  test('鉛筆在按鈕列第三個；打開後整首一個文字區，段名浮在左邊、不能選取；複製的按鈕列和歌詞藏起來', async ({ app }) => {
+  test('點鉛筆後歌名、段名和歌詞的位置和檢視時一樣（段裡沒有換投影片時）', async ({ app }) => {
+    await app.goto('#song_id=10&view=lyrics');
+    // 檢視時：歌名、段名的位置，和每段第一行字的左上角（.lyrics-line 左邊有 padding）
+    const measure_view = () => app.page.evaluate(() => ({
+      title: document.querySelector('#lyrics_title').getBoundingClientRect().top,
+      names: [...document.querySelectorAll('#lyrics_sections .lyrics-name')].map((n) => { const r = n.getBoundingClientRect(); return [r.left, r.top]; }),
+      lines: [...document.querySelectorAll('#lyrics_sections .lyrics-line')].map((l) => {
+        const r = l.getBoundingClientRect();
+        return [r.left + parseFloat(getComputedStyle(l).paddingLeft), r.top];
+      }),
+    }));
+    const view_pos = await measure_view();
+    await button(app, 'edit').click();
+    await expect(area(app)).toHaveValue('一二三四五六七八\n\n甲乙丙丁戊己庚辛\n\n副');
+    const edit_pos = await app.page.evaluate(() => {
+      const t = document.querySelector('#lyrics_editor_text');
+      const s = getComputedStyle(t);
+      const r = t.getBoundingClientRect();
+      const left = r.left + parseFloat(s.borderLeftWidth) + parseFloat(s.paddingLeft);
+      const top = r.top + parseFloat(s.borderTopWidth) + parseFloat(s.paddingTop);
+      const line = parseFloat(s.lineHeight);
+      return {
+        title: document.querySelector('#lyrics_title').getBoundingClientRect().top,
+        names: [...document.querySelectorAll('#lyrics_editor_names .lyrics-editor-name')].map((n) => { const b = n.getBoundingClientRect(); return [b.left, b.top]; }),
+        // 文字區的第 1、3、5 行（第 2、4 行是段和段之間的空行）
+        lines: [0, 2, 4].map((k) => [left, top + k * line]),
+      };
+    });
+    const close = (a, b) => expect(Math.abs(a - b)).toBeLessThan(1);
+    close(edit_pos.title, view_pos.title);
+    expect(edit_pos.names.length).toBe(view_pos.names.length);
+    view_pos.names.forEach(([x, y], i) => { close(edit_pos.names[i][0], x); close(edit_pos.names[i][1], y); });
+    view_pos.lines.forEach(([x, y], i) => { close(edit_pos.lines[i][0], x); close(edit_pos.lines[i][1], y); });
+    // 改到字出現警告時，歌詞也不移動
+    await caret(app, '三');
+    await app.page.keyboard.type('啊');
+    await expect(warnings(app)).toHaveCount(1);
+    const names_after = await name_tops(app);
+    view_pos.names.forEach(([, y], i) => close(names_after[i], y));
+  });
+
+  test('鉛筆在按鈕列第三個；打開後整首一個文字區，段名浮在上面、不能選取；複製的按鈕列和歌詞藏起來', async ({ app }) => {
     await app.goto('#song_id=12&view=lyrics');
     await expect(app.page.locator('#lyrics_view .lyrics-actions > *').nth(0)).toHaveId('lyrics_select_all');
     await expect(app.page.locator('#lyrics_view .lyrics-actions > *').nth(1)).toHaveId('lyrics_space_group');
@@ -58,19 +99,23 @@ test.describe('歌詞排版編輯', () => {
     await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌一句');
     await expect(names(app)).toHaveText(['主歌', '副歌']);
     expect(await names(app).first().evaluate((n) => getComputedStyle(n).userSelect)).toBe('none');
-    // 段名在文字區左邊，對齊各段的第一行（主歌第 1 行、副歌第 6 行：段和段之間空一行）
-    const box = await area(app).boundingBox();
-    const name_box = await names(app).nth(1).boundingBox();
-    expect(name_box.x + name_box.width).toBeLessThanOrEqual(box.x);
+    // 段名在各段第一行的上面（主歌第 1 行、副歌第 6 行：段和段之間空一行，副歌的段名在那個空行裡）
     const line = await area(app).evaluate((t) => parseFloat(getComputedStyle(t).lineHeight));
     const [a, b] = await name_tops(app);
     expect(Math.abs(b - a - 5 * line)).toBeLessThan(2);
-    // 段和段之間一條線，在中間那個空行的中間
+    // 段和段之間一條線，在中間那個空行裡，從段名框的中間穿過（段名是白底）
     const divider = app.page.locator('#lyrics_editor_marks .lyrics-editor-divider');
     await expect(divider).toHaveCount(1);
     const divider_y = (await divider.boundingBox()).y;
-    const second_line_top = b + (await names(app).nth(1).boundingBox()).height / 2 - line / 2;
-    expect(Math.abs(divider_y - (second_line_top - line / 2))).toBeLessThan(2);
+    const box = await area(app).boundingBox();
+    const padding_top = await area(app).evaluate((t) => parseFloat(getComputedStyle(t).paddingTop) + parseFloat(getComputedStyle(t).borderTopWidth));
+    const blank_line_top = box.y + padding_top + 4 * line;
+    expect(divider_y).toBeGreaterThan(blank_line_top);
+    expect(divider_y).toBeLessThan(blank_line_top + line);
+    const name_box = await names(app).nth(1).boundingBox();
+    expect(Math.abs(divider_y - (name_box.y + name_box.height / 2))).toBeLessThan(1.5);
+    expect(await names(app).nth(1).evaluate((n) => getComputedStyle(n).backgroundColor)).toBe('rgb(255, 255, 255)');
+    await expect(app.page.locator('#lyrics_editor .lyrics-editor-hint')).toHaveCount(0);
     for (const id of ['undo', 'redo', 'save', 'editor_close'])
       await expect(button(app, id)).toBeVisible();
     for (const id of ['undo', 'redo', 'save'])

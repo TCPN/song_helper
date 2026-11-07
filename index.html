@@ -95,19 +95,17 @@
 					<h2 id="lyrics_title" class="lyrics-title"></h2>
 					<div id="lyrics_sections"></div>
 					<ul id="lyrics_messages" class="lyrics-messages"></ul>
-					<!-- 歌詞排版編輯（js/lyrics-editor.js）：整首一個文字區，段名浮在文字區外面（不能選取、刪不掉）；
-					     只能改空格和換行，改到字時顯示警告；存在這台裝置的 localStorage -->
+					<!-- 歌詞排版編輯（js/lyrics-editor.js）：整首一個文字區，段名浮在文字區上面（不能選取、刪不掉）；
+					     段名和歌詞的位置和檢視時一樣。只能改空格和換行，改到字時顯示警告；存在這台裝置的 localStorage -->
 					<div id="lyrics_editor" class="hide">
-						<ul id="lyrics_editor_warnings" class="lyrics-editor-warnings" aria-live="polite"></ul>
-						<p class="lyrics-editor-hint">只調整空格和換行；空一行是換一張投影片。</p>
-						<!-- 整首一個文字區；左邊是浮在外面的段名，文字區底下畫段和段之間的線、有變動的段的底色 -->
-						<div class="lyrics-editor-area">
-							<div id="lyrics_editor_gutter" class="lyrics-editor-gutter"></div>
-							<div class="lyrics-editor-box">
-								<div id="lyrics_editor_marks" aria-hidden="true"></div>
-								<textarea id="lyrics_editor_text" class="lyrics-editor-text" rows="1" spellcheck="false" aria-label="歌詞排版"></textarea>
-							</div>
+						<!-- 整首一個文字區；段名浮在文字區上面（檢視時段名的位置：每段第一行上面、段和段之間的空行裡），
+						     文字區底下畫段和段之間的線、有變動的段的底色。警告放在後面（和檢視時的訊息一樣），出現時歌詞不會移動 -->
+						<div class="lyrics-editor-box">
+							<div id="lyrics_editor_marks" aria-hidden="true"></div>
+							<textarea id="lyrics_editor_text" class="lyrics-editor-text" rows="1" spellcheck="false" aria-label="歌詞排版"></textarea>
+							<div id="lyrics_editor_names" class="lyrics-editor-names"></div>
 						</div>
+						<ul id="lyrics_editor_warnings" class="lyrics-editor-warnings" aria-live="polite"></ul>
 					</div>
 				</div>
 			</div>
