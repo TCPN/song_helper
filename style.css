@@ -1098,6 +1098,13 @@ button.popup-window-close:hover {
 }
 
 #lyrics_view {
+	/* 段名框的大小（見 .lyrics-name）：字級（倍數）、框高、框上下的空隙，都以歌詞的字級為單位。
+	   上空隙＋框高＋下空隙＋段和段之間的空隙 = 一行歌詞的高度（1.8em），排版編輯時段名才放得進段和段之間的空行 */
+	--lyrics-name-font: 0.68;
+	--lyrics-name-box: 0.95em;
+	--lyrics-name-above: 0.175em;
+	--lyrics-name-below: 0.175em;
+	--lyrics-name-area: calc(var(--lyrics-name-above) + var(--lyrics-name-box) + var(--lyrics-name-below));
 	box-sizing: border-box;
 	width: min(36em, 100% - 32px);
 	margin: 1em auto auto;
@@ -1206,33 +1213,35 @@ button.popup-window-close:hover {
 	display: none;
 }
 
-/* 段和段之間空 0.5em（最後一段後面不空）。flow-root：段名的 margin 不和段的 margin 重疊（高度才算得準，見 .lyrics-name） */
+/* 段和段之間的空隙：一行歌詞高（1.8em）扣掉段名占的高度（最後一段後面不空）。
+   flow-root：段名的 margin 不和段的 margin 重疊（高度才算得準，見 .lyrics-name） */
 .lyrics-section {
 	display: flow-root;
 	padding: 0;
 }
 
 .lyrics-section:not(:last-child) {
-	margin-bottom: 0.5em;
+	margin-bottom: calc(1.8em - var(--lyrics-name-area));
 }
 
 /* 段名：小字、淡色、不粗體，包一個圓角邊框；點了整段全選／取消。
-   左邊緣對齊歌詞的字（.lyrics-line 左邊有 0.4em 的 padding，段名的字是 0.6em，所以除以 0.6）。
-   高度固定：上下各空 0.3em、框 0.7em，共 1.3em（歌詞的字級），加上段和段之間的 0.5em 剛好是一行歌詞的高度（1.8em），
+   左邊緣對齊歌詞的字（.lyrics-line 左邊有 0.4em 的 padding）。大小用 #lyrics_view 的 --lyrics-name-* 設定（以歌詞的字級為單位，
+   這裡的 em 是段名的字級，所以除以 --lyrics-name-font）。高度固定，加上段和段之間的空隙剛好是一行歌詞的高度，
    排版編輯時段名放在段和段之間的空行裡，位置和這裡一樣（js/lyrics-editor.js） */
 .lyrics-name {
 	display: block;
 	width: fit-content;
 	box-sizing: border-box;
-	height: calc(0.7em / 0.6);
-	line-height: calc(0.7em / 0.6 - 2px);
-	font-size: 0.6em;
+	height: calc(var(--lyrics-name-box) / var(--lyrics-name-font));
+	line-height: calc(var(--lyrics-name-box) / var(--lyrics-name-font) - 2px);
+	font-size: calc(var(--lyrics-name-font) * 1em);
 	color: #888;
 	border: 1px solid #bbb;
 	border-radius: 4px;
 	padding: 0 0.4em;
-	margin: calc(0.3em / 0.6) 0 calc(0.3em / 0.6) calc(0.4em / 0.6);
+	margin: calc(var(--lyrics-name-above) / var(--lyrics-name-font)) 0 calc(var(--lyrics-name-below) / var(--lyrics-name-font)) calc(0.4em / var(--lyrics-name-font));
 	font-family: ui-monospace, Menlo, Consolas, monospace;
+	white-space: nowrap;
 	user-select: none;
 }
 
@@ -1337,6 +1346,7 @@ button.popup-window-close:hover {
 	user-select: none;
 }
 
+/* 和檢視時的訊息（.lyrics-messages）一樣放在歌詞後面，空一點距離 */
 .lyrics-editor-warnings {
 	list-style: none;
 	margin: 1.6em 0 0;
@@ -1427,7 +1437,7 @@ button.popup-window-close:hover {
 	background: #fff3c4;
 }
 
-/* 文字區：和歌詞檢視一樣的字、行高和換行方式，字的位置也一樣（左邊 0.4em、上面留 1.3em 給第一段的段名，都扣掉 1px 的框），
+/* 文字區：和歌詞檢視一樣的字、行高和換行方式，字的位置也一樣（左邊 0.4em、上面留段名占的高度給第一段的段名，都扣掉 1px 的框），
    高度跟著內容（js 的 layout），不能拉大小 */
 .lyrics-editor-text {
 	position: relative;
@@ -1437,7 +1447,7 @@ button.popup-window-close:hover {
 	font: inherit;
 	line-height: 1.8;
 	word-spacing: 0.5em;
-	padding: calc(1.3em - 1px) calc(0.4em - 1px) 0.2em;
+	padding: calc(var(--lyrics-name-area) - 1px) calc(0.4em - 1px) 0.2em;
 	margin: 0;
 	border: 1px solid #ccc;
 	border-radius: 0.3em;
