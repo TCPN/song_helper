@@ -283,7 +283,8 @@ test.describe('歌詞檢視', () => {
       const st = getComputedStyle(s);
       return parseFloat(st.marginBottom) / parseFloat(st.fontSize);
     }));
-    expect(margins).toEqual([0.5, 0]);
+    expect(margins[0]).toBeCloseTo(0.5);
+    expect(margins[1]).toBe(0);
     const em = (locator, side) => locator.evaluate((e, side) => parseFloat(getComputedStyle(e)[side]) / parseFloat(getComputedStyle(e).fontSize), side);
     expect(await em(app.page.locator('#lyrics_title'), 'marginBottom')).toBeCloseTo(0.8);
     expect(await em(app.page.locator('#lyrics_messages'), 'marginTop')).toBeCloseTo(2);

@@ -93,18 +93,21 @@ function line_tops() {
     'letterSpacing', 'wordSpacing', 'tabSize'])
     mirror.style[key] = style[key];
   Object.assign(mirror.style, { position: 'absolute', top: '0', left: '0', visibility: 'hidden', borderStyle: 'solid',
-    whiteSpace: 'pre-wrap', overflowWrap: 'break-word', wordBreak: style.wordBreak, width: area.offsetWidth + 'px' });
+    whiteSpace: 'pre-wrap', overflowWrap: style.overflowWrap, wordBreak: style.wordBreak, width: area.offsetWidth + 'px' });
   var text = area.value;
   var markers = editing.boundaries.map((start, i) => {
     mirror.append(text.slice(i ? editing.boundaries[i - 1] : 0, start));
+    // 記號：寬 0、和一行一樣高、貼齊行的上緣，它的上緣就是那一行的上緣
     var marker = document.createElement('span');
-    marker.textContent = '​';
+    Object.assign(marker.style, { display: 'inline-block', width: '0', height: style.lineHeight, verticalAlign: 'top' });
     mirror.append(marker);
     return marker;
   });
   mirror.append(text.slice(editing.boundaries[editing.boundaries.length - 1]) + '​');
   area.parentNode.appendChild(mirror);
-  var tops = markers.map((m) => m.offsetTop);
+  // 用 getBoundingClientRect 量（offsetTop 會四捨五入成整數 px）
+  var origin = mirror.getBoundingClientRect().top;
+  var tops = markers.map((m) => m.getBoundingClientRect().top - origin);
   mirror.remove();
   return tops;
 }
@@ -114,13 +117,15 @@ function place_marks() {
   var tops = line_tops();
   var line = parseFloat(getComputedStyle(area).lineHeight) || 24;
   var bottom = area.offsetHeight - (parseFloat(getComputedStyle(area).paddingBottom) || 0);
-  var names = [...document.querySelectorAll('#lyrics_editor_gutter .lyrics-editor-name')];
-  var width = 0;
-  names.forEach((name, i) => {
-    name.style.top = tops[i] + (line - name.offsetHeight) / 2 + 'px';
-    width = Math.max(width, name.offsetWidth);
+  // 段名在那段第一行的正上方，和檢視時一樣（段名的上下 margin 和高度見 style.css 的 .lyrics-name；
+  // absolute 的 top 加上 margin-top 才是框的位置）。centers：段名框的中線，段和段之間的線畫在這裡
+  var centers = [...document.querySelectorAll('#lyrics_editor_names .lyrics-editor-name')].map((name, i) => {
+    var name_style = getComputedStyle(name);
+    var height = name.getBoundingClientRect().height;
+    var outer = height + parseFloat(name_style.marginTop) + parseFloat(name_style.marginBottom);
+    name.style.top = tops[i] - outer + 'px';
+    return tops[i] - outer + parseFloat(name_style.marginTop) + height / 2;
   });
-  $('#lyrics_editor_gutter').style.width = width + 'px';
   // 有變動的段用 update() 最後一次比對的結果（組字中不重新比對）
   var changed = editing.changed;
   $('#lyrics_editor_marks').replaceChildren(...tops.flatMap((top, i) => {
@@ -136,8 +141,8 @@ function place_marks() {
     if (i > 0) {
       var divider = document.createElement('div');
       divider.className = 'lyrics-editor-divider';
-      // 對齊上面那個空行的中間
-      divider.style.top = Math.round(top - line / 2) + 'px';
+      // 在上面那個空行裡，從段名框的中間穿過（段名是白底，看起來像線上的標籤）
+      divider.style.top = Math.round(centers[i] ?? top - line / 2) + 'px';
       marks.push(divider);
     }
     return marks;
@@ -157,7 +162,7 @@ export function open_lyrics_editor(song_id, sections, source_sections) {
     original_texts: compare_whole ? [original.join('\n')] : original, saved: start, history: create_history(start),
     boundaries: boundaries.slice(), last_value: text, before_input: null, changed: new Set() };
   // 段名：不是文字區的一部分，不能選取、刪不掉；點了游標移到那段的開頭
-  $('#lyrics_editor_gutter').replaceChildren(...sections.map((section, i) => {
+  $('#lyrics_editor_names').replaceChildren(...sections.map((section, i) => {
     var name = document.createElement('div');
     name.className = 'lyrics-name lyrics-editor-name';
     name.dataset.s = i;
@@ -182,7 +187,7 @@ export function close_lyrics_editor(force = true) {
   $('#lyrics_view').classList.remove('editing');
   $('#lyrics_editor').classList.add('hide');
   textarea().value = '';
-  $('#lyrics_editor_gutter').replaceChildren();
+  $('#lyrics_editor_names').replaceChildren();
   $('#lyrics_editor_marks').replaceChildren();
   return true;
 }
@@ -215,7 +220,7 @@ function update() {
   var found = changes();
   var changed = changed_sections(found);
   editing.changed = changed;
-  for (const name of document.querySelectorAll('#lyrics_editor_gutter .lyrics-editor-name'))
+  for (const name of document.querySelectorAll('#lyrics_editor_names .lyrics-editor-name'))
     name.classList.toggle('changed', changed.has(Number(name.dataset.s)));
   $('#lyrics_editor_warnings').replaceChildren(...found.map(({ index }) => {
     var li = document.createElement('li');
@@ -242,6 +247,8 @@ function update() {
   set_disabled('#lyrics_undo', !can_undo(editing.history));
   set_disabled('#lyrics_redo', !can_redo(editing.history));
   set_disabled('#lyrics_save', !is_dirty());
+  // 改到字時存檔按鈕換成警告的顏色（按下去會先確認）
+  $('#lyrics_save').classList.toggle('warning', found.length > 0);
 }
 
 // 游標在第幾段
@@ -372,7 +379,7 @@ function redo() {
 function save() {
   if (!editing || !is_dirty())
     return;
-  if (changes().length && !confirm('有些字和原本的歌詞不一樣，仍要存檔嗎？'))
+  if (changes().length && !confirm('已修改文字內容，確認要儲存此變更嗎？'))
     return;
   var texts = current_texts();
   var cell = sections_to_cell(apply_texts(editing.sections, texts));
@@ -428,9 +435,9 @@ export function setup_lyrics_editor({ changed } = {}) {
     editing.before_input = { start: area.selectionStart, end: area.selectionEnd };
   });
   // 點段名：游標移到那段的開頭
-  var gutter = $('#lyrics_editor_gutter');
-  gutter.addEventListener('mousedown', (event) => { event.preventDefault(); });
-  gutter.addEventListener('click', (event) => {
+  var names = $('#lyrics_editor_names');
+  names.addEventListener('mousedown', (event) => { event.preventDefault(); });
+  names.addEventListener('click', (event) => {
     var name = event.target.closest('.lyrics-editor-name');
     if (!name || !editing)
       return;
