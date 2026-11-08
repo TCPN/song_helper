@@ -1172,6 +1172,16 @@ button.popup-window-close:hover {
 	background: #246;
 }
 
+/* 改到字時的存檔按鈕（js/lyrics-editor.js）：和文字變更警告同色系的橘色，按下去會先確認 */
+.lyrics-button.primary.warning {
+	background: #d97a00;
+	color: #fff;
+}
+
+.lyrics-button.primary.warning:hover {
+	background: #b86600;
+}
+
 .lyrics-button.disabled {
 	opacity: 0.4;
 	pointer-events: none;

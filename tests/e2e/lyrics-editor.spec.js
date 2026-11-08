@@ -307,12 +307,21 @@ test.describe('歌詞排版編輯', () => {
     await expect(view_messages(app)).toHaveCount(0);
   });
 
-  test('改到字時存檔要先確認；暫存的字和原本不一樣時歌詞檢視顯示警告', async ({ app }) => {
+  test('改到字時存檔按鈕換成橘色、存檔要先確認；暫存的字和原本不一樣時歌詞檢視顯示警告', async ({ app }) => {
     await open_editor(app, 12);
+    const save_color = () => button(app, 'save').evaluate((b) => getComputedStyle(b).backgroundColor);
+    // 只改空格、換行時是平常的深藍色
+    await caret(app, '副歌');
+    await app.page.keyboard.press('Enter');
+    await expect(button(app, 'save')).not.toHaveClass(/warning/);
+    expect(await save_color()).toBe('rgb(51, 85, 119)');
+    await app.page.keyboard.press('Backspace');
     await caret(app, '副歌一句');
     await app.page.keyboard.type('！');
+    await expect(button(app, 'save')).toHaveClass(/warning/);
+    expect(await save_color()).toBe('rgb(217, 122, 0)');
     await button(app, 'save').click();
-    expect(app.dialogs).toEqual(['有些字和原本的歌詞不一樣，仍要存檔嗎？']);
+    expect(app.dialogs).toEqual(['已修改文字內容，確認要儲存此變更嗎？']);
     await button(app, 'editor_close').click();
     await expect(view_messages(app)).toHaveText(['使用這台裝置暫存的排版（還沒存回試算表）', '暫存的排版和目前的歌詞文字不一樣']);
     await button(app, 'edit').click();

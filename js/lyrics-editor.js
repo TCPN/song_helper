@@ -247,6 +247,8 @@ function update() {
   set_disabled('#lyrics_undo', !can_undo(editing.history));
   set_disabled('#lyrics_redo', !can_redo(editing.history));
   set_disabled('#lyrics_save', !is_dirty());
+  // 改到字時存檔按鈕換成警告的顏色（按下去會先確認）
+  $('#lyrics_save').classList.toggle('warning', found.length > 0);
 }
 
 // 游標在第幾段
@@ -377,7 +379,7 @@ function redo() {
 function save() {
   if (!editing || !is_dirty())
     return;
-  if (changes().length && !confirm('有些字和原本的歌詞不一樣，仍要存檔嗎？'))
+  if (changes().length && !confirm('已修改文字內容，確認要儲存此變更嗎？'))
     return;
   var texts = current_texts();
   var cell = sections_to_cell(apply_texts(editing.sections, texts));
