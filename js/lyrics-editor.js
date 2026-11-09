@@ -3,7 +3,7 @@
 // 所以段名不能選取、也刪不掉；刪到段和段之間的空行、或在空行上打字時改回去（段落標記不能改）。文字區裡可以加減空格與換行，
 // 空一行是段內分段（投影片換頁）。隨時把去掉空白後的字和原本的歌詞（「投影片」欄或從譜上抽出的）比對，不一樣時顯示警告。
 // 復原／重做用自己的紀錄（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是），存檔存在這台裝置的 localStorage
-// （「投影片」欄的格式，之後可以直接貼回試算表）。編輯狀態不放進網址。
+// （「投影片」欄的格式；歌詞檢視的「存回試算表」再寫進試算表，見 js/lyrics-view.js）。編輯狀態不放進網址。
 import { click_on_enter, message_icon } from './dom.js';
 import { UNNAMED, half_width_spaces } from './slide-lyrics.js';
 import { section_to_text, sections_to_cell, apply_texts, layout_changes, word_diff, trim_diff, parse_saved_layouts,
@@ -21,6 +21,11 @@ function load_all() {
 export function load_local_layout(song_id) {
   var saved = load_all()[song_id];
   return saved === undefined ? null : saved;
+}
+
+// 刪掉這首歌的暫存（已經存回試算表時）
+export function clear_local_layout(song_id) {
+  return save_local_layout(song_id, null);
 }
 
 // text 是 null 時刪掉這首歌的暫存；存不了（無痕模式等）時傳回 false

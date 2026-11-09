@@ -411,7 +411,7 @@ test.describe('歌詞檢視', () => {
     // 下拉的 icon 是畫的（svg），不是文字
     await expect(button.locator('svg.lyrics-caret')).toBeVisible();
     // 和旁邊的按鈕一樣高
-    const heights = await app.page.locator('#lyrics_view .lyrics-actions .lyrics-button').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
+    const heights = await app.page.locator('#lyrics_view .lyrics-actions .lyrics-button:visible').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
     expect(new Set(heights).size).toBe(1);
     await expect(lines(app).first()).toHaveText('第一句 第二句');
     await button.click();

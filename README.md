@@ -61,6 +61,10 @@
     按鈕：復原、重做（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是，換行與空格各一步，連續打字合成一步）、存檔（Ctrl+S；改到字時按鈕變成橘色，按下去先確認「已修改文字內容，確認要儲存此變更嗎？」）、關閉（沒存檔時先確認）。
     存在這台裝置的 localStorage `lyrics_layout`（`{ 歌號: 「投影片」欄格式的文字 }`，之後可以直接貼回試算表）；和原本一模一樣時刪掉暫存。
     有暫存時歌詞檢視用暫存的排版，加一則「使用這台裝置暫存的排版（還沒存回試算表）」，暫存的字和原本不一樣時再加一則警告。換歌或回到歌譜檢視時不再編輯（沒存的修改不留）。
+  - 存回試算表（`js/sheet-save.js`、`js/sheet-api.js`）：有暫存時歌詞檢視的鉛筆右邊多一個雲朵（「存回試算表」）。按下去用 Google 登入（Google Identity Services 的 token client，
+    和進階編輯器同一個 OAuth 用戶端，第一次會跳出登入／授權視窗；token 只放在記憶體），用 Sheets API 讀 A 欄找到這首歌的列，把暫存的文字照字面（RAW）寫進 I 欄（「投影片」）。
+    試算表上那一格和網站載入時不一樣（別人改過）時先確認才覆蓋。成功後刪掉這首歌的暫存、更新快取，按鈕列顯示「已存回」；失敗（沒有編輯權限等）用 alert 說明，暫存留著。
+    能不能寫由登入的 Google 帳號對試算表有沒有編輯權決定。網站的網址要列在 OAuth 用戶端的「已授權的 JavaScript 來源」裡才能登入；學校網頁（www.csie.ntu.edu.tw）不顯示這個按鈕。
 - 螢幕寬度小於 450px（或工具列放不下）時，列印、播放、編輯、排版收進「⋮」選單（「排版…」打開的面板出現在「⋮」旁邊），「檢視」換成 icon
 - 歌曲列表最後有「沒有找到想要的歌？快來許願」，「快來許願」連到許願用的 Google 表單
 - 狀態都記在網址 hash，例如 `#song_id=12&transpose=2`（歌詞檢視再加 `&view=lyrics`），方便分享與存書籤
@@ -83,9 +87,10 @@
 | `js/editor-links.js` | 「編輯」與「⋮」選單的開關、編輯器連結 |
 | `js/lyrics-view.js` | 歌詞檢視（`view=lyrics`）：「檢視」選單的切換、列出各段、選取、複製 |
 | `js/lyrics-editor.js` | 歌詞排版編輯：整首一個文字區、段名浮在上面（位置和檢視時一樣）、文字變動警告、復原／重做、存在 localStorage |
+| `js/sheet-save.js` | 存回試算表：Google 登入（Google Identity Services）與 Sheets API 寫入「投影片」欄 |
 | `js/toolbar.js` | 螢幕寬度小於 450px（或工具列放不下）時切換成精簡版面（「⋮」選單） |
 | `js/state.js`, `js/dom.js` | 共用狀態、DOM 小工具 |
-| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js`, `js/score-marks.js`, `js/slide-lyrics.js`, `js/lyric-layout.js` | 純函式（不碰 DOM，有單元測試） |
+| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js`, `js/score-marks.js`, `js/slide-lyrics.js`, `js/lyric-layout.js`, `js/sheet-api.js` | 純函式（不碰 DOM，有單元測試） |
 | `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
@@ -93,6 +98,7 @@
 
 資料來源是 Google 試算表：`js/data.js` 直接 `fetch` 試算表的 gviz 查詢（`js/song-data.js` 的 `SHEET_QUERY_URL`），
 不需要載入 Google 的 JavaScript。試算表必須維持「知道連結的人都能檢視」。
+寫回試算表只有「存回試算表」一處（見上面），要登入，才載入 Google 登入的程式。
 欄位以固定索引對應：0 編號、1 歌名、2 調號、3 拍號、4 首句旋律、8 投影片（`song.slides`）、10 abc。
 快取存在 localStorage 的 `song_data`（歌曲陣列的 JSON）與 `song_data_timestamp`。
 

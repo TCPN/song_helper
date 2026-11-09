@@ -1338,6 +1338,21 @@ button.popup-window-close:hover {
 	height: 1.2em;
 }
 
+/* 窄螢幕：有「存回試算表」按鈕時一排放不下，按鈕和間距縮小一點 */
+@media (max-width: 420px) {
+	.lyrics-actions {
+		gap: 0.3em;
+	}
+
+	.lyrics-actions .lyrics-button {
+		padding: 0 0.55em;
+	}
+
+	.lyrics-actions .lyrics-icon-button {
+		padding: 0 0.4em;
+	}
+}
+
 /* 歌詞排版編輯（js/lyrics-editor.js）：打開時蓋掉複製用的按鈕列、歌詞和訊息（歌名留著） */
 #lyrics_editor.hide, #lyrics_view:not(.editing) #lyrics_editor_bar, .editing .lyrics-actions, .editing #lyrics_sections, .editing #lyrics_messages {
 	display: none;
