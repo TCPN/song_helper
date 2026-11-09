@@ -12,11 +12,13 @@
 - 計畫中的方向（#9）：先以測試固定行為，再把程式依功能拆成 ES modules（不引入 bundler），
   最後才加新功能。
 - 進度：程式都在 `js/` 的 ES modules，進入點是 `js/main.js`。純函式（`hash.js`、`abc.js`、`song-data.js`、
-  `search.js`、`keypad.js`、`score-fit.js`、`render-params.js`、`line-heights.js`、`layout-settings.js`、`pagination.js`、`page-breaks.js`、`score-marks.js`、`song-checks.js`、`slide-lyrics.js`、`lyric-layout.js`）不碰 DOM，有 `tests/unit/` 的單元測試；新的純函式也照這樣放，模組頂層不要碰 DOM。
+  `search.js`、`keypad.js`、`score-fit.js`、`render-params.js`、`line-heights.js`、`layout-settings.js`、`pagination.js`、`page-breaks.js`、`score-marks.js`、`song-checks.js`、`slide-lyrics.js`、`lyric-layout.js`、`sheet-api.js`）不碰 DOM，有 `tests/unit/` 的單元測試；新的純函式也照這樣放，模組頂層不要碰 DOM。
   HTML 裡不寫 `onclick=` 等事件屬性：每個模組有自己的 `setup_*()` 用 `addEventListener` 註冊，由 `main.js` 呼叫；
   模組的函式不掛到 `window`。
   `js/package.json` 的 `"type": "module"` 是讓 Node 把 `js/*.js` 當 ES modules 載入，不要刪。
 - 初始化順序：`main.js` 的 `renderWithCachedData()` 要放在事件監聽註冊之後（以前太早執行造成 #2 的 TypeError）。
+- 「存回試算表」用的 OAuth 用戶端（`js/sheet-api.js` 的 `OAUTH_CLIENT_ID`）和 tcpn_web_server 的 `/song_edit/` 共用；
+  E2E 測試用 `page.route` 假裝 `accounts.google.com/gsi/client` 與 `sheets.googleapis.com`（`tests/e2e/sheet-save.spec.js`），不連外。
 - 部署時 `js/` 整個資料夾都要上傳；網站要透過伺服器開，`file://` 無法載入 ES modules。
 - `songs.json`（`npm run update-songs` 產生的試算表快照）含整份歌譜與歌詞，repo 是公開的，絕對不要 commit；
   測試不讀本機的 `songs.json`，要用快照就在測試裡設 `snapshot` 選項。

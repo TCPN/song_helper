@@ -4,7 +4,9 @@ import { state } from './state.js';
 import { song_slide_lyrics, lyrics_messages, lines_text, map_lines, UNNAMED, SPACE_MODES, normalize_space_mode } from './slide-lyrics.js';
 import { update_hash } from './route.js';
 import { click_on_enter, message_icon, setup_dropdown, toggle_menu } from './dom.js';
-import { setup_lyrics_editor, open_lyrics_editor, close_lyrics_editor, load_local_layout, editing_song_id } from './lyrics-editor.js';
+import { setup_lyrics_editor, open_lyrics_editor, close_lyrics_editor, load_local_layout, clear_local_layout, editing_song_id } from './lyrics-editor.js';
+import { can_save_to_sheet, preload_google_sign_in, save_slides_cell } from './sheet-save.js';
+import { setCachedData } from './cache.js';
 
 const CONTAINER = '#score_popup_container';
 
@@ -86,6 +88,53 @@ export function refresh_lyrics() {
   var edit = document.querySelector('#lyrics_edit');
   edit.classList.toggle('disabled', !lyrics.sections.length);
   edit.setAttribute('aria-disabled', !lyrics.sections.length);
+  // 用的是這台裝置暫存的排版時，才能存回試算表；先載入 Google 登入，按下去時才能馬上開登入視窗
+  var upload_shown = lyrics.from == 'local' && can_save_to_sheet();
+  document.querySelector('#lyrics_upload').classList.toggle('hide', !upload_shown);
+  if (upload_shown)
+    preload_google_sign_in().catch(() => {});
+}
+
+var uploading = false;
+
+// 「存回試算表」：把這台裝置暫存的排版寫進試算表的「投影片」欄，成功後刪掉暫存、更新快取
+async function upload_layout() {
+  var song = state.displayingSong;
+  var text = song && load_local_layout(song.id);
+  if (uploading || !text)
+    return;
+  uploading = true;
+  var button = document.querySelector('#lyrics_upload');
+  button.classList.add('disabled');
+  button.setAttribute('aria-disabled', true);
+  set_status('存回中…');
+  try {
+    // 不能先 await 別的東西：第一次要在這次點擊裡開 Google 登入視窗
+    var result = await save_slides_cell(song.id, text, song.slides, (current) => confirm(current
+      ? '試算表裡這首歌的「投影片」欄在網站載入之後被改過了，要用這台裝置的排版覆蓋嗎？\n\n試算表現在的內容：\n' + current
+      : '試算表裡這首歌的「投影片」欄在網站載入之後被清空了，要用這台裝置的排版覆蓋嗎？'));
+    if (!result.saved) {
+      set_status('');
+      return;
+    }
+    // 網站裡的資料也換成新的（列表的資料和打開的歌可能是不同的物件）
+    for (const s of [song, ...(state.songs || []).filter((s) => s.id === song.id)])
+      s.slides = text;
+    if (state.songs)
+      setCachedData(state.songs);
+    clear_local_layout(song.id);
+    if (state.displayingSong === song)
+      refresh_lyrics();
+    set_status('已存回');
+  } catch (e) {
+    // 錯誤訊息可能很長，按鈕列放不下，用 alert
+    set_status('');
+    alert('無法存回試算表：' + (e.message || '不明的錯誤'));
+  } finally {
+    uploading = false;
+    button.classList.remove('disabled');
+    button.setAttribute('aria-disabled', false);
+  }
 }
 
 // 「編輯排版」：用目前列出的段（有暫存就是暫存的）開編輯器，和原本（格子或譜上）的字比對
@@ -305,7 +354,8 @@ export function setup_lyrics_view() {
   }
   var buttons = [['#lyrics_select_all', select_all],
     ['#lyrics_copy', copy_selected],
-    ['#lyrics_edit', edit_layout]];
+    ['#lyrics_edit', edit_layout],
+    ['#lyrics_upload', upload_layout]];
   for (const [id, action] of buttons) {
     var button = document.querySelector(id);
     // 按按鈕時不要把選取的文字取消掉
