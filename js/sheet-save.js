@@ -28,6 +28,8 @@ export function preload_google_sign_in() {
       script.async = true;
       script.onload = () => resolve();
       script.onerror = () => {
+        // 失敗的 <script> 拿掉，下次（例如按按鈕時）再載入一次
+        script.remove();
         gis_loading = null;
         reject(new Error('無法載入 Google 登入'));
       };

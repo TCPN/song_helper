@@ -122,7 +122,9 @@ async function upload_layout() {
       s.slides = text;
     if (state.songs)
       setCachedData(state.songs);
-    clear_local_layout(song.id);
+    // 等待登入、確認、網路時可能又改了排版存檔：暫存還是剛寫進去的文字才刪，較新的修改留著
+    if (load_local_layout(song.id) === text)
+      clear_local_layout(song.id);
     if (state.displayingSong === song)
       refresh_lyrics();
     set_status('已存回');

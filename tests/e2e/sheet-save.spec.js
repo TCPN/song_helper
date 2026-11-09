@@ -28,11 +28,11 @@ function fake_gis(grant) {
 }
 
 // 假的試算表：第 1 列是標題，之後依序是 SAVE_SONGS；sheet_slides 可以改某一首在試算表上的值（模擬別人改過）
-async function fake_google(app, { sheet_slides = {}, put_status = 200, grant = 'https://www.googleapis.com/auth/spreadsheets' } = {}) {
+async function fake_google(app, { sheet_slides = {}, put_status = 200, grant = 'https://www.googleapis.com/auth/spreadsheets', before_put = null } = {}) {
   const calls = [];
   await app.page.route('https://accounts.google.com/gsi/client', (route) =>
     route.fulfill({ contentType: 'application/javascript', body: fake_gis(grant) }));
-  await app.page.route('https://sheets.googleapis.com/**', (route) => {
+  await app.page.route('https://sheets.googleapis.com/**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     calls.push({ method: request.method(), path: decodeURIComponent(url.pathname), search: url.search,
@@ -46,6 +46,8 @@ async function fake_google(app, { sheet_slides = {}, put_status = 200, grant = '
       return route.fulfill({ headers, contentType: 'application/json',
         body: JSON.stringify({ valueRanges: [{ range: 'A1:A99', values: [ids] }, { range: 'I1:I99', values: [slides] }] }) });
     }
+    if (before_put)
+      await before_put();
     if (put_status != 200)
       return route.fulfill({ status: put_status, headers, contentType: 'application/json',
         body: JSON.stringify({ error: { code: put_status, message: 'denied' } }) });
@@ -134,6 +136,18 @@ test.describe('存回試算表', () => {
     await upload(app).click();
     await expect.poll(() => app.dialogs).toEqual(['無法存回試算表：沒有允許存取試算表']);
     expect(calls).toEqual([]);
+  });
+
+  test('寫入期間又存了新的排版：新的暫存留著，不會被刪掉', async ({ app }) => {
+    const NEWER = '[主歌 = A1]\n第一句 第二句\n\n[副歌]\n副歌一句';
+    await fake_google(app, { before_put: () => app.page.evaluate((t) =>
+      localStorage.setItem('lyrics_layout', JSON.stringify({ 12: t })), NEWER) });
+    await seed_local(app, { 12: LOCAL });
+    await app.goto('#song_id=12&view=lyrics');
+    await upload(app).click();
+    await expect(status(app)).toHaveText('已存回');
+    expect(await saved(app)).toEqual({ 12: NEWER });
+    await expect(upload(app)).toBeVisible();
   });
 
   test('第二次存不用再登入（token 留在記憶體）', async ({ app }) => {
