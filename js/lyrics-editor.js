@@ -172,6 +172,8 @@ function render_names() {
     name.dataset.s = i;
     name.textContent = label.name || UNNAMED;
     name.title = '改名或移除段落標籤';
+    name.tabIndex = 0;
+    name.setAttribute('role', 'button');
     return name;
   }));
 }
@@ -396,7 +398,8 @@ function place_add_button() {
   var button = $('#lyrics_editor_add');
   var area = textarea();
   var slot = null;
-  if (!editing.naming && document.activeElement == area && area.selectionStart == area.selectionEnd) {
+  var focused = document.activeElement == area || document.activeElement == button;
+  if (!editing.naming && focused && area.selectionStart == area.selectionEnd) {
     var caret = area.selectionEnd;
     slot = label_slots(area.value, editing.boundaries).find((s) => s.at <= caret && caret <= s.end) || null;
   }
@@ -427,10 +430,10 @@ function fit_name_input() {
   input.style.width = 'calc(' + (Math.max(width, 4) + 1) + 'ch + 0.8em + 2px)';
 }
 
-// 結束輸入：commit 為 false 或段名是空的時不改
+// 結束輸入：commit 為 false 或段名是空的時不改。傳回新加的段是第幾段（沒有新加時 null）
 function finish_naming(commit) {
   if (!editing || !editing.naming)
-    return;
+    return null;
   var naming = editing.naming;
   var name = clean_label_name(name_input().value);
   editing.naming = null;
@@ -447,16 +450,17 @@ function finish_naming(commit) {
       editing.last_value = added.text;
       editing.labels.splice(added.index, 0, { name, source: null });
       structure_changed(added.boundaries[added.index]);
-      return;
+      return added.index;
     }
   } else if (commit && name && !naming.slot && name !== editing.labels[naming.index].name) {
     editing.labels[naming.index] = { ...editing.labels[naming.index], name };
     structure_changed(editing.boundaries[naming.index]);
-    return;
+    return null;
   }
   var caret = naming.slot ? naming.slot.at : editing.boundaries[naming.index];
   area.setSelectionRange(caret, caret);
   place_marks();
+  return null;
 }
 
 function cancel_naming() {
@@ -567,12 +571,18 @@ function close() {
 
 // Ctrl+Z 復原、Ctrl+Shift+Z／Ctrl+Y 重做、Ctrl+S 存檔（Mac 是 Cmd）
 function on_keydown(event) {
-  // 段名的輸入框裡用瀏覽器自己的復原
-  if (event.target == name_input())
-    return;
   if (!(event.ctrlKey || event.metaKey) || event.altKey)
     return;
   var key = event.key.toLowerCase();
+  // 段名的輸入框裡用瀏覽器自己的復原；存檔時先確定正在輸入的段名
+  if (event.target == name_input()) {
+    if (key == 's') {
+      event.preventDefault();
+      finish_naming(true);
+      save();
+    }
+    return;
+  }
   if (key == 'z' && !event.shiftKey) {
     event.preventDefault();
     undo();
@@ -609,15 +619,36 @@ export function setup_lyrics_editor({ changed } = {}) {
     var name = event.target.closest('.lyrics-editor-name');
     if (!name || !editing)
       return;
-    finish_naming(true);
     var index = Number(name.dataset.s);
+    // 正在新增的段名先確定（新的段在被點的段前面時，被點的段往後一個）
+    var added = finish_naming(true);
+    if (added !== null && added <= index)
+      index++;
     var at = editing.boundaries[index];
     area.focus();
     area.setSelectionRange(at, at);
     open_label_menu(index);
+    // 用鍵盤打開（Enter／空白鍵，click 的 detail 是 0）時焦點移到選單的第一項
+    if (event.detail == 0)
+      menu.querySelector('.menu-item').focus();
+  });
+  // 段名可以用 Tab 移過去，Enter／空白鍵打開選單
+  names.addEventListener('keydown', (event) => {
+    if (event.target.closest('.lyrics-editor-name') && (event.key == 'Enter' || event.key == ' ')) {
+      event.preventDefault();
+      event.target.click();
+    }
   });
   var menu = $('#lyrics_editor_label_menu');
   menu.addEventListener('mousedown', (event) => { event.preventDefault(); });
+  menu.addEventListener('keydown', (event) => {
+    if (event.key == 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      close_label_menu();
+      area.focus();
+    }
+  });
   for (const item of menu.querySelectorAll('[data-label-action]')) {
     item.addEventListener('click', () => label_action(item.dataset.labelAction));
     click_on_enter(item);
@@ -637,6 +668,7 @@ export function setup_lyrics_editor({ changed } = {}) {
   // 「＋段名」：在游標所在的空行加段落標籤（先輸入段名）
   var add = $('#lyrics_editor_add');
   add.addEventListener('mousedown', (event) => { event.preventDefault(); });
+  click_on_enter(add);
   add.addEventListener('click', () => {
     if (!editing || !editing.add_slot)
       return;
@@ -648,8 +680,13 @@ export function setup_lyrics_editor({ changed } = {}) {
     if (editing && !editing.naming)
       place_add_button();
   });
-  area.addEventListener('blur', () => {
-    if (editing)
+  // 焦點從文字區用 Tab 移到「＋段名」時留著（鍵盤也能加），移到別的地方才收起來
+  area.addEventListener('blur', (event) => {
+    if (editing && event.relatedTarget != add)
+      hide(add);
+  });
+  add.addEventListener('blur', (event) => {
+    if (editing && event.relatedTarget != area)
       hide(add);
   });
   var input = name_input();

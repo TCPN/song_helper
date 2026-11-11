@@ -352,9 +352,52 @@ test.describe('歌詞排版編輯', () => {
     // 第一段不能移除
     await names(app).nth(0).click();
     await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['改名']);
-    // 點別的地方、打字時收起來
+    // 點別的地方、打字、按 Esc 時收起來
     await area(app).click();
     await expect(label_menu(app)).toBeHidden();
+    await names(app).nth(1).click();
+    await app.page.keyboard.type(' ');
+    await expect(label_menu(app)).toBeHidden();
+    await names(app).nth(1).click();
+    await app.page.keyboard.press('Escape');
+    await expect(label_menu(app)).toBeHidden();
+  });
+
+  test('段落標籤：改名保留「= A1」；只用鍵盤也能加段名、打開段名選單；段名輸入框裡 Ctrl+S 先確定段名再存檔', async ({ app }) => {
+    await open_editor(app, 12);
+    // 鍵盤：Tab 到段名、Enter 打開選單，焦點在第一項，Enter 改名
+    await names(app).nth(0).focus();
+    await app.page.keyboard.press('Enter');
+    await expect(label_menu(app)).toBeVisible();
+    await expect(label_menu(app).locator('.menu-item').first()).toBeFocused();
+    await app.page.keyboard.press('Enter');
+    await expect(name_input(app)).toBeFocused();
+    await app.page.keyboard.type('主歌一');
+    await app.page.keyboard.press('Enter');
+    await expect(names(app)).toHaveText(['主歌一', '副歌']);
+    // 鍵盤：游標在空行時 Tab 到「＋段名」，Enter 輸入段名
+    await caret(app, '第三句\n');
+    await expect(add_button(app)).toBeVisible();
+    await app.page.keyboard.press('Tab');
+    await expect(add_button(app)).toBeFocused();
+    await app.page.keyboard.press('Enter');
+    await expect(name_input(app)).toBeFocused();
+    await app.page.keyboard.type('主歌二');
+    await app.page.keyboard.press('ControlOrMeta+s');
+    await expect(names(app)).toHaveText(['主歌一', '主歌二', '副歌']);
+    await expect(status(app)).toHaveText('已存檔');
+    expect(await saved(app)).toEqual({ 12: '[主歌一 = A1]\n第一句 第二句\n第三句\n\n[主歌二]\n第四句\n\n[副歌]\n副歌一句' });
+  });
+
+  test('段落標籤：輸入新段名時直接點後面的段名，選單開在被點的那段', async ({ app }) => {
+    await open_editor(app, 12);
+    await caret(app, '第三句\n');
+    await add_button(app).click();
+    await app.page.keyboard.type('新段');
+    await names(app).nth(1).click();
+    await expect(names(app)).toHaveText(['主歌', '新段', '副歌']);
+    await label_menu(app).getByText('移除段落標籤').click();
+    await expect(names(app)).toHaveText(['主歌', '新段']);
   });
 
   test('段落標籤：游標停在段內的空行時出現「＋段名」，輸入段名後從那裡分成新的一段；字不變、沒有警告，可以復原', async ({ app }) => {

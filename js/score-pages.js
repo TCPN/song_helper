@@ -227,8 +227,8 @@ function page_keydown(event) {
     return;
   if(document.querySelector('#score_popup_top_bar').contains(event.target))
     return;
-  // 在文字區裡（歌詞排版編輯）方向鍵是移動游標
-  if(event.target.closest && event.target.closest('textarea'))
+  // 在文字區、輸入框裡（歌詞排版編輯的歌詞與段名）方向鍵是移動游標
+  if(event.target.closest && event.target.closest('textarea, #lyrics_editor input'))
     return;
   event.preventDefault();
   turn_page(step);
