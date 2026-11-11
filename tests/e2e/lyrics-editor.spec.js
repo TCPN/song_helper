@@ -348,10 +348,10 @@ test.describe('歌詞排版編輯', () => {
     await expect(area(app)).toBeFocused();
     expect(await area(app).evaluate((t) => t.value.slice(t.selectionStart))).toBe('副歌一句');
     await expect(label_menu(app)).toBeVisible();
-    await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['改名', /^移除段落標籤/]);
+    await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['重新命名', /^移除標籤/]);
     // 第一段不能移除
     await names(app).nth(0).click();
-    await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['改名']);
+    await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['重新命名']);
     // 點別的地方、打字、按 Esc 時收起來
     await area(app).click();
     await expect(label_menu(app)).toBeHidden();
@@ -375,7 +375,7 @@ test.describe('歌詞排版編輯', () => {
     await app.page.keyboard.type('主歌一');
     await app.page.keyboard.press('Enter');
     await expect(names(app)).toHaveText(['主歌一', '副歌']);
-    // 鍵盤：游標在空行時 Tab 到「＋段名」，Enter 輸入段名
+    // 鍵盤：游標在空行時 Tab 到「＋段落標籤」，Enter 輸入段名
     await caret(app, '第三句\n');
     await expect(add_button(app)).toBeVisible();
     await app.page.keyboard.press('Tab');
@@ -407,11 +407,11 @@ test.describe('歌詞排版編輯', () => {
     await app.page.keyboard.type('新段');
     await names(app).nth(1).click();
     await expect(names(app)).toHaveText(['主歌', '新段', '副歌']);
-    await label_menu(app).getByText('移除段落標籤').click();
+    await label_menu(app).getByText('移除標籤').click();
     await expect(names(app)).toHaveText(['主歌', '新段']);
   });
 
-  test('段落標籤：游標停在段內的空行時出現「＋段名」，輸入段名後從那裡分成新的一段；字不變、沒有警告，可以復原', async ({ app }) => {
+  test('段落標籤：游標停在段內的空行時出現「＋段落標籤」，輸入段名後從那裡分成新的一段；字不變、沒有警告，可以復原', async ({ app }) => {
     await open_editor(app, 12);
     const text = '第一句 第二句\n第三句\n\n第四句\n\n副歌一句';
     // 不是空行、段和段之間的空行：不出現
@@ -422,7 +422,7 @@ test.describe('歌詞排版編輯', () => {
     // 段內的空行
     await caret(app, '第三句\n');
     await expect(add_button(app)).toBeVisible();
-    // 「＋段名」在空行裡，和段名的位置一樣（在下一行的正上方）
+    // 「＋段落標籤」在空行裡，和段名的位置一樣（在下一行的正上方）
     const line = await area(app).evaluate((t) => parseFloat(getComputedStyle(t).lineHeight));
     const [first] = await name_tops(app);
     const add_top = await add_button(app).evaluate((e) => e.getBoundingClientRect().top);
@@ -485,7 +485,7 @@ test.describe('歌詞排版編輯', () => {
   test('段落標籤：移除後和上一段合併（空行留著）；改名；比對文字改成整首一起比', async ({ app }) => {
     await open_editor(app, 10);
     await names(app).nth(1).click();
-    await label_menu(app).getByText('移除段落標籤').click();
+    await label_menu(app).getByText('移除標籤').click();
     await expect(names(app)).toHaveText(['A1', 'B']);
     await expect(area(app)).toHaveValue('一二三四五六七八\n\n甲乙丙丁戊己庚辛\n\n副');
     await expect(warnings(app)).toHaveCount(0);
@@ -494,7 +494,7 @@ test.describe('歌詞排版編輯', () => {
     await expect(add_button(app)).toBeVisible();
     // 改名
     await names(app).nth(1).click();
-    await label_menu(app).getByText('改名').click();
+    await label_menu(app).getByText('重新命名').click();
     await expect(name_input(app)).toBeFocused();
     await expect(name_input(app)).toHaveValue('B');
     await app.page.keyboard.type('副歌');

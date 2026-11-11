@@ -1,7 +1,7 @@
 // 歌詞排版編輯：在歌詞檢視裡按「編輯排版」（鉛筆）打開，蓋在歌詞上面。
 // 整首一個文字區（<textarea>），段和段之間空一行；段名浮在文字區左邊（對齊那段的第一行），空行中間畫一條線，
 // 所以段名不能選取、也刪不掉；刪到段和段之間的空行、或在空行上打字時改回去（段落標記不能改）。文字區裡可以加減空格與換行，
-// 空一行是段內分段（投影片換頁）。段落標籤：游標停在段內的空行時左邊出現「＋段名」，點了輸入段名、從那裡切成新的一段；
+// 空一行是段內分段（投影片換頁）。段落標籤：游標停在段內的空行時左邊出現「＋段落標籤」，點了輸入段名、從那裡切成新的一段；
 // 點段名出現選單，可以改名或移除段落標籤（和上一段合併，中間的空行留著）。字都不變，只改段的開頭和段名。隨時把去掉空白後的字和原本的歌詞（「投影片」欄或從譜上抽出的）比對，不一樣時顯示警告。
 // 復原／重做用自己的紀錄（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是），存檔存在這台裝置的 localStorage
 // （「投影片」欄的格式；歌詞檢視的「存回試算表」再寫進試算表，見 js/lyrics-view.js）。編輯狀態不放進網址。
@@ -171,7 +171,7 @@ function render_names() {
     name.className = 'lyrics-name lyrics-editor-name';
     name.dataset.s = i;
     name.textContent = label.name || UNNAMED;
-    name.title = '改名或移除段落標籤';
+    name.title = '重新命名或移除標籤';
     name.tabIndex = 0;
     name.setAttribute('role', 'button');
     return name;
@@ -383,7 +383,7 @@ function on_composition_end() {
   record('type:' + section_at(area.selectionEnd));
 }
 
-// ---- 段落標籤：「＋段名」按鈕、段名的輸入框、段名的選單 ----
+// ---- 段落標籤：「＋段落標籤」按鈕、段名的輸入框、段名的選單 ----
 
 function hide(el) {
   el.classList.add('hide');
@@ -393,7 +393,7 @@ function name_input() {
   return $('#lyrics_editor_name_input');
 }
 
-// 游標（沒有選取範圍）停在段內的空行時，空行左邊出現「＋段名」（位置和段名一樣）
+// 游標（沒有選取範圍）停在段內的空行時，空行左邊出現「＋段落標籤」（位置和段名一樣）
 function place_add_button() {
   var button = $('#lyrics_editor_add');
   var area = textarea();
@@ -668,7 +668,7 @@ export function setup_lyrics_editor({ changed } = {}) {
     }
   });
   area.addEventListener('input', close_label_menu);
-  // 「＋段名」：在游標所在的空行加段落標籤（先輸入段名）
+  // 「＋段落標籤」：在游標所在的空行加段落標籤（先輸入段名）
   var add = $('#lyrics_editor_add');
   add.addEventListener('mousedown', (event) => { event.preventDefault(); });
   click_on_enter(add);
@@ -678,12 +678,12 @@ export function setup_lyrics_editor({ changed } = {}) {
     var slot = editing.add_slot;
     start_naming({ index: null, at: slot.end + 1, slot }, '');
   });
-  // 游標移動時決定「＋段名」要不要出現；離開文字區時收起來
+  // 游標移動時決定「＋段落標籤」要不要出現；離開文字區時收起來
   document.addEventListener('selectionchange', () => {
     if (editing && !editing.naming)
       place_add_button();
   });
-  // 焦點從文字區用 Tab 移到「＋段名」時留著（鍵盤也能加），移到別的地方才收起來
+  // 焦點從文字區用 Tab 移到「＋段落標籤」時留著（鍵盤也能加），移到別的地方才收起來
   area.addEventListener('blur', (event) => {
     if (editing && event.relatedTarget != add)
       hide(add);
