@@ -6,6 +6,7 @@
 // 復原／重做用自己的紀錄（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是），存檔存在這台裝置的 localStorage
 // （「投影片」欄的格式；歌詞檢視的「存回試算表」再寫進試算表，見 js/lyrics-view.js）。編輯狀態不放進網址。
 import { click_on_enter, message_icon } from './dom.js';
+import { auto_layout_text, parse_auto_layout, step_auto_layout, auto_layout_at_limit } from './auto-layout.js';
 import { UNNAMED, half_width_spaces } from './slide-lyrics.js';
 import { section_to_text, sections_to_cell, apply_texts, layout_changes, word_diff, trim_diff, parse_saved_layouts,
   create_history, history_record, history_undo, history_redo, can_undo, can_redo,
@@ -43,6 +44,21 @@ function save_local_layout(song_id, text) {
     return false;
   }
 }
+
+// 自動排版的設定（js/auto-layout.js）：所有歌共用，存在 localStorage
+const AUTO_KEY = 'lyrics_auto_layout';
+var auto_options = parse_auto_layout(null);
+
+function load_auto_options() {
+  try { return parse_auto_layout(localStorage.getItem(AUTO_KEY)); } catch (e) { return parse_auto_layout(null); }
+}
+
+function save_auto_options() {
+  try { localStorage.setItem(AUTO_KEY, JSON.stringify(auto_options)); } catch (e) {}
+}
+
+// 空格的顯示方式（歌詞檢視的設定，由 js/lyrics-view.js 傳入）：自動排版算寬度時用
+var space = { get: () => 'half', set: () => {} };
 
 // 編輯中：{ song_id, labels, source_cell, source_names, original_sections, original_whole, whole, saved, history, boundaries,
 //   last_value, before_input, composition_start, changed, add_slot, naming }
@@ -209,6 +225,7 @@ export function close_lyrics_editor(force = true) {
   hide(name_input());
   hide($('#lyrics_editor_add'));
   editing = null;
+  show_auto_panel(false);
   $('#lyrics_view').classList.remove('editing');
   $('#lyrics_editor').classList.add('hide');
   textarea().value = '';
@@ -567,6 +584,54 @@ function save() {
   on_change();
 }
 
+// ---- 自動排版 ----
+// 打開面板時，用那時的文字（auto.base）依設定重排每一段；面板開著時改設定，從同一份文字重排，整段過程合成復原的一步。
+// 重排完又改了文字之後再改設定，從改過的文字開始（新的一步）
+
+function auto_panel_open() {
+  return !$('#lyrics_auto_panel').classList.contains('hide');
+}
+
+function show_auto_panel(open) {
+  $('#lyrics_auto_panel').classList.toggle('hide', !open);
+  $('#lyrics_auto_button').setAttribute('aria-expanded', open);
+}
+
+// 面板上的數值、−／＋ 能不能按、選中的空格
+function show_auto_options() {
+  var panel = $('#lyrics_auto_panel');
+  for (const output of panel.querySelectorAll('[data-auto-value]'))
+    output.value = auto_options[output.dataset.autoValue];
+  for (const button of panel.querySelectorAll('[data-auto-step]'))
+    button.setAttribute('aria-disabled', auto_layout_at_limit(auto_options, button.dataset.autoStep, Number(button.dataset.steps)));
+  for (const choice of panel.querySelectorAll('[data-auto-space]'))
+    choice.setAttribute('aria-checked', choice.dataset.autoSpace == space.get());
+}
+
+function auto_layout() {
+  if (!editing)
+    return;
+  close_label_menu();
+  cancel_naming();
+  var now = snapshot();
+  if (!editing.auto || !same(now, editing.auto.result))
+    editing.auto = { base: current_texts(), key: 'auto:' + Date.now(), result: null };
+  var { text, boundaries } = join_sections(editing.auto.base.map((t) => auto_layout_text(t, auto_options, space.get())));
+  var area = textarea();
+  area.value = text;
+  editing.boundaries = boundaries;
+  editing.last_value = text;
+  layout(false);
+  var next = snapshot();
+  editing.auto.result = next;
+  // 時間固定傳 0：同一次自動排版（同一個 key）的每次重排都合成一步
+  if (!same(next, editing.history.stack[editing.history.index]))
+    history_record(editing.history, next, editing.auto.key, 0);
+  // 不顯示狀態文字（窄螢幕放不下）：「自動排版」按鈕亮著就表示設定開著、改設定會重排
+  set_status('');
+  update();
+}
+
 function close() {
   if (close_lyrics_editor(false))
     on_change();
@@ -599,8 +664,45 @@ function on_keydown(event) {
 }
 
 // 註冊編輯器的事件；changed：存檔或關閉後呼叫（歌詞檢視重新列出）
-export function setup_lyrics_editor({ changed } = {}) {
+// space_mode：{ get, set } 讀、改歌詞檢視的空格顯示方式
+export function setup_lyrics_editor({ changed, space_mode } = {}) {
   on_change = changed || (() => {});
+  if (space_mode)
+    space = space_mode;
+  auto_options = load_auto_options();
+  var auto_button = $('#lyrics_auto_button');
+  var auto_panel = $('#lyrics_auto_panel');
+  // 按「自動排版」打開設定就排；再按一次收起設定（排好的留著）
+  auto_button.addEventListener('click', () => {
+    if (!editing)
+      return;
+    var open = !auto_panel_open();
+    show_auto_panel(open);
+    if (open) {
+      show_auto_options();
+      auto_layout();
+    }
+  });
+  click_on_enter(auto_button);
+  for (const target of [auto_button, auto_panel])
+    target.addEventListener('mousedown', (event) => { event.preventDefault(); });
+  for (const button of auto_panel.querySelectorAll('[data-auto-step]')) {
+    button.addEventListener('click', () => {
+      auto_options = step_auto_layout(auto_options, button.dataset.autoStep, Number(button.dataset.steps));
+      save_auto_options();
+      show_auto_options();
+      auto_layout();
+    });
+    click_on_enter(button);
+  }
+  for (const choice of auto_panel.querySelectorAll('[data-auto-space]')) {
+    choice.addEventListener('click', () => {
+      space.set(choice.dataset.autoSpace);
+      show_auto_options();
+      auto_layout();
+    });
+    click_on_enter(choice);
+  }
   var area = textarea();
   area.addEventListener('input', on_input);
   area.addEventListener('compositionstart', on_composition_start);

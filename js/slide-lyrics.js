@@ -73,7 +73,7 @@ export function parse_slide_cell(text) {
 }
 
 // 中日韓文字（含全形標點）：兩個音節之間如果有一邊是這種字，接起來時不加空格
-const CJK = /[\u2E80-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF\uFF00-\uFFEF]/;
+export const CJK = /[\u2E80-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF\uFF00-\uFFEF]/;
 
 // 一行譜裡有歌詞的音符數，與段落標記、小節線、休止符的位置（都以「之前有幾個音符」表示）
 // → { marks: [{ name, at }]（[P:B] 的段名與位置）, bars: [位置…], rests: [位置…] }

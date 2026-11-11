@@ -254,6 +254,14 @@ function select_lines(first, last) {
   selection.addRange(range);
 }
 
+// 改空格的顯示方式：記起來、更新選單、重新列出歌詞
+function set_space_mode(mode) {
+  space_mode = normalize_space_mode(mode);
+  save_space_mode();
+  update_space_menu();
+  refresh_lyrics();
+}
+
 function update_space_menu() {
   document.querySelector('#lyrics_space_label').textContent = SPACE_LABELS[space_mode];
   for (const item of document.querySelectorAll('#lyrics_space_menu [data-space-mode]')) {
@@ -335,7 +343,8 @@ export function setup_lyrics_view() {
     update_checks();
   });
   // 編輯器存檔或關閉後重新列出（暫存的排版可能變了）
-  setup_lyrics_editor({ changed: refresh_lyrics });
+  // 自動排版用的空格（半形／全形）就是歌詞檢視的空格顯示方式
+  setup_lyrics_editor({ changed: refresh_lyrics, space_mode: { get: () => space_mode, set: set_space_mode } });
   space_mode = load_space_mode();
   update_space_menu();
   var space_button = document.querySelector('#lyrics_space_button');
@@ -346,11 +355,8 @@ export function setup_lyrics_view() {
     target.addEventListener('mousedown', (event)=>{ event.preventDefault(); });
   for (const item of space_menu.querySelectorAll('[data-space-mode]')) {
     item.addEventListener('click', ()=>{
-      space_mode = normalize_space_mode(item.dataset.spaceMode);
-      save_space_mode();
-      update_space_menu();
+      set_space_mode(item.dataset.spaceMode);
       toggle_menu(space_button, space_menu);
-      refresh_lyrics();
     });
     click_on_enter(item);
   }

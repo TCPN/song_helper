@@ -64,6 +64,10 @@
     按鈕：復原、重做（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是，換行與空格各一步，連續打字合成一步）、存檔（Ctrl+S；改到字時按鈕變成橘色，按下去先確認「已修改文字內容，確認要儲存此變更嗎？」）、關閉（沒存檔時先確認）。
     存在這台裝置的 localStorage `lyrics_layout`（`{ 歌號: 「投影片」欄格式的文字 }`，之後可以直接貼回試算表）；和原本一模一樣時刪掉暫存。
     有暫存時歌詞檢視用暫存的排版，加一則「使用這台裝置暫存的排版（還沒存回試算表）」，暫存的字和原本不一樣時再加一則警告。換歌或回到歌譜檢視時不再編輯（沒存的修改不留）。
+  - 自動排版（`js/auto-layout.js`，在 `js/lyrics-editor.js` 裡）：編輯時按鈕列的「自動排版」打開一列設定（每頁行數、最多行數、每行字數、空格 半形／全形），打開時就依設定把每段重新分行、分頁，改設定馬上重排（從打開時的文字重排；整個過程是復原的一步），排完可以接著編輯、存檔。
+    分行：原本的一行放得下就不動，太長時在空格（片語之間）斷成最少的行、各行盡量一樣長，片語本身太長再從字中間斷（中文一字一字，英文單字不拆）；原本的行不合併。寬度以全形字計算（英數、半形空格算半個字，全形空格算一個）。
+    分頁：每段從新的一頁開始，原本的分頁不管；頁數讓每頁盡量有「每頁行數」到「最多行數」行、各頁平均（前面多一行），換頁盡量不切在同一行斷出來的幾行中間。
+    設定所有歌共用，存在 localStorage 的 `lyrics_auto_layout`；空格就是歌詞檢視的空格顯示方式（`lyrics_space_mode`）。
   - 存回試算表（`js/sheet-save.js`、`js/sheet-api.js`）：有暫存時歌詞檢視的鉛筆右邊多一個雲朵（「存回試算表」）。按下去用 Google 登入（Google Identity Services 的 token client，
     和進階編輯器同一個 OAuth 用戶端，第一次會跳出登入／授權視窗；token 只放在記憶體），用 Sheets API 讀 A 欄找到這首歌的列，把暫存的文字照字面（RAW）寫進 I 欄（「投影片」）。
     試算表上那一格和網站載入時不一樣（別人改過）時先確認才覆蓋。成功後刪掉這首歌的暫存、更新快取，按鈕列顯示「已存回」；失敗（沒有編輯權限等）用 alert 說明，暫存留著。
@@ -93,7 +97,7 @@
 | `js/sheet-save.js` | 存回試算表：Google 登入（Google Identity Services）與 Sheets API 寫入「投影片」欄 |
 | `js/toolbar.js` | 螢幕寬度小於 450px（或工具列放不下）時切換成精簡版面（「⋮」選單） |
 | `js/state.js`, `js/dom.js` | 共用狀態、DOM 小工具 |
-| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js`, `js/score-marks.js`, `js/slide-lyrics.js`, `js/lyric-layout.js`, `js/sheet-api.js` | 純函式（不碰 DOM，有單元測試） |
+| `js/hash.js`, `js/abc.js`, `js/song-data.js`, `js/search.js`, `js/keypad.js`, `js/score-fit.js`, `js/render-params.js`, `js/line-heights.js`, `js/layout-settings.js`, `js/pagination.js`, `js/page-breaks.js`, `js/score-marks.js`, `js/slide-lyrics.js`, `js/lyric-layout.js`, `js/auto-layout.js`, `js/sheet-api.js` | 純函式（不碰 DOM，有單元測試） |
 | `js/abc-rewrite.js` | 把 ABC 改寫成和弦／旋律兩聲部（目前未使用） |
 | `style.css`, `abcjs-midi.css`, `fix-abcjs-midi.css` | 樣式（後者修正 abcjs 播放器的圖示） |
 | `score_chord.png`, `score_note.png` | 列表中譜面連結的圖示 |
