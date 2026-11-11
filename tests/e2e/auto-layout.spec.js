@@ -51,6 +51,13 @@ test.describe('自動排版', () => {
     await expect(area(app)).toHaveValue('一二三四 五六七八\n甲乙丙丁\n\n子丑寅卯\n辰巳午未\n\n春夏秋冬');
     expect(await app.page.evaluate(() => JSON.parse(localStorage.getItem('lyrics_auto_layout')))).toEqual({ lines: 2, max_lines: 2, width: 9 });
     expect(await app.page.evaluate(() => localStorage.getItem('lyrics_space_mode'))).toBe('full');
+    // 隱藏空格：和歌詞檢視的「空格」選單同一個設定，面板上也選得到；寬 8，每行 8 字放得下
+    await step(app, 'width', -1).click();
+    await panel(app).locator('[data-auto-space="hide"]').click();
+    await expect(panel(app).locator('[data-auto-space="hide"]')).toHaveAttribute('aria-checked', 'true');
+    await expect(area(app)).toHaveValue('一二三四 五六七八\n甲乙丙丁\n\n子丑寅卯\n辰巳午未\n\n春夏秋冬');
+    await panel(app).locator('[data-auto-space="full"]').click();
+    await step(app, 'width', 1).click();
     // 字沒變：沒有警告，存檔不用確認
     await expect(app.page.locator('#lyrics_editor_warnings li')).toHaveCount(0);
     await app.page.locator('#lyrics_save').click();
