@@ -389,6 +389,17 @@ test.describe('歌詞排版編輯', () => {
     expect(await saved(app)).toEqual({ 12: '[主歌一 = A1]\n第一句 第二句\n第三句\n\n[主歌二]\n第四句\n\n[副歌]\n副歌一句' });
   });
 
+  test('段落標籤：輸入段名時點到別處也算確定，焦點留在點到的地方', async ({ app }) => {
+    await open_editor(app, 12);
+    await caret(app, '第三句\n');
+    await add_button(app).click();
+    await app.page.keyboard.type('主歌2');
+    await app.page.locator('#lyrics_title').click();
+    await expect(name_input(app)).toBeHidden();
+    await expect(names(app)).toHaveText(['主歌', '主歌2', '副歌']);
+    await expect(area(app)).not.toBeFocused();
+  });
+
   test('段落標籤：輸入新段名時直接點後面的段名，選單開在被點的那段', async ({ app }) => {
     await open_editor(app, 12);
     await caret(app, '第三句\n');

@@ -431,7 +431,8 @@ function fit_name_input() {
 }
 
 // 結束輸入：commit 為 false 或段名是空的時不改。傳回新加的段是第幾段（沒有新加時 null）
-function finish_naming(commit) {
+// focus 為 false 時（輸入框失焦，使用者點了別的地方）焦點不搶回文字區
+function finish_naming(commit, focus = true) {
   if (!editing || !editing.naming)
     return null;
   var naming = editing.naming;
@@ -439,7 +440,8 @@ function finish_naming(commit) {
   editing.naming = null;
   hide(name_input());
   var area = textarea();
-  area.focus();
+  if (focus)
+    area.focus();
   if (commit && name && naming.slot) {
     // 輸入期間文字沒變才加（保險：找同一個空行）
     var slot = label_slots(area.value, editing.boundaries).find((s) => s.at == naming.slot.at && s.end == naming.slot.end);
@@ -449,12 +451,12 @@ function finish_naming(commit) {
       editing.boundaries = added.boundaries;
       editing.last_value = added.text;
       editing.labels.splice(added.index, 0, { name, source: null });
-      structure_changed(added.boundaries[added.index]);
+      structure_changed(added.boundaries[added.index], focus);
       return added.index;
     }
   } else if (commit && name && !naming.slot && name !== editing.labels[naming.index].name) {
     editing.labels[naming.index] = { ...editing.labels[naming.index], name };
-    structure_changed(editing.boundaries[naming.index]);
+    structure_changed(editing.boundaries[naming.index], focus);
     return null;
   }
   var caret = naming.slot ? naming.slot.at : editing.boundaries[naming.index];
@@ -471,11 +473,12 @@ function cancel_naming() {
 }
 
 // 段名或段的開頭改了：重畫段名、記一步，游標放在 caret
-function structure_changed(caret) {
+function structure_changed(caret, focus = true) {
   render_names();
   layout(false);
   var area = textarea();
-  area.focus();
+  if (focus)
+    area.focus();
   area.setSelectionRange(caret, caret);
   record(null);
 }
@@ -703,7 +706,7 @@ export function setup_lyrics_editor({ changed } = {}) {
       finish_naming(false);
     }
   });
-  input.addEventListener('blur', () => finish_naming(true));
+  input.addEventListener('blur', () => finish_naming(true, false));
   for (const area of ['#lyrics_editor', '#lyrics_editor_bar'])
     $(area).addEventListener('keydown', on_keydown);
   var buttons = [['#lyrics_undo', undo], ['#lyrics_redo', redo], ['#lyrics_save', save], ['#lyrics_editor_close', close]];
