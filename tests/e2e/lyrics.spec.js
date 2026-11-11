@@ -211,7 +211,7 @@ test.describe('歌詞檢視', () => {
 
   test('沒有勾選框；段名不能被選取。點段名選取整段，已經選取整段時取消；全選（沒有全不選）', async ({ app }) => {
     await app.goto('#song_id=11&view=lyrics');
-    await expect(app.page.locator('#lyrics_view input')).toHaveCount(0);
+    await expect(app.page.locator('#lyrics_view input[type=checkbox]')).toHaveCount(0);
     expect(await names(app).first().evaluate((n) => getComputedStyle(n).userSelect)).toBe('none');
     await names(app).nth(1).click();
     expect(await selection(app)).toMatch(/^五六七八\s+子丑寅卯$/);

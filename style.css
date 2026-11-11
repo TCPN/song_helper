@@ -1435,6 +1435,47 @@ button.popup-window-close:hover {
 	color: #806600;
 }
 
+/* 段落標籤（js/lyrics-editor.js）：「＋段名」和段名的輸入框放在段名的位置（js 量 top），虛線框表示還不是段名 */
+.lyrics-editor-add, .lyrics-editor-name-input {
+	position: absolute;
+	left: 0;
+	z-index: 1;
+}
+
+.lyrics-editor-add {
+	color: #2a6fc9;
+	border: 1px dashed #6cb4f0;
+	background: #fff;
+	cursor: pointer;
+}
+
+.lyrics-editor-add:hover {
+	background: #eaf4fd;
+}
+
+.lyrics-editor-name-input {
+	color: #333;
+	background: #fff;
+	border-color: #6cb4f0;
+	outline: none;
+	box-shadow: 0 0 0 2px #6cb4f055;
+	user-select: text;
+}
+
+.lyrics-editor-add.hide, .lyrics-editor-name-input.hide, .lyrics-editor-label-menu .menu-item.hide {
+	display: none;
+}
+
+/* 點段名出現的選單：在段名正下方（js 放位置） */
+.lyrics-editor-label-menu {
+	z-index: 2;
+	font-size: 0.85em;
+}
+
+.lyrics-editor-label-menu .menu-item {
+	padding-left: 1em;
+}
+
 .lyrics-editor-box {
 	position: relative;
 	background: #fff;

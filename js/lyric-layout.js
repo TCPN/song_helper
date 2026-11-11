@@ -245,3 +245,55 @@ export function trim_diff(parts, context = 4) {
     return { type: 'same', text };
   });
 }
+
+// ---- 段落標籤的新增／移除：字不變，只改段的開頭位置（boundaries）和段名 ----
+
+// 段內的空行（只有空白的行也算）：可以加段落標籤的地方 → [{ at, end, section }]
+// at：空行的開頭，end：空行結尾的換行的位置（at 到 end 之間是空白），section：在第幾段。
+// 段和段之間的空行（段落標記）不算；空行前面或後面（同一段裡）沒有字時也不算（加了會變成沒有字的段）
+export function label_slots(text, boundaries) {
+  var slots = [];
+  var section = 0;
+  var line_start = 0;
+  while (line_start <= text.length) {
+    var newline = text.indexOf('\n', line_start);
+    var end = newline < 0 ? text.length : newline;
+    while (section + 1 < boundaries.length && boundaries[section + 1] <= line_start)
+      section++;
+    var separator = boundaries.some((b, i) => i > 0 && b - 1 == line_start);
+    if (newline >= 0 && !separator && !text.slice(line_start, end).trim()) {
+      var start = boundaries[section];
+      var stop = section + 1 < boundaries.length ? boundaries[section + 1] - SEPARATOR.length : text.length;
+      if (text.slice(start, line_start).trim() && text.slice(end, stop).trim())
+        slots.push({ at: line_start, end, section });
+    }
+    if (newline < 0)
+      break;
+    line_start = newline + 1;
+  }
+  return slots;
+}
+
+// 在 label_slots 的一個空行加段落標籤：空行裡的空白拿掉，空行變成段落標記，下一行是新的一段的開頭
+// → { text, boundaries, index }（index：新的一段是第幾段）
+export function add_boundary(text, boundaries, slot) {
+  var removed = slot.end - slot.at;
+  var next = text.slice(0, slot.at) + text.slice(slot.end);
+  var start = slot.at + 1;
+  var moved = boundaries.map((b) => (b > slot.at ? b - removed : b));
+  var index = moved.findIndex((b) => b > start);
+  if (index < 0)
+    index = moved.length;
+  moved.splice(index, 0, start);
+  return { text: next, boundaries: moved, index };
+}
+
+// 移除第 index 段（不是第一段）的段落標籤：和上一段合併，中間的空行留著（變成段內分段）
+export function remove_boundary(boundaries, index) {
+  return index > 0 ? boundaries.filter((b, i) => i != index) : boundaries.slice();
+}
+
+// 段名：拿掉「投影片」欄格式用到的 [ ] =、換行，前後空白也拿掉（空字串表示不要）
+export function clean_label_name(name) {
+  return String(name ?? '').replace(/[\[\]=\r\n]/g, ' ').replace(/\s+/g, ' ').trim();
+}

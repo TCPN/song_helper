@@ -83,7 +83,8 @@ test('song_slide_lyrics：有本機暫存時用暫存的段，記下原本的段
   assert.equal(song_slide_lyrics(song, '  ').from, 'abc');
 });
 
-import { join_sections, split_sections, apply_edit, word_diff, trim_diff, diff_tokens } from '../../js/lyric-layout.js';
+import { join_sections, split_sections, apply_edit, word_diff, trim_diff, diff_tokens,
+  label_slots, add_boundary, remove_boundary, clean_label_name } from '../../js/lyric-layout.js';
 
 test('join_sections／split_sections：段和段之間空一行，記下每段開頭的位置', () => {
   const joined = join_sections(['一\n二', '', '三']);
@@ -133,4 +134,36 @@ test('word_diff／trim_diff：標出刪掉與加上的詞，沒變的太長只�
   assert.deepEqual(word_diff('一 二', '一二'), [{ type: 'same', text: '一二' }]);
   assert.deepEqual(trim_diff([{ type: 'same', text: '一二三四五六七八' }, { type: 'removed', text: '九' }, { type: 'same', text: '十甲乙丙丁戊' }], 2), [
     { type: 'same', text: '…七八' }, { type: 'removed', text: '九' }, { type: 'same', text: '十甲…' }]);
+});
+
+test('label_slots：段內只有空白的行，前後同一段裡都有字；段和段之間的空行不算', () => {
+  const { text, boundaries } = join_sections(['甲\n\n乙\n  \n丙', '丁\n\n戊', '\n己']);
+  // '甲\n\n乙\n  \n丙\n\n丁\n\n戊\n\n\n己'
+  assert.deepEqual(label_slots(text, boundaries), [
+    { at: 2, end: 2, section: 0 },
+    { at: 5, end: 7, section: 0 },
+    { at: 13, end: 13, section: 1 },
+  ]);
+  assert.deepEqual(label_slots('甲\n\n', [0]), []);
+  assert.deepEqual(label_slots('', [0]), []);
+});
+
+test('add_boundary：空行變成段落標記（空白拿掉），後面的段跟著移', () => {
+  const { text, boundaries } = join_sections(['甲\n  \n乙', '丙']);
+  const slot = label_slots(text, boundaries)[0];
+  const added = add_boundary(text, boundaries, slot);
+  assert.deepEqual(added, { text: '甲\n\n乙\n\n丙', boundaries: [0, 3, 6], index: 1 });
+  assert.deepEqual(split_sections(added.text, added.boundaries), ['甲', '乙', '丙']);
+});
+
+test('remove_boundary：和上一段合併，第一段不能移除', () => {
+  assert.deepEqual(remove_boundary([0, 3, 6], 1), [0, 6]);
+  assert.deepEqual(remove_boundary([0, 3], 0), [0, 3]);
+  assert.deepEqual(split_sections('甲\n\n乙\n\n丙', [0, 6]), ['甲\n\n乙', '丙']);
+});
+
+test('clean_label_name：拿掉 [ ] = 和換行', () => {
+  assert.equal(clean_label_name(' [副歌 = A1]\n'), '副歌 A1');
+  assert.equal(clean_label_name('  '), '');
+  assert.equal(clean_label_name(null), '');
 });
