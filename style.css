@@ -1255,9 +1255,13 @@ button.popup-window-close:hover {
 	user-select: none;
 }
 
-/* 段內分段（投影片換頁）不多空間，每一行一樣高 */
+/* 段內分段（投影片換頁）：和排版編輯時一樣空一行（一行歌詞高，見 .lyrics-line 的 line-height） */
 .lyrics-paragraph {
 	margin: 0;
+}
+
+.lyrics-paragraph + .lyrics-paragraph {
+	margin-top: 1.8em;
 }
 
 /* 歌詞裡的空白在畫面上寬一點（word-spacing 只影響顯示，複製出來還是一個空白） */
