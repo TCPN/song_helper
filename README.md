@@ -67,7 +67,7 @@
   - 存回試算表（`js/sheet-save.js`、`js/sheet-api.js`）：有暫存時歌詞檢視的鉛筆右邊多一個雲朵（「存回試算表」）。按下去用 Google 登入（Google Identity Services 的 token client，
     和進階編輯器同一個 OAuth 用戶端，第一次會跳出登入／授權視窗；token 只放在記憶體），用 Sheets API 讀 A 欄找到這首歌的列，把暫存的文字照字面（RAW）寫進 I 欄（「投影片」）。
     試算表上那一格和網站載入時不一樣（別人改過）時先確認才覆蓋。成功後刪掉這首歌的暫存、更新快取，按鈕列顯示「已存回」；失敗（沒有編輯權限等）用 alert 說明，暫存留著。
-    能不能寫由登入的 Google 帳號對試算表有沒有編輯權決定。網站的網址要列在 OAuth 用戶端的「已授權的 JavaScript 來源」裡才能登入；學校網頁（www.csie.ntu.edu.tw）不顯示這個按鈕。
+    能不能寫由登入的 Google 帳號對試算表有沒有編輯權決定。網站的網址要列在 OAuth 用戶端的「已授權的 JavaScript 來源」裡才能登入（目前有 tcpn-web.appspot.com 和 www.csie.ntu.edu.tw）。
 - 螢幕寬度小於 450px（或工具列放不下）時，列印、播放、編輯、排版收進「⋮」選單（「排版…」打開的面板出現在「⋮」旁邊），「檢視」換成 icon
 - 歌曲列表最後有「沒有找到想要的歌？快來許願」，「快來許願」連到許願用的 Google 表單
 - 狀態都記在網址 hash，例如 `#song_id=12&transpose=2`（歌詞檢視再加 `&view=lyrics`），方便分享與存書籤

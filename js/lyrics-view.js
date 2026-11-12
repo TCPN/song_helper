@@ -5,7 +5,7 @@ import { song_slide_lyrics, lyrics_messages, lines_text, map_lines, UNNAMED, SPA
 import { update_hash } from './route.js';
 import { click_on_enter, message_icon, setup_dropdown, toggle_menu } from './dom.js';
 import { setup_lyrics_editor, open_lyrics_editor, close_lyrics_editor, load_local_layout, clear_local_layout, editing_song_id } from './lyrics-editor.js';
-import { can_save_to_sheet, preload_google_sign_in, save_slides_cell } from './sheet-save.js';
+import { preload_google_sign_in, save_slides_cell } from './sheet-save.js';
 import { setCachedData } from './cache.js';
 
 const CONTAINER = '#score_popup_container';
@@ -89,7 +89,7 @@ export function refresh_lyrics() {
   edit.classList.toggle('disabled', !lyrics.sections.length);
   edit.setAttribute('aria-disabled', !lyrics.sections.length);
   // 用的是這台裝置暫存的排版時，才能存回試算表；先載入 Google 登入，按下去時才能馬上開登入視窗
-  var upload_shown = lyrics.from == 'local' && can_save_to_sheet();
+  var upload_shown = lyrics.from == 'local';
   document.querySelector('#lyrics_upload').classList.toggle('hide', !upload_shown);
   if (upload_shown)
     preload_google_sign_in().catch(() => {});

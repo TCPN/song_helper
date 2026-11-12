@@ -5,11 +5,6 @@ import { OAUTH_CLIENT_ID, SHEETS_SCOPE, ID_COLUMN_INDEX, SLIDES_COLUMN_INDEX, co
 
 const GIS_URL = 'https://accounts.google.com/gsi/client';
 
-// 學校網頁不在 OAuth 用戶端允許的網站來源裡，登入不了（和「編輯」選單一樣，編輯器都在 App Engine 上）
-export function can_save_to_sheet() {
-  return location.hostname != 'www.csie.ntu.edu.tw';
-}
-
 var gis_loading = null;
 var token = null; // { access_token, expires_at }
 

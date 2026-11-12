@@ -1435,7 +1435,7 @@ button.popup-window-close:hover {
 	color: #806600;
 }
 
-/* 段落標籤（js/lyrics-editor.js）：「＋段名」和段名的輸入框放在段名的位置（js 量 top），虛線框表示還不是段名 */
+/* 段落標籤（js/lyrics-editor.js）：「＋段落標籤」和段名的輸入框放在段名的位置（js 量 top），虛線框表示還不是段名 */
 .lyrics-editor-add, .lyrics-editor-name-input {
 	position: absolute;
 	left: 0;
