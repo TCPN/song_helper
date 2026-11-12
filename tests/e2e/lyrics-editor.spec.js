@@ -348,7 +348,7 @@ test.describe('歌詞排版編輯', () => {
     await expect(area(app)).toBeFocused();
     expect(await area(app).evaluate((t) => t.value.slice(t.selectionStart))).toBe('副歌一句');
     await expect(label_menu(app)).toBeVisible();
-    await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['重新命名', /^移除標籤/]);
+    await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['重新命名', '移除標籤']);
     // 第一段不能移除
     await names(app).nth(0).click();
     await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['重新命名']);
