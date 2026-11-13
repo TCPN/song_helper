@@ -1255,9 +1255,13 @@ button.popup-window-close:hover {
 	user-select: none;
 }
 
-/* 段內分段（投影片換頁）不多空間，每一行一樣高 */
+/* 段內分段（投影片換頁）：和排版編輯時一樣空一行（一行歌詞高，見 .lyrics-line 的 line-height） */
 .lyrics-paragraph {
 	margin: 0;
+}
+
+.lyrics-paragraph + .lyrics-paragraph {
+	margin-top: 1.8em;
 }
 
 /* 歌詞裡的空白在畫面上寬一點（word-spacing 只影響顯示，複製出來還是一個空白） */
@@ -1363,6 +1367,7 @@ button.popup-window-close:hover {
 	top: 0;
 	z-index: 1;
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5em;
 	padding: 0.6em 0;
@@ -1410,6 +1415,87 @@ button.popup-window-close:hover {
 	background: #c8f0c8;
 	color: #060;
 	text-decoration: none;
+}
+
+/* 自動排版的設定（js/lyrics-editor.js）：按鈕列下面一整列（按鈕列 flex-wrap），設定一個接一個排，放不下時換行 */
+#lyrics_auto_button[aria-expanded="true"] {
+	background: #6cb4f0;
+	color: #06233f;
+}
+
+#lyrics_auto_panel {
+	flex-basis: 100%;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3em 1.2em;
+	padding-top: 0.5em;
+	border-top: 1px solid #0001;
+	font-size: 0.9em;
+}
+
+#lyrics_auto_panel.hide {
+	display: none;
+}
+
+#lyrics_auto_panel .auto-row {
+	display: flex;
+	align-items: center;
+	gap: 0.15em;
+}
+
+#lyrics_auto_panel .auto-label {
+	margin-right: 0.3em;
+	white-space: nowrap;
+}
+
+#lyrics_auto_panel .step-button {
+	padding: 0.1em 0.55em;
+	border-radius: 0.3em;
+	background: #0001;
+}
+
+#lyrics_auto_panel .step-button:hover {
+	box-shadow: none;
+	background: #0002;
+}
+
+#lyrics_auto_panel .step-button[aria-disabled="true"] {
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+#lyrics_auto_panel .auto-value {
+	min-width: 2.5ch;
+	font-family: ui-monospace, Menlo, Consolas, monospace;
+	text-align: center;
+}
+
+#lyrics_auto_panel .auto-choices {
+	display: inline-flex;
+	border: 1px solid #0002;
+	border-radius: 0.3em;
+	overflow: hidden;
+}
+
+#lyrics_auto_panel .auto-choice {
+	padding: 0.1em 0.6em;
+	cursor: pointer;
+}
+
+#lyrics_auto_panel .auto-choice + .auto-choice {
+	border-left: 1px solid #0002;
+}
+
+#lyrics_auto_panel .auto-choice[aria-checked="true"] {
+	background: #6cb4f0;
+	color: #06233f;
+}
+
+#lyrics_auto_panel .auto-note {
+	flex-basis: 100%;
+	font-size: 0.8em;
+	color: #777;
 }
 
 /* 段名浮在文字區上面，在那段第一行上面（js 量位置，和檢視時的位置一樣）；不能選取，點了游標移到那段開頭。

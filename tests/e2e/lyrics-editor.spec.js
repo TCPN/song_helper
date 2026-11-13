@@ -89,6 +89,20 @@ test.describe('歌詞排版編輯', () => {
     view_pos.names.forEach(([, y], i) => close(names_after[i], y));
   });
 
+  test('段裡有換投影片時，檢視時也空一行，每一行的位置和編輯時一樣', async ({ app }) => {
+    await app.goto('#song_id=12&view=lyrics');
+    const view_tops = await app.page.locator('#lyrics_sections .lyrics-line').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+    await button(app, 'edit').click();
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌一句');
+    const edit_tops = await area(app).evaluate((t) => {
+      const s = getComputedStyle(t);
+      const top = t.getBoundingClientRect().top + parseFloat(s.borderTopWidth) + parseFloat(s.paddingTop);
+      return [0, 1, 3, 5].map((k) => top + k * parseFloat(s.lineHeight));
+    });
+    expect(view_tops.length).toBe(4);
+    view_tops.forEach((y, i) => expect(Math.abs(y - edit_tops[i])).toBeLessThan(1));
+  });
+
   test('鉛筆在按鈕列第三個；打開後整首一個文字區，段名浮在上面、不能選取；複製的按鈕列和歌詞藏起來', async ({ app }) => {
     await app.goto('#song_id=12&view=lyrics');
     await expect(app.page.locator('#lyrics_view .lyrics-actions > *').nth(0)).toHaveId('lyrics_select_all');
