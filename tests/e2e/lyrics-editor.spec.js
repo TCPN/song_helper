@@ -25,6 +25,9 @@ test.describe('歌詞排版編輯', () => {
   const button = (app, id) => app.page.locator('#lyrics_' + id);
   const view_lines = (app) => app.page.locator('#lyrics_sections .lyrics-line');
   const view_messages = (app) => app.page.locator('#lyrics_messages li');
+  const add_button = (app) => app.page.locator('#lyrics_editor_add');
+  const name_input = (app) => app.page.locator('#lyrics_editor_name_input');
+  const label_menu = (app) => app.page.locator('#lyrics_editor_label_menu');
   const saved = (app) => app.page.evaluate(() => JSON.parse(localStorage.getItem('lyrics_layout') || '{}'));
 
   async function open_editor(app, song_id) {
@@ -140,7 +143,7 @@ test.describe('歌詞排版編輯', () => {
     await caret(app, '副歌一句', true);
     await app.page.keyboard.press('Backspace');
     await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌一句');
-    await expect(status(app)).toHaveText('段落之間的空行不能修改');
+    await expect(status(app)).toHaveText('段落之間的空行不能修改（點段名可以移除段落標籤）');
     await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
     // 全選後刪除
     await area(app).focus();
@@ -235,7 +238,7 @@ test.describe('歌詞排版編輯', () => {
     await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\nㄒㄧ\n副歌一句');
     await cdp.send('Input.insertText', { text: '下' });
     await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌一句');
-    await expect(status(app)).toHaveText('段落之間的空行不能修改');
+    await expect(status(app)).toHaveText('段落之間的空行不能修改（點段名可以移除段落標籤）');
     await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
     // 之後照常編輯
     await caret(app, '副歌');
@@ -339,11 +342,178 @@ test.describe('歌詞排版編輯', () => {
     await expect(view_lines(app)).toHaveText(['第一句 第二句', '第三句', '第四句', '副歌一句']);
   });
 
-  test('點段名：游標移到那段的開頭', async ({ app }) => {
+  test('點段名：游標移到那段的開頭，出現改名／移除段落標籤的選單', async ({ app }) => {
     await open_editor(app, 12);
     await names(app).nth(1).click();
     await expect(area(app)).toBeFocused();
     expect(await area(app).evaluate((t) => t.value.slice(t.selectionStart))).toBe('副歌一句');
+    await expect(label_menu(app)).toBeVisible();
+    await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['重新命名', '移除標籤']);
+    // 第一段不能移除
+    await names(app).nth(0).click();
+    await expect(label_menu(app).locator('.menu-item:visible')).toHaveText(['重新命名']);
+    // 點別的地方、打字、按 Esc 時收起來
+    await area(app).click();
+    await expect(label_menu(app)).toBeHidden();
+    await names(app).nth(1).click();
+    await app.page.keyboard.type(' ');
+    await expect(label_menu(app)).toBeHidden();
+    await names(app).nth(1).click();
+    await app.page.keyboard.press('Escape');
+    await expect(label_menu(app)).toBeHidden();
+  });
+
+  test('段落標籤：改名保留「= A1」；只用鍵盤也能加段名、打開段名選單；段名輸入框裡 Ctrl+S 先確定段名再存檔', async ({ app }) => {
+    await open_editor(app, 12);
+    // 鍵盤：Tab 到段名、Enter 打開選單，焦點在第一項，Enter 改名
+    await names(app).nth(0).focus();
+    await app.page.keyboard.press('Enter');
+    await expect(label_menu(app)).toBeVisible();
+    await expect(label_menu(app).locator('.menu-item').first()).toBeFocused();
+    await app.page.keyboard.press('Enter');
+    await expect(name_input(app)).toBeFocused();
+    await app.page.keyboard.type('主歌一');
+    await app.page.keyboard.press('Enter');
+    await expect(names(app)).toHaveText(['主歌一', '副歌']);
+    // 鍵盤：游標在空行時 Tab 到「＋段落標籤」，Enter 輸入段名
+    await caret(app, '第三句\n');
+    await expect(add_button(app)).toBeVisible();
+    await app.page.keyboard.press('Tab');
+    await expect(add_button(app)).toBeFocused();
+    await app.page.keyboard.press('Enter');
+    await expect(name_input(app)).toBeFocused();
+    await app.page.keyboard.type('主歌二');
+    await app.page.keyboard.press('ControlOrMeta+s');
+    await expect(names(app)).toHaveText(['主歌一', '主歌二', '副歌']);
+    await expect(status(app)).toHaveText('已存檔');
+    expect(await saved(app)).toEqual({ 12: '[主歌一 = A1]\n第一句 第二句\n第三句\n\n[主歌二]\n第四句\n\n[副歌]\n副歌一句' });
+  });
+
+  test('段落標籤：輸入段名時點到別處也算確定，焦點留在點到的地方', async ({ app }) => {
+    await open_editor(app, 12);
+    await caret(app, '第三句\n');
+    await add_button(app).click();
+    await app.page.keyboard.type('主歌2');
+    await app.page.locator('#lyrics_title').click();
+    await expect(name_input(app)).toBeHidden();
+    await expect(names(app)).toHaveText(['主歌', '主歌2', '副歌']);
+    await expect(area(app)).not.toBeFocused();
+  });
+
+  test('段落標籤：輸入新段名時直接點後面的段名，選單開在被點的那段', async ({ app }) => {
+    await open_editor(app, 12);
+    await caret(app, '第三句\n');
+    await add_button(app).click();
+    await app.page.keyboard.type('新段');
+    await names(app).nth(1).click();
+    await expect(names(app)).toHaveText(['主歌', '新段', '副歌']);
+    await label_menu(app).getByText('移除標籤').click();
+    await expect(names(app)).toHaveText(['主歌', '新段']);
+  });
+
+  test('段落標籤：游標停在段內的空行時出現「＋段落標籤」，輸入段名後從那裡分成新的一段；字不變、沒有警告，可以復原', async ({ app }) => {
+    await open_editor(app, 12);
+    const text = '第一句 第二句\n第三句\n\n第四句\n\n副歌一句';
+    // 不是空行、段和段之間的空行：不出現
+    await caret(app, '第三句');
+    await expect(add_button(app)).toBeHidden();
+    await caret(app, '第四句\n');
+    await expect(add_button(app)).toBeHidden();
+    // 段內的空行
+    await caret(app, '第三句\n');
+    await expect(add_button(app)).toBeVisible();
+    // 「＋段落標籤」在空行裡，和段名的位置一樣（在下一行的正上方）
+    const line = await area(app).evaluate((t) => parseFloat(getComputedStyle(t).lineHeight));
+    const [first] = await name_tops(app);
+    const add_top = await add_button(app).evaluate((e) => e.getBoundingClientRect().top);
+    expect(Math.abs(add_top - first - 3 * line)).toBeLessThan(2);
+    await add_button(app).click();
+    await expect(name_input(app)).toBeFocused();
+    await app.page.keyboard.type('主歌2');
+    await app.page.keyboard.press('Enter');
+    await expect(name_input(app)).toBeHidden();
+    await expect(names(app)).toHaveText(['主歌', '主歌2', '副歌']);
+    await expect(area(app)).toHaveValue(text);
+    await expect(area(app)).toBeFocused();
+    expect(await area(app).evaluate((t) => t.value.slice(t.selectionStart))).toBe('第四句\n\n副歌一句');
+    await expect(warnings(app)).toHaveCount(0);
+    await expect(button(app, 'save')).toHaveAttribute('aria-disabled', 'false');
+    // 新的段落標記和原本的一樣不能刪
+    await app.page.keyboard.press('Backspace');
+    await expect(area(app)).toHaveValue(text);
+    await expect(names(app)).toHaveText(['主歌', '主歌2', '副歌']);
+    // 復原、重做
+    await button(app, 'undo').click();
+    await expect(names(app)).toHaveText(['主歌', '副歌']);
+    await expect(button(app, 'save')).toHaveAttribute('aria-disabled', 'true');
+    await button(app, 'redo').click();
+    await expect(names(app)).toHaveText(['主歌', '主歌2', '副歌']);
+    await button(app, 'save').click();
+    expect(app.dialogs).toEqual([]);
+    expect(await saved(app)).toEqual({ 12: '[主歌 = A1]\n第一句 第二句\n第三句\n\n[主歌2]\n第四句\n\n[副歌]\n副歌一句' });
+    await button(app, 'editor_close').click();
+    await expect(app.page.locator('#lyrics_sections .lyrics-name')).toHaveText(['主歌', '主歌2', '副歌']);
+  });
+
+  test('段落標籤：輸入段名時按 Esc 或沒打字就不加；只有空白的空行也可以加（空白拿掉）', async ({ app }) => {
+    await open_editor(app, 12);
+    await caret(app, '第三句\n');
+    await add_button(app).click();
+    await app.page.keyboard.type('X');
+    await app.page.keyboard.press('Escape');
+    await expect(name_input(app)).toBeHidden();
+    await expect(editor(app)).toBeVisible();
+    await expect(names(app)).toHaveText(['主歌', '副歌']);
+    await caret(app, '第三句\n');
+    await add_button(app).click();
+    await app.page.keyboard.press('Enter');
+    await expect(names(app)).toHaveText(['主歌', '副歌']);
+    await expect(button(app, 'undo')).toHaveAttribute('aria-disabled', 'true');
+    // 空行裡打空格（每個空格是一步），再加段落標籤
+    await caret(app, '第三句\n');
+    await app.page.keyboard.type('  ');
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n  \n第四句\n\n副歌一句');
+    await expect(add_button(app)).toBeVisible();
+    await add_button(app).click();
+    await app.page.keyboard.type('[間奏]');
+    await app.page.keyboard.press('Enter');
+    // [ ] = 是格式用的字，不能放在段名裡
+    await expect(names(app)).toHaveText(['主歌', '間奏', '副歌']);
+    await expect(area(app)).toHaveValue('第一句 第二句\n第三句\n\n第四句\n\n副歌一句');
+  });
+
+  test('段落標籤：移除後和上一段合併（空行留著）；改名；比對文字改成整首一起比', async ({ app }) => {
+    await open_editor(app, 10);
+    await names(app).nth(1).click();
+    await label_menu(app).getByText('移除標籤').click();
+    await expect(names(app)).toHaveText(['A1', 'B']);
+    await expect(area(app)).toHaveValue('一二三四五六七八\n\n甲乙丙丁戊己庚辛\n\n副');
+    await expect(warnings(app)).toHaveCount(0);
+    // 原本段落標記的空行變成段內的空行，可以再加回來、也可以刪
+    await caret(app, '五六七八\n');
+    await expect(add_button(app)).toBeVisible();
+    // 改名
+    await names(app).nth(1).click();
+    await label_menu(app).getByText('重新命名').click();
+    await expect(name_input(app)).toBeFocused();
+    await expect(name_input(app)).toHaveValue('B');
+    await app.page.keyboard.type('副歌');
+    await app.page.keyboard.press('Enter');
+    await expect(names(app)).toHaveText(['A1', '副歌']);
+    // 段對不起來時改到字：警告是整首
+    await caret(app, '副');
+    await app.page.keyboard.type('啊');
+    await expect(warnings(app)).toHaveText([/整首/]);
+    await button(app, 'undo').click();
+    await expect(warnings(app)).toHaveCount(0);
+    await button(app, 'undo').click();
+    await expect(names(app)).toHaveText(['A1', 'B']);
+    await button(app, 'undo').click();
+    await expect(names(app)).toHaveText(['A1', 'A2', 'B']);
+    await button(app, 'redo').click();
+    await button(app, 'redo').click();
+    await button(app, 'save').click();
+    expect(await saved(app)).toEqual({ 10: '[A1]\n一二三四五六七八\n\n甲乙丙丁戊己庚辛\n\n[副歌]\n副' });
   });
 
   test('換歌或回到歌譜檢視時不再編輯', async ({ app }) => {

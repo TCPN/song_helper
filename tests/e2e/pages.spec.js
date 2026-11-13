@@ -155,6 +155,21 @@ test.describe('分頁顯示', () => {
     await expect(indicator(app)).toHaveText(`1 / ${pages}`);
   });
 
+  test('焦點在歌詞排版編輯的段名輸入框時，方向鍵移動游標、不換頁', async ({ app }) => {
+    await app.goto('#song_id=1');
+    const pages = await page_count(app);
+    expect(pages).toBeGreaterThan(1);
+    // 直接把輸入框露出來測按鍵（歌詞排版編輯的段名輸入，js/lyrics-editor.js）
+    await app.page.evaluate(() => {
+      for (const el of [document.querySelector('#lyrics_view'), document.querySelector('#lyrics_editor'), document.querySelector('#lyrics_editor_name_input')])
+        el.classList.remove('hide');
+    });
+    const input = app.page.locator('#lyrics_editor_name_input');
+    await input.focus();
+    await app.page.keyboard.press('ArrowRight');
+    await expect(indicator(app)).toHaveText(`1 / ${pages}`);
+  });
+
   test('換頁後捲回這頁的最上面', async ({ app }) => {
     await app.page.setViewportSize({ width: 375, height: 667 });
     await app.goto('#song_id=1');

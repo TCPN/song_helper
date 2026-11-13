@@ -105,7 +105,14 @@
 						<div class="lyrics-editor-box">
 							<div id="lyrics_editor_marks" aria-hidden="true"></div>
 							<textarea id="lyrics_editor_text" class="lyrics-editor-text" rows="1" spellcheck="false" aria-label="歌詞排版"></textarea>
+							<span id="lyrics_editor_add" class="lyrics-name lyrics-editor-add hide" role="button" tabindex="0" title="在這個空行加段落標籤，從這裡分成新的一段">＋段落標籤</span>
 							<div id="lyrics_editor_names" class="lyrics-editor-names"></div>
+							<!-- 段落標籤（js/lyrics-editor.js）：游標在段內的空行時出現「＋段落標籤」；段名的輸入框；點段名出現的選單 -->
+							<input id="lyrics_editor_name_input" class="lyrics-name lyrics-editor-name-input hide" type="text" placeholder="段名" aria-label="段名" autocomplete="off" spellcheck="false">
+							<div id="lyrics_editor_label_menu" class="hide menu lyrics-menu lyrics-editor-label-menu" role="menu">
+								<span class="menu-item" data-label-action="rename" role="menuitem" tabindex="0">重新命名</span>
+								<span class="menu-item" data-label-action="remove" role="menuitem" tabindex="0">移除標籤</span>
+							</div>
 						</div>
 						<ul id="lyrics_editor_warnings" class="lyrics-editor-warnings" aria-live="polite"></ul>
 					</div>
