@@ -6,7 +6,7 @@
 // 復原／重做用自己的紀錄（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是），存檔存在這台裝置的 localStorage
 // （「投影片」欄的格式；歌詞檢視的「存回試算表」再寫進試算表，見 js/lyrics-view.js）。編輯狀態不放進網址。
 import { click_on_enter, message_icon } from './dom.js';
-import { auto_layout_text, parse_auto_layout, step_auto_layout, auto_layout_at_limit, align_hints, hints_for } from './auto-layout.js';
+import { auto_layout_text, parse_auto_layout, step_auto_layout, auto_layout_at_limit, hints_for_text } from './auto-layout.js';
 import { UNNAMED, half_width_spaces, sections_from_abc } from './slide-lyrics.js';
 import { section_to_text, sections_to_cell, apply_texts, layout_changes, word_diff, trim_diff, parse_saved_layouts,
   create_history, history_record, history_undo, history_redo, can_undo, can_redo,
@@ -620,7 +620,7 @@ function auto_layout() {
     if (editing.abc_sections === undefined)
       editing.abc_sections = editing.abc ? sections_from_abc(editing.abc, { hints: true }) : null;
     var base = current_texts();
-    var hints = base.map((t, i) => align_hints(t, hints_for(editing.abc_sections, editing.labels[i].name, editing.labels[i].source)));
+    var hints = base.map((t, i) => hints_for_text(editing.abc_sections, t, editing.labels[i].name, editing.labels[i].source));
     editing.auto = { base, hints, key: 'auto:' + Date.now(), result: null };
   }
   var { text, boundaries } = join_sections(editing.auto.base.map((t, i) => auto_layout_text(t, auto_options, space.get(), editing.auto.hints[i])));

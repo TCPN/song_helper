@@ -12,7 +12,7 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { parse_slide_cell, sections_from_abc } from '../js/slide-lyrics.js';
-import { auto_layout_text, align_hints, hints_for, DEFAULT_AUTO_LAYOUT } from '../js/auto-layout.js';
+import { auto_layout_text, hints_for_text, lcs_map, DEFAULT_AUTO_LAYOUT } from '../js/auto-layout.js';
 import { section_to_text } from '../js/lyric-layout.js';
 import { fetch_songs } from './fetch-songs.mjs';
 
@@ -49,26 +49,9 @@ export function break_positions(texts) {
   return { chars, breaks };
 }
 
-// 兩串字的最長共同子序列 → a 的第 i 個字對到 b 的第幾個字（對不到是 -1）
-function align(a, b) {
-  var n = a.length, m = b.length, width = m + 1;
-  var lcs = new Uint16Array((n + 1) * width);
-  for (var i = n - 1; i >= 0; i--)
-    for (var j = m - 1; j >= 0; j--)
-      lcs[i * width + j] = a[i] == b[j] ? lcs[(i + 1) * width + j + 1] + 1 : Math.max(lcs[(i + 1) * width + j], lcs[i * width + j + 1]);
-  var map = new Array(n).fill(-1);
-  i = 0; j = 0;
-  while (i < n && j < m) {
-    if (a[i] == b[j]) { map[i] = j; i++; j++; }
-    else if (lcs[(i + 1) * width + j] >= lcs[i * width + j + 1]) i++;
-    else j++;
-  }
-  return { map, common: lcs[0] };
-}
-
 // 人工的換行 vs 某種做法的換行 → { precision, recall, f1 }（最後一個字後面不算）
 function compare(human, guess) {
-  var { map } = align(human.chars, guess.chars);
+  var { map } = lcs_map(human.chars, guess.chars);
   var last_h = human.chars.length - 1, last_g = guess.chars.length - 1;
   var human_breaks = [...human.breaks].filter((i) => i != last_h && map[i] >= 0);
   var guess_breaks = [...guess.breaks].filter((j) => j != last_g);
@@ -89,12 +72,12 @@ function evaluate(song) {
   var human = break_positions(human_sections.map(section_to_text));
   var score_lines = break_positions(abc_texts);
   // 字要大部分對得上才算（「投影片」欄和譜上的歌詞可能是不同版本）
-  var { common } = align(human.chars, score_lines.chars);
+  var { common } = lcs_map(human.chars, score_lines.chars);
   if (common < 0.8 * Math.max(human.chars.length, score_lines.chars.length))
     return null;
   // 只看文字：給全是 0 的分數，譜的換行就只當一般的弱斷點（不給的話，原本的換行會被當成人工的換行保留下來）
   var text_only = abc_texts.map((t) => auto_layout_text(t, options, 'half', new Array(t.replace(/\s+/g, '').length).fill(0)));
-  var with_score = abc_texts.map((t, i) => auto_layout_text(t, options, 'half', align_hints(t, hints_for(abc_sections, abc_sections[i].name))));
+  var with_score = abc_texts.map((t, i) => auto_layout_text(t, options, 'half', hints_for_text(abc_sections, t, abc_sections[i].name)));
   return {
     id: song.id, name: song.name,
     texts: { human: human_sections.map(section_to_text), score_lines: abc_texts, text_only, with_score },

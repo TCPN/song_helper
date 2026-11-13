@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_AUTO_LAYOUT, normalize_auto_layout, parse_auto_layout, step_auto_layout, auto_layout_at_limit,
-  text_width, page_sizes, auto_layout_text, align_hints, hints_for } from '../../js/auto-layout.js';
+  text_width, page_sizes, auto_layout_text, align_hints, hints_for_text, lcs_map } from '../../js/auto-layout.js';
 import { sections_from_abc } from '../../js/slide-lyrics.js';
 
 // 每行一段文字（沒有譜）
@@ -72,25 +72,33 @@ test('分行（有譜）：譜行接起來，在休止符、長音等斷句分�
   const sections = sections_from_abc(abc, { hints: true });
   const text = sections[0].paragraphs.flat().join('\n');
   assert.equal(text, '春天花開了 小鳥在唱\n歌綠草青青');
-  const hints = align_hints(text, hints_for(sections, sections[0].name));
+  const hints = hints_for_text(sections, text, sections[0].name);
   const options = { lines: 12, max_lines: 12, width: 6 };
   assert.equal(auto_layout_text(text, options, 'half', hints), '春天花開了\n小鳥在唱歌\n綠草青青');
   // 沒有譜時，原本的換行保留
   assert.equal(auto_layout_text(text, options), '春天花開了\n小鳥在唱\n歌綠草青青');
 });
 
-test('align_hints／hints_for：譜的分數對到文字（字有改過也對得到大部分）', () => {
+test('align_hints／hints_for_text：譜的分數對到文字（字有改過也對得到大部分）', () => {
   const source = [...'一二三四'].map((c, i) => ({ c, s: i }));
   assert.deepEqual(align_hints('一二 三四', source), [0, 1, 2, 3]);
   assert.deepEqual(align_hints('一甲三四', source), [0, undefined, 2, 3]);
   assert.equal(align_hints('一二', null), null);
-  const sections = [{ name: 'A1', hints: [{ c: '甲', s: 1 }] }, { name: 'B', hints: [{ c: '乙', s: 2 }] }, { name: 'W', hints: null }];
-  assert.deepEqual(hints_for(sections, 'B'), [{ c: '乙', s: 2 }]);
+  const hints = (text, s) => [...text].map((c) => ({ c, s }));
+  const sections = [{ name: 'A1', hints: hints('甲乙丙丁', 1) }, { name: 'B', hints: hints('春夏秋冬', 2) }, { name: 'W', hints: null }];
+  assert.deepEqual(hints_for_text(sections, '春夏 秋冬', 'B'), [2, 2, 2, 2]);
   // [主歌 = A1] 用 A1 對
-  assert.deepEqual(hints_for(sections, '主歌', 'A1'), [{ c: '甲', s: 1 }]);
-  // 對不到段名時用整首
-  assert.deepEqual(hints_for(sections, '其他'), [{ c: '甲', s: 1 }, { c: '乙', s: 2 }]);
-  assert.equal(hints_for(null, 'A'), null);
+  assert.deepEqual(hints_for_text(sections, '甲乙丙丁', '主歌', 'A1'), [1, 1, 1, 1]);
+  // 對不到段名時挑字對得上的那段
+  assert.deepEqual(hints_for_text(sections, '春夏秋冬', '其他'), [2, 2, 2, 2]);
+  // 八成的字對不上就不用譜（不拿別段的分數硬對）
+  assert.equal(hints_for_text(sections, '甲乙春夏', '其他'), null);
+  assert.equal(hints_for_text(null, '甲', 'A'), null);
+});
+
+test('lcs_map：最長共同子序列的對應', () => {
+  assert.deepEqual(lcs_map([...'abcd'], [...'xbyd']), { map: [-1, 1, -1, 3], common: 2 });
+  assert.deepEqual(lcs_map([], [...'ab']), { map: [], common: 0 });
 });
 
 test('page_sizes：每頁 lines 到 max_lines 行，平均、前面的頁多一行', () => {

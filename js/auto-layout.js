@@ -145,24 +145,19 @@ function word_starts(text) {
   return new Set([...seg.segment(text)].map((part) => part.index));
 }
 
-// 譜的分數對到這段文字的字：source（[{ c, s }]）和 text 去掉空白後的字做最長共同子序列，對到的字用譜的 s，
-// 對不到的是 undefined（沒有分數）。source 是 null 或空的時候傳回 null
-export function align_hints(text, source) {
-  if (!source || !source.length)
-    return null;
-  var a = [...String(text).replace(/\s+/g, '')];
-  var b = source;
+// 兩串的最長共同子序列：a 的第 i 個對到 b 的第幾個（對不到是 -1），common 是對到幾個。same(x, y) 判斷兩個是不是同一個字
+export function lcs_map(a, b, same = (x, y) => x == y) {
   var n = a.length, m = b.length;
   var width = m + 1;
   var lcs = new Uint16Array((n + 1) * width);
   for (var i = n - 1; i >= 0; i--)
     for (var j = m - 1; j >= 0; j--)
-      lcs[i * width + j] = a[i] == b[j].c ? lcs[(i + 1) * width + j + 1] + 1 : Math.max(lcs[(i + 1) * width + j], lcs[i * width + j + 1]);
-  var result = new Array(n).fill(undefined);
+      lcs[i * width + j] = same(a[i], b[j]) ? lcs[(i + 1) * width + j + 1] + 1 : Math.max(lcs[(i + 1) * width + j], lcs[i * width + j + 1]);
+  var map = new Array(n).fill(-1);
   i = 0; j = 0;
   while (i < n && j < m) {
-    if (a[i] == b[j].c) {
-      result[i] = b[j].s;
+    if (same(a[i], b[j])) {
+      map[i] = j;
       i++; j++;
     } else if (lcs[(i + 1) * width + j] >= lcs[i * width + j + 1]) {
       i++;
@@ -170,19 +165,43 @@ export function align_hints(text, source) {
       j++;
     }
   }
-  return result;
+  return { map, common: n && m ? lcs[0] : 0 };
 }
 
-// 從譜上抽出的各段（sections_from_abc(abc, { hints: true })）裡，挑這段要用的分數：
-// 段名（或 [段名 = A1] 的 A1）一樣的那段；沒有時用整首接起來的分數
-export function hints_for(abc_sections, name, source = null) {
-  if (!abc_sections || !abc_sections.length)
+// 譜的分數對到這段文字的字：source（[{ c, s }]）和 text 去掉空白後的字做最長共同子序列，對到的字用譜的 s，
+// 對不到的是 undefined（沒有分數）。source 是 null 或空的時候傳回 null
+export function align_hints(text, source) {
+  if (!source || !source.length)
     return null;
-  var same = abc_sections.find((s) => s.hints && (s.name === source || s.name === name));
+  var { map } = lcs_map([...String(text).replace(/\s+/g, '')], source, (c, h) => c == h.c);
+  return map.map((j) => (j >= 0 ? source[j].s : undefined));
+}
+
+// 沒有同名段時，別段的字要有這麼多比例對得上才用它的分數
+const MIN_MATCH = 0.8;
+
+// 從譜上抽出的各段（sections_from_abc(abc, { hints: true })）裡，挑這段文字要用的分數（align_hints 的結果）：
+// 段名（或 [段名 = A1] 的 A1）一樣的那段；沒有時挑字對得最多的一段，但要有八成的字對得上，
+// 不然不用譜（整首裡重複的字很多，硬對會拿到別的地方的分數）
+export function hints_for_text(abc_sections, text, name, source = null) {
+  var sections = (abc_sections || []).filter((s) => s.hints && s.hints.length);
+  var same = sections.find((s) => s.name === source || s.name === name);
   if (same)
-    return same.hints;
-  var all = abc_sections.flatMap((s) => s.hints || []);
-  return all.length ? all : null;
+    return align_hints(text, same.hints);
+  var chars = [...String(text).replace(/\s+/g, '')];
+  if (!chars.length)
+    return null;
+  var best = null, best_common = 0;
+  for (const s of sections) {
+    var { common } = lcs_map(chars, s.hints, (c, h) => c == h.c);
+    if (common > best_common) {
+      best = s;
+      best_common = common;
+    }
+  }
+  if (!best || best_common < MIN_MATCH * Math.max(chars.length, best.hints.length))
+    return null;
+  return align_hints(text, best.hints);
 }
 
 // 一段的文字 → 字塊（中文一個字一塊、英數連在一起一塊、標點接在前一塊）與每塊後面的空隙：
