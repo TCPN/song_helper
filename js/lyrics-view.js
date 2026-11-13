@@ -144,7 +144,7 @@ function edit_layout() {
   var song = state.displayingSong;
   if (!shown_lyrics || !song || !shown_lyrics.sections.length)
     return;
-  open_lyrics_editor(song.id, shown_lyrics.sections, shown_lyrics.source_sections || shown_lyrics.sections);
+  open_lyrics_editor(song.id, shown_lyrics.sections, shown_lyrics.source_sections || shown_lyrics.sections, song.abc || null);
 }
 
 // 關閉譜面時：回到歌譜檢視，下次打開重新列出

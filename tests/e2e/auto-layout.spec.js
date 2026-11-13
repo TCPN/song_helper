@@ -8,6 +8,11 @@ const AUTO_SONGS = [
     slides: '[A]\n一二三四 五六七八 甲乙丙丁\n子丑寅卯\n\n辰巳午未\n[B]\n春夏秋冬',
     abc: 'X:20\nT:Auto\nM:4/4\nL:1/4\nK:C\nCDEF|]\n',
   },
+  {
+    // 從譜上抽出歌詞：「了」後面有休止符；「唱」和下一行的「歌」是同一句，被譜的換行切開
+    id: 21, name: '看譜斷句的歌', tone: 'C', timesig: '4/4', melody: 'CDEF',
+    abc: 'X:21\nT:Score\nM:4/4\nL:1/4\nK:C\nCDEF|G2 z2|ABcd|\nw:春 天 花 開 了 小 鳥 在 唱\ne4|cdef|g4|]\nw:歌 綠 草 青 青\n',
+  },
 ];
 
 test.use({ songs: [AUTO_SONGS, { option: true }] });
@@ -51,11 +56,12 @@ test.describe('自動排版', () => {
     await expect(area(app)).toHaveValue('一二三四 五六七八\n甲乙丙丁\n\n子丑寅卯\n辰巳午未\n\n春夏秋冬');
     expect(await app.page.evaluate(() => JSON.parse(localStorage.getItem('lyrics_auto_layout')))).toEqual({ lines: 2, max_lines: 2, width: 9 });
     expect(await app.page.evaluate(() => localStorage.getItem('lyrics_space_mode'))).toBe('full');
-    // 隱藏空格：和歌詞檢視的「空格」選單同一個設定，面板上也選得到；寬 8，每行 8 字放得下
+    // 隱藏空格：和歌詞檢視的「空格」選單同一個設定，面板上也選得到；寬 8，兩個片語接起來（不顯示空格）剛好 8 字
     await step(app, 'width', -1).click();
     await panel(app).locator('[data-auto-space="hide"]').click();
     await expect(panel(app).locator('[data-auto-space="hide"]')).toHaveAttribute('aria-checked', 'true');
-    await expect(area(app)).toHaveValue('一二三四 五六七八\n甲乙丙丁\n\n子丑寅卯\n辰巳午未\n\n春夏秋冬');
+    // 三個片語都是 4 字，分成兩行時前後兩種一樣好，取後面多一個片語的
+    await expect(area(app)).toHaveValue('一二三四\n五六七八 甲乙丙丁\n\n子丑寅卯\n辰巳午未\n\n春夏秋冬');
     await panel(app).locator('[data-auto-space="full"]').click();
     await step(app, 'width', 1).click();
     // 字沒變：沒有警告，存檔不用確認
@@ -88,5 +94,14 @@ test.describe('自動排版', () => {
     await app.page.locator('#lyrics_undo').click();
     await expect(area(app)).toHaveValue('一二三四 五六七八 甲乙丙丁\n子丑寅卯\n\n辰巳午未\n\n春夏秋冬');
     await expect(app.page.locator('#lyrics_undo')).toHaveClass(/disabled/);
+  });
+
+  test('從譜上抽出的歌詞：譜行接起來，在休止符、長音的地方換行', async ({ app }) => {
+    await app.page.addInitScript(() => localStorage.setItem('lyrics_auto_layout', JSON.stringify({ lines: 3, max_lines: 3, width: 6 })));
+    await app.goto('#song_id=21&view=lyrics');
+    await app.page.locator('#lyrics_edit').click();
+    await expect(area(app)).toHaveValue('春天花開了 小鳥在唱\n歌綠草青青');
+    await app.page.locator('#lyrics_auto_button').click();
+    await expect(area(app)).toHaveValue('春天花開了\n小鳥在唱歌\n綠草青青');
   });
 });

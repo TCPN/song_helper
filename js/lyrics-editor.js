@@ -6,8 +6,8 @@
 // 復原／重做用自己的紀錄（跨所有段；Ctrl+Z、Ctrl+Shift+Z、Ctrl+Y 也是），存檔存在這台裝置的 localStorage
 // （「投影片」欄的格式；歌詞檢視的「存回試算表」再寫進試算表，見 js/lyrics-view.js）。編輯狀態不放進網址。
 import { click_on_enter, message_icon } from './dom.js';
-import { auto_layout_text, parse_auto_layout, step_auto_layout, auto_layout_at_limit } from './auto-layout.js';
-import { UNNAMED, half_width_spaces } from './slide-lyrics.js';
+import { auto_layout_text, parse_auto_layout, step_auto_layout, auto_layout_at_limit, align_hints, hints_for } from './auto-layout.js';
+import { UNNAMED, half_width_spaces, sections_from_abc } from './slide-lyrics.js';
 import { section_to_text, sections_to_cell, apply_texts, layout_changes, word_diff, trim_diff, parse_saved_layouts,
   create_history, history_record, history_undo, history_redo, can_undo, can_redo,
   join_sections, split_sections, apply_edit, label_slots, add_boundary, remove_boundary, clean_label_name } from './lyric-layout.js';
@@ -195,7 +195,8 @@ function render_names() {
 }
 
 // 打開編輯：sections 是現在顯示的段（有暫存就是暫存的），source_sections 是原本的段（比對文字用）
-export function open_lyrics_editor(song_id, sections, source_sections) {
+// abc：這首歌的 ABC（自動排版看譜決定斷句位置用，沒有時 null）
+export function open_lyrics_editor(song_id, sections, source_sections, abc = null) {
   // 空白一律用半形（全形空白換成半形，長度一樣，位置不變）
   var texts = sections.map(section_to_text).map(half_width_spaces);
   var original = source_sections.map(section_to_text);
@@ -205,7 +206,7 @@ export function open_lyrics_editor(song_id, sections, source_sections) {
   editing = { song_id, labels: labels.slice(), source_cell: sections_to_cell(source_sections),
     source_names: source_sections.map((s) => s.name), original_sections: original, original_whole: original.join('\n'),
     whole: false, saved: start, history: create_history(start), boundaries: boundaries.slice(), last_value: text,
-    before_input: null, changed: new Set(), add_slot: null, naming: null };
+    before_input: null, changed: new Set(), add_slot: null, naming: null, abc, abc_sections: undefined };
   render_names();
   textarea().value = text;
   $('#lyrics_view').classList.add('editing');
@@ -614,9 +615,15 @@ function auto_layout() {
   close_label_menu();
   cancel_naming();
   var now = snapshot();
-  if (!editing.auto || !same(now, editing.auto.result))
-    editing.auto = { base: current_texts(), key: 'auto:' + Date.now(), result: null };
-  var { text, boundaries } = join_sections(editing.auto.base.map((t) => auto_layout_text(t, auto_options, space.get())));
+  if (!editing.auto || !same(now, editing.auto.result)) {
+    // 譜的斷句分數（第一次自動排版時才算），對到每段的字
+    if (editing.abc_sections === undefined)
+      editing.abc_sections = editing.abc ? sections_from_abc(editing.abc, { hints: true }) : null;
+    var base = current_texts();
+    var hints = base.map((t, i) => align_hints(t, hints_for(editing.abc_sections, editing.labels[i].name, editing.labels[i].source)));
+    editing.auto = { base, hints, key: 'auto:' + Date.now(), result: null };
+  }
+  var { text, boundaries } = join_sections(editing.auto.base.map((t, i) => auto_layout_text(t, auto_options, space.get(), editing.auto.hints[i])));
   var area = textarea();
   area.value = text;
   editing.boundaries = boundaries;

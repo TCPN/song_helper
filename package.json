@@ -10,7 +10,8 @@
     "test:e2e": "playwright test",
     "test:headed": "playwright test --headed",
     "update-songs": "node scripts/update-songs.mjs",
-    "check-songs": "node scripts/check-songs.mjs"
+    "check-songs": "node scripts/check-songs.mjs",
+    "eval-auto-layout": "node scripts/eval-auto-layout.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.56.0"

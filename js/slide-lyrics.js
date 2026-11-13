@@ -75,25 +75,57 @@ export function parse_slide_cell(text) {
 // 中日韓文字（含全形標點）：兩個音節之間如果有一邊是這種字，接起來時不加空格
 export const CJK = /[\u2E80-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF\uFF00-\uFFEF]/;
 
+// 音符字母後面的八度記號與長度（2、/、3/2、//…）→ { len（以 L: 為單位）, used（用掉幾個字） }
+function note_length(text) {
+  var m = text.match(/^[,']*(\d*)(\/*)(\d*)/);
+  var len = m[1] ? Number(m[1]) : 1;
+  if (m[2])
+    len /= m[3] ? Number(m[3]) * 2 ** (m[2].length - 1) : 2 ** m[2].length;
+  return { len, used: m[0].length };
+}
+
 // 一行譜裡有歌詞的音符數，與段落標記、小節線、休止符的位置（都以「之前有幾個音符」表示）
-// → { marks: [{ name, at }]（[P:B] 的段名與位置）, bars: [位置…], rests: [位置…] }
+// → { marks: [{ name, at }]（[P:B] 的段名與位置）, bars: [位置…], rests: [位置…], notes: [{ len, fermata, breath }…] }
 // 休止符（z x Z X）、裝飾音 {…}、和弦記號 "…"、裝飾 !…! +…+ 不算音符；[CEG] 和音算一個
 // rests 只記看得見的休止符 z Z（x X 是看不見的休止符，只用來排版）
+// notes：每個音符的長度（以 L: 為單位，附點 > < 也算進去）、有沒有延長記號（H、!fermata!）、後面有沒有換氣記號（!breath!）；
+// 自動排版判斷斷句位置用（js/auto-layout.js）
 export function music_line_marks(line) {
   var marks = [];
   var bars = [];
   var rests = [];
-  var notes = 0;
+  var notes = [];
   var i = 0;
+  var fermata = false; // 下一個音符有延長記號
+  var factor = 1; // 下一個音符的長度要乘上的數（a>b 的 b 是 1/2）
   var skip_to = (ch) => {
     var j = line.indexOf(ch, i + 1);
     i = j < 0 ? line.length : j + 1;
+  };
+  // 從 i 讀音符後面的八度記號與長度，傳回長度
+  var read_length = () => {
+    var { len, used } = note_length(line.slice(i));
+    i += used;
+    return len;
+  };
+  var add_note = (len) => {
+    notes.push({ len: len * factor, fermata, breath: false });
+    fermata = false;
+    factor = 1;
   };
   while (i < line.length) {
     var c = line[i];
     if (c == '%')
       break;
-    if (c == '"' || c == '!' || c == '+') {
+    if (c == '!' || c == '+') {
+      var end = line.indexOf(c, i + 1);
+      var name = line.slice(i + 1, end < 0 ? line.length : end);
+      if (name == 'fermata' || name == 'invertedfermata')
+        fermata = true;
+      else if (name == 'breath' && notes.length)
+        notes[notes.length - 1].breath = true;
+      skip_to(c);
+    } else if (c == '"') {
       skip_to(c);
     } else if (c == '{') {
       skip_to('}');
@@ -101,29 +133,47 @@ export function music_line_marks(line) {
       var field = line.slice(i).match(/^\[([A-Za-z]):([^\]]*)\]/);
       if (field) {
         if (field[1] == 'P')
-          marks.push({ name: field[2].trim(), at: notes });
+          marks.push({ name: field[2].trim(), at: notes.length });
         i += field[0].length;
       } else if (line[i + 1] == '|' || /\d/.test(line[i + 1] || '')) {
         // [| 小節線、[1 [2 反覆結尾
         i++;
       } else {
-        // 和音：整組算一個音符
-        notes++;
+        // 和音：整組算一個音符；長度寫在 ] 後面，或寫在第一個音上
+        var close = line.indexOf(']', i + 1);
+        var inner = line.slice(i + 1, close < 0 ? line.length : close).match(/[A-Ga-g](.*)/);
         skip_to(']');
+        var outer = read_length();
+        add_note(outer * (inner ? note_length(inner[1]).len : 1));
       }
     } else if (c == '|' || c == ':') {
       while (i < line.length && /[|:\]\[]/.test(line[i]) && !(line[i] == '[' && /[A-Za-z]/.test(line[i + 1] || '')))
         i++;
-      bars.push(notes);
+      bars.push(notes.length);
+    } else if (/[A-Ga-g]/.test(c)) {
+      i++;
+      add_note(read_length());
+    } else if (/[zZxX]/.test(c)) {
+      if ((c == 'z' || c == 'Z') && rests[rests.length - 1] !== notes.length)
+        rests.push(notes.length);
+      i++;
+      read_length();
+      factor = 1;
+    } else if (c == '>' || c == '<') {
+      // 附點節奏：a>b = a 長 1.5 倍、b 剩一半（>> 是 1.75 與 1/4）
+      var n = line.slice(i).match(/^[<>]+/)[0].length;
+      var short = 1 / 2 ** n;
+      if (notes.length)
+        notes[notes.length - 1].len *= c == '>' ? 2 - short : short;
+      factor = c == '>' ? short : 2 - short;
+      i += n;
     } else {
-      if (/[A-Ga-g]/.test(c))
-        notes++;
-      else if ((c == 'z' || c == 'Z') && rests[rests.length - 1] !== notes)
-        rests.push(notes);
+      if (c == 'H')
+        fermata = true;
       i++;
     }
   }
-  return { marks, bars, rests };
+  return { marks, bars, rests, notes };
 }
 
 // 一行 w: 的內容（不含「w:」）→ 每個音符對到的音節：[{ text, hyphen }]
@@ -238,7 +288,11 @@ function join_lyric_continuations(lines) {
 
 // ABC → 從 w: 產生的段（{ name, source, paragraphs } 的陣列）
 // 行中間的 [P:B]：這行 w: 從那個音符開始的字都算 B 段（依音符數對齊 w: 的音節）
-export function sections_from_abc(abc) {
+//
+// options.hints 為 true 時，每段另外附上 hints：這段歌詞（所有行接起來、去掉空白）每個字後面可以斷句的分數，
+// [{ c, s }]：s 越大越適合在這個字後面斷開，null 是同一個字（英文單字中間、`-` 連起來的音節）不能斷。
+// 分數看譜（見 break_score）：後面有休止符、延長記號、換氣記號、長音、小節線、譜的行尾。自動排版用（js/auto-layout.js）
+export function sections_from_abc(abc, { hints = false } = {}) {
   var lines = join_lyric_continuations(String(abc || '').split(/\r?\n/));
   var k = lines.findIndex((line) => /^K:/.test(line));
   var parts = []; // 依出現順序：{ name, verses: [[行…]…] }；name 是 null 表示第一個 P: 之前（或沒有 P:）
@@ -246,13 +300,15 @@ export function sections_from_abc(abc) {
   var segments = [{ at: 0, name: null }]; // 目前這行譜的段：從第幾個音符開始是哪一段
   var bars = [];
   var rests = [];
+  var notes = []; // 目前這行譜的音符（music_line_marks 的 notes）
   var verse = 0; // 目前這行譜下面的第幾行 w:
   var w_text = []; // W: 的行（空字串 = 分段）
-  function add_line(name, verse, text) {
+  var all_sylls = []; // 所有音節（算長音的基準用）
+  function add_line(name, verse, text, sylls) {
     var p = parts.find((p) => p.name === name);
     if (!p)
       parts.push(p = { name, verses: [] });
-    (p.verses[verse] = p.verses[verse] || []).push(text);
+    (p.verses[verse] = p.verses[verse] || []).push({ text, sylls });
   }
   for (const line of k < 0 ? [] : lines.slice(k + 1)) {
     var m;
@@ -261,8 +317,11 @@ export function sections_from_abc(abc) {
       segments.forEach((seg, i) => {
         var end = i + 1 < segments.length ? segments[i + 1].at : slots.length;
         var text = slots_text(slots.slice(seg.at, end), rests.map((r) => r - seg.at));
-        if (text)
-          add_line(seg.name, verse, text);
+        if (!text)
+          return;
+        var sylls = hints ? syllables(slots, seg.at, end, { notes, bars, rests, line_end: end == slots.length }) : [];
+        all_sylls.push(...sylls);
+        add_line(seg.name, verse, text, sylls);
       });
       verse++;
       continue;
@@ -284,6 +343,7 @@ export function sections_from_abc(abc) {
     var info = music_line_marks(line);
     bars = info.bars;
     rests = info.rests;
+    notes = info.notes;
     segments = [{ at: 0, name: current }];
     for (const mark of info.marks) {
       var last = segments[segments.length - 1];
@@ -295,6 +355,7 @@ export function sections_from_abc(abc) {
     current = segments[segments.length - 1].name;
   }
   var sections = [];
+  var typical = median(all_sylls.map((syll) => syll.held));
   for (const p of parts) {
     // 每一段只有一節歌詞時段名不加數字（A、Verse），多節時 A1、A2…、Verse1、Verse2…；
     // 沒有 P: 的歌（和第一個 P: 之前的歌詞）段名是 Verse
@@ -302,14 +363,99 @@ export function sections_from_abc(abc) {
     var single = verses.filter((kept) => kept.length).length == 1;
     var name = p.name === null ? UNNAMED : p.name;
     verses.forEach((kept, i) => {
-      if (kept.length)
-        sections.push({ name: single ? name : name + (i + 1), source: null, paragraphs: [kept] });
+      if (!kept.length)
+        return;
+      var section = { name: single ? name : name + (i + 1), source: null, paragraphs: [kept.map((l) => l.text)] };
+      if (hints)
+        section.hints = kept.flatMap((l) => syllable_hints(l.sylls, typical));
+      sections.push(section);
     });
   }
   var w_paragraphs = to_paragraphs(w_text);
-  if (w_paragraphs.length)
-    sections.push({ name: 'W', source: null, paragraphs: w_paragraphs });
+  if (w_paragraphs.length) {
+    var w_section = { name: 'W', source: null, paragraphs: w_paragraphs };
+    // W: 沒有音符，沒有分數
+    if (hints)
+      w_section.hints = null;
+    sections.push(w_section);
+  }
   return sections;
+}
+
+function median(values) {
+  if (!values.length)
+    return 1;
+  var sorted = values.slice().sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)];
+}
+
+// 一段 w: 音節（slots 的 start..end）→ 有字的音節：{ text, hyphen, held, rest, fermata, breath, bar, line_end }
+// held：這個字唱多長（到下一個有字的音節之前的音符長度加起來，含 `_` 延長）；rest：後面有休止符；bar：後面是小節線；
+// line_end：是譜的這一行的最後一個字
+function syllables(slots, start, end, { notes, bars, rests, line_end }) {
+  var sylls = [];
+  for (var k = start; k < end; k++) {
+    if (!slots[k].text)
+      continue;
+    var j = k + 1;
+    while (j < end && !slots[j].text)
+      j++;
+    var held = 0;
+    var fermata = false;
+    for (var n = k; n < j; n++) {
+      held += notes[n] ? notes[n].len : 1;
+      fermata = fermata || !!(notes[n] && notes[n].fermata);
+    }
+    sylls.push({ text: slots[k].text, hyphen: slots[k].hyphen, held, fermata,
+      breath: !!(notes[j - 1] && notes[j - 1].breath),
+      rest: rests.some((r) => r > k && r <= j),
+      bar: bars.includes(j),
+      line_end: line_end && j == end });
+  }
+  return sylls;
+}
+
+// 一個字後面斷句的分數：休止符、延長記號、換氣記號各 5；長音（基準的 2 倍以上 3、1.5 倍以上 2）；後面是小節線 1；譜的行尾 1
+export function break_score({ held, rest, fermata, breath, bar, line_end }, typical = 1) {
+  var score = 0;
+  if (rest)
+    score += 5;
+  if (fermata)
+    score += 5;
+  if (breath)
+    score += 5;
+  if (held >= typical * 2)
+    score += 3;
+  else if (held >= typical * 1.5)
+    score += 2;
+  if (bar)
+    score += 1;
+  if (line_end)
+    score += 1;
+  return score;
+}
+
+// 音節 → 每個字（不含空白、`~`）的斷句分數 [{ c, s }]：音節的最後一個字是 break_score（和下一個音節是同一個字時 null）；
+// 音節裡面：英數字之間 null（單字不拆），其他 0；`~` 分開的地方 0
+function syllable_hints(sylls, typical) {
+  var hints = [];
+  for (const syll of sylls) {
+    var parts = syll.text.split('~').filter(Boolean);
+    parts.forEach((part, p) => {
+      var chars = [...part.replace(/\s+/g, '')];
+      chars.forEach((c, i) => {
+        var s;
+        if (i < chars.length - 1)
+          s = /[A-Za-z0-9À-ɏ']/.test(c) && /[A-Za-z0-9À-ɏ']/.test(chars[i + 1]) ? null : 0;
+        else if (p < parts.length - 1)
+          s = 0;
+        else
+          s = syll.hyphen ? null : break_score(syll, typical);
+        hints.push({ c, s });
+      });
+    });
+  }
+  return hints;
 }
 
 // 沒有段名的段：譜上沒有 P: 的歌詞、「投影片」欄第一個 [段名] 之前的文字
