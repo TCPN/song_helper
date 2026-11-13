@@ -4,6 +4,7 @@ import { DEFAULT_AUTO_LAYOUT, normalize_auto_layout, parse_auto_layout, step_aut
   text_width, wrap_line, page_sizes, auto_layout_text } from '../../js/auto-layout.js';
 
 test('normalize／parse：不認識的欄位丟掉、超出範圍拉回、最多行數不少於每頁行數；壞掉的 JSON 用預設', () => {
+  assert.deepEqual(DEFAULT_AUTO_LAYOUT, { lines: 2, max_lines: 3, width: 13 });
   assert.deepEqual(normalize_auto_layout(null), DEFAULT_AUTO_LAYOUT);
   assert.deepEqual(normalize_auto_layout({ lines: 99, max_lines: 2, width: 1, x: 1 }), { lines: 12, max_lines: 12, width: 4 });
   assert.deepEqual(normalize_auto_layout({ lines: '3', width: 10.4 }), { ...DEFAULT_AUTO_LAYOUT, width: 10 });

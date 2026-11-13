@@ -15,11 +15,11 @@ import { text_to_paragraphs } from './lyric-layout.js';
 
 export const DEFAULT_AUTO_LAYOUT = {
   // 每頁的預設行數
-  lines: 4,
+  lines: 2,
   // 每頁最多行數（為了不留只有一兩行的頁，可以多放到這麼多行）
-  max_lines: 6,
+  max_lines: 3,
   // 每行最多幾個字（全形字的寬度）
-  width: 16,
+  width: 13,
 };
 
 export const AUTO_LAYOUT_STEPS = {
