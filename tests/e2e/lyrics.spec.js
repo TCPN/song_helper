@@ -236,7 +236,7 @@ test.describe('歌詞檢視', () => {
     await expect(app.page.locator('#lyrics_copy')).toHaveAttribute('aria-disabled', 'true');
   });
 
-  test('段名小字、淡色、不粗體，有 4px 圓角的邊框；段與段之間沒有分隔線；每一行一樣高（段內分段也不多空）', async ({ app }) => {
+  test('段名小字、淡色、不粗體，有 4px 圓角的邊框；段與段之間沒有分隔線；每一行一樣高，段內分段（換投影片）空一行', async ({ app }) => {
     await app.goto('#song_id=12&view=lyrics');
     const style = await names(app).first().evaluate((n) => {
       const s = getComputedStyle(n);
@@ -257,9 +257,9 @@ test.describe('歌詞檢視', () => {
     const border = await app.page.locator('#lyrics_sections .lyrics-section').first()
       .evaluate((s) => getComputedStyle(s).borderBottomWidth);
     expect(border).toBe('0px');
-    // 主歌：第一句 第二句／第三句 ‖ 第四句（段內分段）
+    // 主歌：第一句 第二句／第三句 ‖ 第四句（段內分段空一行，和排版編輯時一樣）
     const tops = await lines(app).evaluateAll((ls) => ls.map((l) => l.getBoundingClientRect().top));
-    expect(tops[2] - tops[1]).toBeCloseTo(tops[1] - tops[0], 0);
+    expect(tops[2] - tops[1]).toBeCloseTo(2 * (tops[1] - tops[0]), 0);
     // 訊息的左邊緣也和歌詞的字對齊
     await app.goto('#song_id=13&view=lyrics');
     await expect(app.page.locator('#lyrics_messages li')).toHaveCount(2);

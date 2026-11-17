@@ -126,15 +126,42 @@ test('sections_from_abc：歌詞比 [P:] 之前的音符少時，後面那段沒
 });
 
 test('music_line_marks：段落標記與小節線的位置是之前的音符數', () => {
-  assert.deepEqual(music_line_marks('[P:A]CD EF|:GA [P:B]B2c2:|[1 d4|]'), {
+  const marks = (line) => { const { notes, ...rest } = music_line_marks(line); return rest; };
+  assert.deepEqual(marks('[P:A]CD EF|:GA [P:B]B2c2:|[1 d4|]'), {
     marks: [{ name: 'A', at: 0 }, { name: 'B', at: 6 }],
     bars: [4, 8, 9],
     rests: [],
   });
   // % 之後是註解；"..." 裡的字母不算
-  assert.deepEqual(music_line_marks('"Am"A B|% c d'), { marks: [], bars: [2], rests: [] });
+  assert.deepEqual(marks('"Am"A B|% c d'), { marks: [], bars: [2], rests: [] });
   // 休止符 z Z 記在之前有幾個音符的位置，連續的只記一次；x 是看不見的休止符，不記
-  assert.deepEqual(music_line_marks('z C z2 z D x E Z|'), { marks: [], bars: [3], rests: [0, 1, 3] });
+  assert.deepEqual(marks('z C z2 z D x E Z|'), { marks: [], bars: [3], rests: [0, 1, 3] });
+});
+
+test('music_line_marks：每個音符的長度、延長記號、換氣記號', () => {
+  const notes = (line) => music_line_marks(line).notes;
+  // 長度：2、/、3/2、//；八度記號不影響；和音的長度寫在 ] 後面或第一個音上
+  assert.deepEqual(notes("C2 D/ E3/2 F// c'4 [CE]2 [C2E2]").map((n) => n.len), [2, 0.5, 1.5, 0.25, 4, 2, 2]);
+  // 附點節奏 > <
+  assert.deepEqual(notes('C>D E<F G>>A').map((n) => n.len), [1.5, 0.5, 0.5, 1.5, 1.75, 0.25]);
+  // 延長記號 H、!fermata! 在音符前面；換氣記號 !breath! 記在前一個音符；休止符的長度不算進音符
+  const marked = notes('C H D !fermata!E2 !breath! z2 F');
+  assert.deepEqual(marked.map((n) => [n.len, n.fermata, n.breath]), [[1, false, false], [1, true, false], [2, true, true], [1, false, false]]);
+});
+
+test('sections_from_abc（hints）：每個字後面斷句的分數，看休止符、延長記號、長音、小節線、譜的行尾', () => {
+  const abc = 'X:1\nT:t\nM:4/4\nL:1/4\nK:C\nP:A\nCDEF|G2 z G|ABcd|e4|\nw:一 二 三 四 五 六 七 八 九 十 長\nP:B\nc>d e2|Hf4|\nw:Hal-le lu jah\n';
+  const sections = sections_from_abc(abc, { hints: true });
+  const shown = (s) => s.hints.map((h) => h.c + (h.s === null ? '∅' : h.s)).join(' ');
+  // 五：長音（2 倍）+3、休止符 +5；四、六、十：小節線 +1；長：長音 +3、小節線 +1、譜的行尾 +1
+  assert.equal(shown(sections[0]), '一0 二0 三0 四1 五8 六1 七0 八0 九0 十1 長5');
+  // 英文單字中間和 - 連起來的音節不能斷（∅）；jah：延長記號 +5、長音 +3、小節線、行尾
+  assert.equal(shown(sections[1]), 'H∅ a∅ l∅ l∅ e0 l∅ u4 j∅ a∅ h10');
+  // 沒要 hints 時和原本一樣
+  assert.deepEqual(sections_from_abc(abc), sections.map(({ hints, ...rest }) => rest));
+  // 字數和歌詞（去掉空白）一樣
+  for (const s of sections)
+    assert.equal(s.hints.length, s.paragraphs.flat().join('').replace(/\s+/g, '').length);
 });
 
 test('w_slots：每個音符一個音節；| 跳到下一小節', () => {
